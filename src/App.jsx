@@ -7,6 +7,7 @@ import WorkQueue from "./components/WorkQueue.jsx";
 import EvidenceEngine from "./components/EvidenceEngine.jsx";
 import CommunicationsHub from "./components/CommunicationsHub.jsx";
 import AuthorityReleaseControl from "./components/AuthorityReleaseControl.jsx";
+import AIClaimReviewCenter from "./components/AIClaimReviewCenter.jsx";
 
 const modules = [
   ["overview", "Dashboard"],
@@ -267,19 +268,10 @@ function App() {
           {tab === "recovery" && <SimpleRecords title="Recovery Follow-up & Depreciation Tracking" records={draft.recovery} fields={[["coverage","Coverage"],["amount","Outstanding amount"],["condition","Recovery condition / proof needed"],["dueDate","Follow-up date"],["status","Status"]]} onAdd={r => addRecord("recovery", r)} />}
 
           {tab === "ai" && (
-            <section>
-              <h1>AI Claim Preparation</h1>
-              <div className="stats">
-                <Stat label="Mode" value={draft.aiPrep.mode} />
-                <Stat label="Status" value={draft.aiPrep.status} />
-                <Stat label="Last run" value={draft.aiPrep.lastRun || "None"} />
-              </div>
-              <p className="notice">Automatic OpenAI document processing is intentionally not activated in this browser-only recovery build. API keys must be configured server-side and AI output must remain source-linked and human reviewed.</p>
-              <label>Integration notes<textarea value={draft.aiPrep.notes} onChange={e => {
-                const aiPrep = { ...draft.aiPrep, notes: e.target.value };
-                setDraft(d => ({ ...d, aiPrep }));
-              }} /></label>
-            </section>
+            <AIClaimReviewCenter
+              claim={draft}
+              onChange={changes => saveClaim({ ...draft, ...changes })}
+            />
           )}
         </main>
       </div>

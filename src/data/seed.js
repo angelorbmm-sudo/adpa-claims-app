@@ -35,7 +35,8 @@ export const emptyClaim = () => ({
   payments: [],
   workItems: [],
   releaseRecords: [],
-  aiPrep: { status: "Not activated", mode: "manual", lastRun: "", notes: "" },
+  aiPrep: { status: "Ready for shadow review", mode: "shadow", lastRun: "", notes: "", runs: [] },
+  aiFindings: [],
   notes: "",
   updatedAt: ""
 });

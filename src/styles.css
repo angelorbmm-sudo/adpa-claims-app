@@ -111,3 +111,10 @@ td input { min-width:110px; }
 @media (max-width:800px) {
   .release-gates { grid-template-columns:1fr 1fr; }
 }
+
+.ai-findings { display:grid; gap:12px; margin:16px 0; }
+.ai-finding { background:white; border:1px solid #e5e7eb; border-left-width:5px; border-radius:12px; padding:16px; display:grid; gap:10px; }
+.ai-finding p { margin:0; white-space:pre-wrap; }
+.severity-high { border-left-color:#991b1b; }
+.severity-normal { border-left-color:#1d4ed8; }
+.severity-low { border-left-color:#6b7280; }

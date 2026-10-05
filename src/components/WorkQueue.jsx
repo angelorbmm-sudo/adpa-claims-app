@@ -140,6 +140,18 @@ function systemExceptions(claim) {
     }
   }
 
+  const pendingAi = (claim.aiFindings || []).filter(f => f.reviewStatus === "Needs human review" || f.reviewStatus === "Unreviewed");
+  if (pendingAi.length) {
+    add("Coverage Review", "Normal", pendingAi.length + " AI finding(s) need human review",
+      "AI-prepared observations are not final until reviewed by an authorized human.", "ai");
+  }
+
+  const aiHigh = (claim.aiFindings || []).filter(f => f.severity === "High" && f.reviewStatus !== "Resolved");
+  if (aiHigh.length) {
+    add("Coverage Review", "High", aiHigh.length + " high-priority AI exception(s)",
+      "High-priority claim-preparation exceptions require human review.", "ai");
+  }
+
   const age = daysOld(claim.updatedAt);
   if (age !== null && age >= 7 && claim.representationStatus === "Active") {
     add("Carrier Follow-up", "Normal", "Claim has been quiet for " + age + " days",
