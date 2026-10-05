@@ -118,3 +118,6 @@ td input { min-width:110px; }
 .severity-high { border-left-color:#991b1b; }
 .severity-normal { border-left-color:#1d4ed8; }
 .severity-low { border-left-color:#6b7280; }
+
+.contents-table select { min-width:130px; }
+.contents-table small { color:#6b7280; }

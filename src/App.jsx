@@ -8,6 +8,7 @@ import EvidenceEngine from "./components/EvidenceEngine.jsx";
 import CommunicationsHub from "./components/CommunicationsHub.jsx";
 import AuthorityReleaseControl from "./components/AuthorityReleaseControl.jsx";
 import AIClaimReviewCenter from "./components/AIClaimReviewCenter.jsx";
+import ContentsValuationCenter from "./components/ContentsValuationCenter.jsx";
 
 const modules = [
   ["overview", "Dashboard"],
@@ -239,7 +240,7 @@ function App() {
           {tab === "evidence" && <EvidenceEngine claim={draft} onChange={documents => saveClaim({ ...draft, documents })} />}
           {tab === "estimates" && <EstimateComparison records={draft.estimateComparisons || []} onChange={records => saveClaim({ ...draft, estimateComparisons: records })} />}
           {tab === "payments" && <PaymentLedger payments={draft.payments || []} coverages={draft.coverages} onChange={payments => saveClaim({ ...draft, payments })} />}
-          {tab === "contents" && <SimpleRecords title="Contents Review" records={draft.contents} fields={[["item","Item"],["room","Room"],["rcv","Proposed RCV"],["carrier","Carrier Value"],["status","Review Status"]]} onAdd={r => addRecord("contents", r)} />}
+          {tab === "contents" && <ContentsValuationCenter items={draft.contents || []} onChange={contents => saveClaim({ ...draft, contents })} />}
           {tab === "communications" && <CommunicationsHub claim={draft} onChange={communications => saveClaim({ ...draft, communications })} />}
           {tab === "supplements" && <SimpleRecords title="Supplements & Disputes" records={draft.supplements} fields={[["coverage","Coverage"],["issue","Issue"],["requested","Requested"],["carrierResponse","Carrier response"]]} onAdd={r => addRecord("supplements", r)} />}
           {tab === "mortgage" && <SimpleRecords title="Mortgage Loss Draft" records={draft.mortgage.draws} fields={[["amount","Draw amount"],["status","Status"],["conditions","Conditions"],["date","Date"]]} onAdd={r => {

@@ -70,9 +70,22 @@ function systemExceptions(claim) {
       "Current unresolved variance: " + money(variance) + ".", "estimates");
   }
 
-  const contentsNeedsReview = (claim.contents || []).filter(x => !x.status || x.status === "Needs review" || x.status === "Pending");
+  const contents = claim.contents || [];
+  const contentsNeedsReview = contents.filter(x => !x.status || x.status === "Needs review" || x.status === "Pending");
   if (contentsNeedsReview.length) {
     add("Contents", "Normal", contentsNeedsReview.length + " contents item(s) need review", "Contents records are not fully reviewed.", "contents");
+  }
+
+  const contentsMissingSource = contents.filter(x => Number(x.rcv || 0) > 0 && !x.replacementSource);
+  if (contentsMissingSource.length) {
+    add("Contents", "High", contentsMissingSource.length + " contents item(s) lack replacement support",
+      "RCV is entered without a replacement source or pricing reference.", "contents");
+  }
+
+  const contentsVariance = contents.reduce((sum, x) => sum + ((Number(x.rcv || 0) * Number(x.quantity || 1)) - Number(x.carrierRcv || x.carrier || 0)), 0);
+  if (Math.abs(contentsVariance) >= 5000) {
+    add("Contents", "High", "Material contents valuation variance",
+      "Current ADPA-versus-carrier contents RCV variance is " + money(contentsVariance) + ".", "contents");
   }
 
   const mismatch = paymentMismatch(claim);
