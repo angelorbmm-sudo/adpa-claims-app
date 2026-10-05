@@ -11,6 +11,7 @@ import AIClaimReviewCenter from "./components/AIClaimReviewCenter.jsx";
 import ContentsValuationCenter from "./components/ContentsValuationCenter.jsx";
 import ALEManagementCenter from "./components/ALEManagementCenter.jsx";
 import SupplementsDisputeCenter from "./components/SupplementsDisputeCenter.jsx";
+import MortgageLossDraftCenter from "./components/MortgageLossDraftCenter.jsx";
 
 const modules = [
   ["overview", "Dashboard"],
@@ -119,6 +120,7 @@ function App() {
       estimateComparisons: draft.estimateComparisons || [],
       payments: draft.payments || [],
       ale: draft.ale || {},
+      mortgage: draft.mortgage || {},
       documentManifest: draft.documents.map(({ id, name, category, size, createdAt }) => ({ id, name, category, size, createdAt })),
       assembledAt: nowIso()
     };
@@ -248,10 +250,7 @@ function App() {
           {tab === "ale" && <ALEManagementCenter claim={draft} onChange={changes => saveClaim({ ...draft, ...changes })} />}
           {tab === "communications" && <CommunicationsHub claim={draft} onChange={communications => saveClaim({ ...draft, communications })} />}
           {tab === "supplements" && <SupplementsDisputeCenter claim={draft} onChange={supplements => saveClaim({ ...draft, supplements })} />}
-          {tab === "mortgage" && <SimpleRecords title="Mortgage Loss Draft" records={draft.mortgage.draws} fields={[["amount","Draw amount"],["status","Status"],["conditions","Conditions"],["date","Date"]]} onAdd={r => {
-            const mortgage = { ...draft.mortgage, draws: [...draft.mortgage.draws, { id: uid("draw"), createdAt: nowIso(), ...r }] };
-            saveClaim({ ...draft, mortgage });
-          }} />}
+          {tab === "mortgage" && <MortgageLossDraftCenter claim={draft} onChange={mortgage => saveClaim({ ...draft, mortgage })} />}
           {tab === "agreements" && <SimpleRecords title="Agreement Library & Packets" records={draft.agreements} fields={[["name","Document"],["version","Version"],["signer","Signer"],["status","Status"]]} onAdd={r => addRecord("agreements", r)} />}
           {tab === "receipts" && <SimpleRecords title="Receipts & Recoverable Depreciation" records={draft.receipts} fields={[["item","Item / invoice"],["replacementCost","Replacement cost"],["requested","Depreciation requested"],["approved","Approved"],["released","Released"]]} onAdd={r => addRecord("receipts", r)} />}
 
