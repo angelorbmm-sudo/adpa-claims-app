@@ -12,12 +12,14 @@ import ContentsValuationCenter from "./components/ContentsValuationCenter.jsx";
 import ALEManagementCenter from "./components/ALEManagementCenter.jsx";
 import SupplementsDisputeCenter from "./components/SupplementsDisputeCenter.jsx";
 import MortgageLossDraftCenter from "./components/MortgageLossDraftCenter.jsx";
+import PolicyEndorsementCenter from "./components/PolicyEndorsementCenter.jsx";
 
 const modules = [
   ["overview", "Dashboard"],
   ["workqueue", "Work Queue"],
   ["intake", "Claim Intake"],
   ["coverage", "Coverage & Valuation"],
+  ["policy", "Policy & Endorsements"],
   ["evidence", "Documents & Evidence"],
   ["contents", "Contents"],
   ["ale", "ALE / Loss of Use"],
@@ -121,6 +123,7 @@ function App() {
       payments: draft.payments || [],
       ale: draft.ale || {},
       mortgage: draft.mortgage || {},
+      policyAnalysis: draft.policyAnalysis || {},
       documentManifest: draft.documents.map(({ id, name, category, size, createdAt }) => ({ id, name, category, size, createdAt })),
       assembledAt: nowIso()
     };
@@ -243,6 +246,7 @@ function App() {
             </section>
           )}
 
+          {tab === "policy" && <PolicyEndorsementCenter claim={draft} onChange={policyAnalysis => saveClaim({ ...draft, policyAnalysis })} />}
           {tab === "evidence" && <EvidenceEngine claim={draft} onChange={documents => saveClaim({ ...draft, documents })} />}
           {tab === "estimates" && <EstimateComparison records={draft.estimateComparisons || []} onChange={records => saveClaim({ ...draft, estimateComparisons: records })} />}
           {tab === "payments" && <PaymentLedger payments={draft.payments || []} coverages={draft.coverages} onChange={payments => saveClaim({ ...draft, payments })} />}
