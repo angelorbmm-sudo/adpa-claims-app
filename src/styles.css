@@ -134,3 +134,16 @@ details summary { cursor:pointer; font-weight:600; }
 
 .mortgage-table select { min-width:135px; }
 .mortgage-table small { color:#6b7280; }
+
+.demo-banner {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #7f1d1d;
+  color: white;
+  text-align: center;
+  font-weight: 800;
+  letter-spacing: .02em;
+  padding: 10px 14px;
+}
+.demo-banner + .topbar { top: 42px; }

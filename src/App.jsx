@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { emptyClaim } from "./data/seed.js";
+import { demoWorkspace } from "./data/demo.js";
 import { loadWorkspace, nowIso, saveWorkspace, uid } from "./lib/storage.js";
 import EstimateComparison from "./components/EstimateComparison.jsx";
 import PaymentLedger from "./components/PaymentLedger.jsx";
@@ -41,7 +42,8 @@ function money(v) {
 }
 
 function App() {
-  const [workspace, setWorkspace] = useState(() => loadWorkspace() || { claims: [], selectedId: null });
+  const isDemo = import.meta.env.VITE_DEMO_MODE === "true";
+  const [workspace, setWorkspace] = useState(() => loadWorkspace() || (isDemo ? demoWorkspace() : { claims: [], selectedId: null }));
   const [tab, setTab] = useState("overview");
   const [draft, setDraft] = useState(() => emptyClaim());
 
@@ -141,7 +143,9 @@ function App() {
   if (!selected) {
     return (
       <div className="app">
-        <header className="topbar"><div><strong>ADPA Claims</strong><span>Private Working Workspace</span></div></header>
+        {isDemo && <div className="demo-banner">ADPA DEMO — TEST DATA ONLY — DO NOT ENTER REAL CLIENT INFORMATION</div>}
+      {isDemo && <div className="demo-banner">ADPA DEMO — TEST DATA ONLY — DO NOT ENTER REAL CLIENT INFORMATION</div>}
+        <header className="topbar"><div><strong>ADPA Claims</strong><span>{isDemo ? "Demo Playground" : "Private Working Workspace"}</span></div></header>
         <main className="empty">
           <h1>ADPA Claims Workspace</h1>
           <p>This recovered build keeps regulated decisions behind human and licensed approval gates.</p>
