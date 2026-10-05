@@ -62,6 +62,30 @@ function systemExceptions(claim) {
     add("Coverage Review", "High", "Coverage / valuation review incomplete", "Valuation type, source provision, or reviewer is missing.", "coverage");
   }
 
+  const policy = claim.policyAnalysis || {};
+  const policyConflicts = (policy.conflicts || []).filter(x => x.status !== "Resolved");
+  if (policyConflicts.length) {
+    add("Coverage Review", "Critical", policyConflicts.length + " unresolved policy conflict(s)",
+      "Declarations, endorsements, or provisions contain unresolved interpretation conflicts.", "policy");
+  }
+
+  const policyOpenProvisions = (policy.provisions || []).filter(x => x.status === "Needs review" || x.status === "Conflict");
+  if (policyOpenProvisions.length) {
+    add("Coverage Review", "High", policyOpenProvisions.length + " policy provision(s) need confirmation",
+      "Material policy provisions have not been confirmed by a human reviewer.", "policy");
+  }
+
+  const policyOpenEndorsements = (policy.endorsements || []).filter(x => x.status !== "Reviewed");
+  if (policyOpenEndorsements.length) {
+    add("Coverage Review", "Normal", policyOpenEndorsements.length + " endorsement(s) need review",
+      "One or more recorded endorsements have not been fully reviewed.", "policy");
+  }
+
+  if ((policy.declarations || []).length && policy.reviewStatus !== "Confirmed") {
+    add("Coverage Review", "Normal", "Policy analysis not fully confirmed",
+      "Policy/declarations data is present but reviewer confirmation is not complete.", "policy");
+  }
+
   const unresolvedEstimate = (claim.estimateComparisons || []).filter(x => x.status !== "Resolved");
   if (unresolvedEstimate.length) {
     const variance = unresolvedEstimate.reduce((sum, r) =>
