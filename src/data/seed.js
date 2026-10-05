@@ -19,6 +19,7 @@ export const emptyClaim = () => ({
   valuation: "Unreviewed",
   valuationSource: "",
   valuationReviewer: "",
+  policyAnalysis: { declarations: [], endorsements: [], provisions: [], conflicts: [], reviewer: "", reviewStatus: "Unreviewed", reviewedAt: "", notes: "" },
   coverages: structuredClone(coverageTemplate),
   documents: [],
   contents: [],
