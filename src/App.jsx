@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { emptyClaim } from "./data/seed.js";
 import { loadWorkspace, nowIso, saveWorkspace, uid } from "./lib/storage.js";
+import EstimateComparison from "./components/EstimateComparison.jsx";
+import PaymentLedger from "./components/PaymentLedger.jsx";
 
 const modules = [
   ["overview", "Dashboard"],
@@ -8,6 +10,8 @@ const modules = [
   ["coverage", "Coverage & Valuation"],
   ["evidence", "Documents & Evidence"],
   ["contents", "Contents"],
+  ["estimates", "Estimate Comparison"],
+  ["payments", "Payment Ledger"],
   ["communications", "Communications"],
   ["supplements", "Supplements"],
   ["mortgage", "Mortgage"],
@@ -90,6 +94,8 @@ function App() {
       supplements: draft.supplements,
       receipts: draft.receipts,
       recovery: draft.recovery,
+      estimateComparisons: draft.estimateComparisons || [],
+      payments: draft.payments || [],
       documentManifest: draft.documents.map(({ id, name, category, size, createdAt }) => ({ id, name, category, size, createdAt })),
       assembledAt: nowIso()
     };
@@ -124,6 +130,7 @@ function App() {
 
   const totalRequested = draft.coverages.reduce((s, c) => s + Number(c.requested || 0), 0);
   const totalReceived = draft.coverages.reduce((s, c) => s + Number(c.received || 0), 0);
+  const ledgerPaid = (draft.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
 
   return (
     <div className="app">
@@ -157,6 +164,7 @@ function App() {
                 <Stat label="Received" value={money(totalReceived)} />
                 <Stat label="Open follow-ups" value={draft.recovery.filter(x => x.status !== "Closed").length} />
                 <Stat label="Evidence files" value={draft.documents.length} />
+                <Stat label="Payment ledger total" value={money(ledgerPaid)} />
               </div>
               <Panel title="Next controls">
                 <ul>
@@ -202,6 +210,8 @@ function App() {
           )}
 
           {tab === "evidence" && <Evidence claim={draft} onAdd={r => addRecord("documents", r)} />}
+          {tab === "estimates" && <EstimateComparison records={draft.estimateComparisons || []} onChange={records => saveClaim({ ...draft, estimateComparisons: records })} />}
+          {tab === "payments" && <PaymentLedger payments={draft.payments || []} coverages={draft.coverages} onChange={payments => saveClaim({ ...draft, payments })} />}
           {tab === "contents" && <SimpleRecords title="Contents Review" records={draft.contents} fields={[["item","Item"],["room","Room"],["rcv","Proposed RCV"],["carrier","Carrier Value"],["status","Review Status"]]} onAdd={r => addRecord("contents", r)} />}
           {tab === "communications" && <SimpleRecords title="Communications & Follow-ups" records={draft.communications} fields={[["direction","Direction"],["party","Party"],["summary","Summary"],["followUp","Follow-up date"]]} onAdd={r => addRecord("communications", r)} />}
           {tab === "supplements" && <SimpleRecords title="Supplements & Disputes" records={draft.supplements} fields={[["coverage","Coverage"],["issue","Issue"],["requested","Requested"],["carrierResponse","Carrier response"]]} onAdd={r => addRecord("supplements", r)} />}
