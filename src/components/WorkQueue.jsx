@@ -122,12 +122,21 @@ function systemExceptions(claim) {
   const latestPackage = (claim.packages || []).at(-1);
   if (latestPackage) {
     const packageHash = latestPackage.snapshotHash;
+    const operational = (claim.approvals || []).some(a => a.stage?.toLowerCase().includes("operational") && a.packageHash === packageHash && /approve/i.test(a.decision || ""));
     const licensed = (claim.approvals || []).some(a => a.stage?.toLowerCase().includes("licensed") && a.packageHash === packageHash && /approve/i.test(a.decision || ""));
     const client = (claim.approvals || []).some(a => a.stage?.toLowerCase().includes("client") && a.packageHash === packageHash && /approve|author/i.test(a.decision || ""));
-    if (!licensed) {
+    if (!operational) {
+      add("Licensed PA / Client Approval", "High", "Operational approval missing", "Current claim package lacks matching operational approval.", "approvals");
+    } else if (!licensed) {
       add("Licensed PA / Client Approval", "Critical", "Licensed PA approval missing", "Current claim package is not bound to an approved licensed-PA record.", "approvals");
     } else if (!client) {
       add("Licensed PA / Client Approval", "High", "Client authorization missing", "Current package lacks matching client authorization.", "approvals");
+    }
+
+    const blockedRelease = (claim.releaseRecords || []).some(r => r.packageHash === packageHash && r.status === "Blocked");
+    if (blockedRelease) {
+      add("Licensed PA / Client Approval", "Critical", "Release gate blocked",
+        "A release attempt for the current package is blocked by authority controls.", "approvals");
     }
   }
 

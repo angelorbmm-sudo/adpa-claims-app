@@ -6,6 +6,7 @@ import PaymentLedger from "./components/PaymentLedger.jsx";
 import WorkQueue from "./components/WorkQueue.jsx";
 import EvidenceEngine from "./components/EvidenceEngine.jsx";
 import CommunicationsHub from "./components/CommunicationsHub.jsx";
+import AuthorityReleaseControl from "./components/AuthorityReleaseControl.jsx";
 
 const modules = [
   ["overview", "Dashboard"],
@@ -257,12 +258,10 @@ function App() {
           )}
 
           {tab === "approvals" && (
-            <section>
-              <h1>Approvals & Signatures</h1>
-              <SimpleRecords title="Approval Records" records={draft.approvals} fields={[["stage","Stage: Operational / Licensed PA / Client"],["reviewer","Reviewer"],["packageHash","Package hash"],["decision","Decision"]]} onAdd={r => addRecord("approvals", r)} embedded />
-              <SimpleRecords title="Signature Records" records={draft.signatures} fields={[["mode","Mode: In-person witnessed / Remote"],["signer","Signer"],["witness","Witness"],["packageHash","Package hash"]]} onAdd={r => addRecord("signatures", r)} embedded />
-              <p className="notice">An in-person witnessed record is not the same as independently verified remote identity. Remote verification remains an external integration.</p>
-            </section>
+            <AuthorityReleaseControl
+              claim={draft}
+              onChange={changes => saveClaim({ ...draft, ...changes })}
+            />
           )}
 
           {tab === "recovery" && <SimpleRecords title="Recovery Follow-up & Depreciation Tracking" records={draft.recovery} fields={[["coverage","Coverage"],["amount","Outstanding amount"],["condition","Recovery condition / proof needed"],["dueDate","Follow-up date"],["status","Status"]]} onAdd={r => addRecord("recovery", r)} />}

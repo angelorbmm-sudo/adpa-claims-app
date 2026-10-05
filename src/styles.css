@@ -96,3 +96,18 @@ td input { min-width:110px; }
   .timeline-head { flex-direction:column; }
   .wide { grid-column:auto; }
 }
+
+.release-gates { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:16px 0; }
+.gate { border-radius:12px; padding:14px; display:grid; gap:4px; border:1px solid #d1d5db; background:white; }
+.gate.ok { border-color:#86efac; background:#f0fdf4; }
+.gate.no { border-color:#fecaca; background:#fef2f2; }
+.gate b { font-size:12px; }
+.gate.ok b { color:#166534; }
+.gate.no b { color:#991b1b; }
+.release-banner { border-radius:12px; padding:16px; display:grid; gap:6px; margin:16px 0; border:1px solid; }
+.release-banner.ready { background:#f0fdf4; border-color:#86efac; color:#166534; }
+.release-banner.blocked { background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+.release-banner code { overflow-wrap:anywhere; font-size:11px; }
+@media (max-width:800px) {
+  .release-gates { grid-template-columns:1fr 1fr; }
+}
