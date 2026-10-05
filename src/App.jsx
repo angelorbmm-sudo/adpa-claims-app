@@ -10,6 +10,7 @@ import AuthorityReleaseControl from "./components/AuthorityReleaseControl.jsx";
 import AIClaimReviewCenter from "./components/AIClaimReviewCenter.jsx";
 import ContentsValuationCenter from "./components/ContentsValuationCenter.jsx";
 import ALEManagementCenter from "./components/ALEManagementCenter.jsx";
+import SupplementsDisputeCenter from "./components/SupplementsDisputeCenter.jsx";
 
 const modules = [
   ["overview", "Dashboard"],
@@ -246,7 +247,7 @@ function App() {
           {tab === "contents" && <ContentsValuationCenter items={draft.contents || []} onChange={contents => saveClaim({ ...draft, contents })} />}
           {tab === "ale" && <ALEManagementCenter claim={draft} onChange={changes => saveClaim({ ...draft, ...changes })} />}
           {tab === "communications" && <CommunicationsHub claim={draft} onChange={communications => saveClaim({ ...draft, communications })} />}
-          {tab === "supplements" && <SimpleRecords title="Supplements & Disputes" records={draft.supplements} fields={[["coverage","Coverage"],["issue","Issue"],["requested","Requested"],["carrierResponse","Carrier response"]]} onAdd={r => addRecord("supplements", r)} />}
+          {tab === "supplements" && <SupplementsDisputeCenter claim={draft} onChange={supplements => saveClaim({ ...draft, supplements })} />}
           {tab === "mortgage" && <SimpleRecords title="Mortgage Loss Draft" records={draft.mortgage.draws} fields={[["amount","Draw amount"],["status","Status"],["conditions","Conditions"],["date","Date"]]} onAdd={r => {
             const mortgage = { ...draft.mortgage, draws: [...draft.mortgage.draws, { id: uid("draw"), createdAt: nowIso(), ...r }] };
             saveClaim({ ...draft, mortgage });

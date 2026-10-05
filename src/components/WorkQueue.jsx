@@ -151,10 +151,29 @@ function systemExceptions(claim) {
       "A communication has reached its escalation threshold.", "communications");
   }
 
-  const openSupplements = (claim.supplements || []).filter(x => !x.carrierResponse);
+  const supplements = claim.supplements || [];
+  const openSupplements = supplements.filter(x => !["Resolved","Closed","Approved"].includes(x.status));
   if (openSupplements.length) {
-    add("Carrier Follow-up", "Normal", openSupplements.length + " supplement/dispute item(s) awaiting response",
-      "Carrier response has not been recorded.", "supplements");
+    add("Carrier Follow-up", "Normal", openSupplements.length + " supplement/dispute item(s) open",
+      "One or more supplement or dispute items remain unresolved.", "supplements");
+  }
+
+  const overdueSupplements = supplements.filter(x => x.responseDueDate && isPast(x.responseDueDate) && !["Resolved","Closed","Approved"].includes(x.status));
+  if (overdueSupplements.length) {
+    add("Carrier Follow-up", "High", overdueSupplements.length + " supplement response(s) overdue",
+      "Carrier response due date has passed for one or more supplement/dispute items.", "supplements");
+  }
+
+  const supplementVariance = supplements.reduce((sum,x)=>sum + Math.max(0, Number(x.requested||0)-Number(x.approvedAmount||0)),0);
+  if (supplementVariance >= 5000) {
+    add("Estimating", "High", "Material unresolved supplement variance",
+      "Unresolved supplement/dispute variance totals " + money(supplementVariance) + ".", "supplements");
+  }
+
+  const escalatedSupplements = supplements.filter(x => ["DOI","Appraisal","Counsel","Executive Review"].includes(x.escalationLevel) && !["Resolved","Closed"].includes(x.status));
+  if (escalatedSupplements.length) {
+    add("Carrier Follow-up", "High", escalatedSupplements.length + " dispute item(s) at elevated escalation",
+      "One or more disputes are marked for DOI, appraisal, counsel, or executive review.", "supplements");
   }
 
   const latestPackage = (claim.packages || []).at(-1);

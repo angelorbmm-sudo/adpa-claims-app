@@ -124,3 +124,10 @@ td input { min-width:110px; }
 
 .ale-table select { min-width:130px; }
 .ale-table small { color:#6b7280; }
+
+.dispute-record { gap:12px; }
+.dispute-money { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.dispute-money > span { background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:10px; display:grid; gap:4px; }
+.dispute-money small { color:#6b7280; }
+details summary { cursor:pointer; font-weight:600; }
+@media (max-width:800px){ .dispute-money { grid-template-columns:1fr; } }
