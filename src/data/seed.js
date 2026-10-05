@@ -33,6 +33,7 @@ export const emptyClaim = () => ({
   recovery: [],
   estimateComparisons: [],
   payments: [],
+  ale: { startDate: "", expectedEndDate: "", policyEndDate: "", baselineMonthlyExpense: 0, carrierApprovedMonthly: 0, expenses: [], extensions: [], notes: "" },
   workItems: [],
   releaseRecords: [],
   aiPrep: { status: "Ready for shadow review", mode: "shadow", lastRun: "", notes: "", runs: [] },

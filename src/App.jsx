@@ -9,6 +9,7 @@ import CommunicationsHub from "./components/CommunicationsHub.jsx";
 import AuthorityReleaseControl from "./components/AuthorityReleaseControl.jsx";
 import AIClaimReviewCenter from "./components/AIClaimReviewCenter.jsx";
 import ContentsValuationCenter from "./components/ContentsValuationCenter.jsx";
+import ALEManagementCenter from "./components/ALEManagementCenter.jsx";
 
 const modules = [
   ["overview", "Dashboard"],
@@ -17,6 +18,7 @@ const modules = [
   ["coverage", "Coverage & Valuation"],
   ["evidence", "Documents & Evidence"],
   ["contents", "Contents"],
+  ["ale", "ALE / Loss of Use"],
   ["estimates", "Estimate Comparison"],
   ["payments", "Payment Ledger"],
   ["communications", "Communications"],
@@ -115,6 +117,7 @@ function App() {
       recovery: draft.recovery,
       estimateComparisons: draft.estimateComparisons || [],
       payments: draft.payments || [],
+      ale: draft.ale || {},
       documentManifest: draft.documents.map(({ id, name, category, size, createdAt }) => ({ id, name, category, size, createdAt })),
       assembledAt: nowIso()
     };
@@ -241,6 +244,7 @@ function App() {
           {tab === "estimates" && <EstimateComparison records={draft.estimateComparisons || []} onChange={records => saveClaim({ ...draft, estimateComparisons: records })} />}
           {tab === "payments" && <PaymentLedger payments={draft.payments || []} coverages={draft.coverages} onChange={payments => saveClaim({ ...draft, payments })} />}
           {tab === "contents" && <ContentsValuationCenter items={draft.contents || []} onChange={contents => saveClaim({ ...draft, contents })} />}
+          {tab === "ale" && <ALEManagementCenter claim={draft} onChange={changes => saveClaim({ ...draft, ...changes })} />}
           {tab === "communications" && <CommunicationsHub claim={draft} onChange={communications => saveClaim({ ...draft, communications })} />}
           {tab === "supplements" && <SimpleRecords title="Supplements & Disputes" records={draft.supplements} fields={[["coverage","Coverage"],["issue","Issue"],["requested","Requested"],["carrierResponse","Carrier response"]]} onAdd={r => addRecord("supplements", r)} />}
           {tab === "mortgage" && <SimpleRecords title="Mortgage Loss Draft" records={draft.mortgage.draws} fields={[["amount","Draw amount"],["status","Status"],["conditions","Conditions"],["date","Date"]]} onAdd={r => {

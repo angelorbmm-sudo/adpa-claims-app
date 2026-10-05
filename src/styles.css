@@ -121,3 +121,6 @@ td input { min-width:110px; }
 
 .contents-table select { min-width:130px; }
 .contents-table small { color:#6b7280; }
+
+.ale-table select { min-width:130px; }
+.ale-table small { color:#6b7280; }

@@ -6,6 +6,7 @@ const buckets = [
   "Coverage Review",
   "Estimating",
   "Contents",
+  "ALE / Loss of Use",
   "Accounting / Depreciation",
   "Carrier Follow-up",
   "Licensed PA / Client Approval"
@@ -86,6 +87,30 @@ function systemExceptions(claim) {
   if (Math.abs(contentsVariance) >= 5000) {
     add("Contents", "High", "Material contents valuation variance",
       "Current ADPA-versus-carrier contents RCV variance is " + money(contentsVariance) + ".", "contents");
+  }
+
+  const ale = claim.ale || {};
+  const aleExpenses = ale.expenses || [];
+  const aleOutstanding = aleExpenses.filter(x => x.status !== "Paid").reduce((s,x)=>s+Number(x.requested||x.amount||0)-Number(x.paid||0),0);
+  const aleOverdue = aleExpenses.filter(x => x.reimbursementDueDate && isPast(x.reimbursementDueDate) && x.status !== "Paid");
+  if (aleOverdue.length) {
+    add("ALE / Loss of Use", "High", aleOverdue.length + " ALE reimbursement item(s) overdue",
+      "One or more ALE reimbursement due dates have passed.", "ale");
+  }
+  if (aleOutstanding > 0) {
+    add("ALE / Loss of Use", "Normal", "ALE reimbursement outstanding",
+      "Current recorded ALE outstanding amount is " + money(aleOutstanding) + ".", "ale");
+  }
+  const dCoverage = (claim.coverages || []).find(c=>c.key==="D");
+  const paidAle = aleExpenses.reduce((s,x)=>s+Number(x.paid||0),0);
+  if (dCoverage && Number(dCoverage.limit||0)>0 && paidAle/Number(dCoverage.limit||1)>=0.8) {
+    add("ALE / Loss of Use", "High", "ALE limit is approaching exhaustion",
+      "Recorded ALE paid amount has reached at least 80% of the Coverage D limit.", "ale");
+  }
+  const openExtensions = (ale.extensions || []).filter(x=>x.status!=="Approved" && x.status!=="Closed");
+  if (openExtensions.length) {
+    add("ALE / Loss of Use", "Normal", openExtensions.length + " ALE extension request(s) open",
+      "One or more ALE extension requests remain unresolved.", "ale");
   }
 
   const mismatch = paymentMismatch(claim);
