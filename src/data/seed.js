@@ -1,0 +1,37 @@
+export const coverageTemplate = [
+  { key: "A", name: "Dwelling", limit: 0, requested: 0, carrier: 0, issued: 0, received: 0 },
+  { key: "B", name: "Other Structures", limit: 0, requested: 0, carrier: 0, issued: 0, received: 0 },
+  { key: "C", name: "Personal Property", limit: 0, requested: 0, carrier: 0, issued: 0, received: 0 },
+  { key: "D", name: "Additional Living Expense", limit: 0, requested: 0, carrier: 0, issued: 0, received: 0 },
+  { key: "CODE", name: "Ordinance / Law / Code Upgrade", limit: 0, requested: 0, carrier: 0, issued: 0, received: 0 }
+];
+
+export const emptyClaim = () => ({
+  id: "",
+  insured: "",
+  property: "",
+  carrier: "",
+  claimNumber: "",
+  dateOfLoss: "",
+  causeOfLoss: "",
+  representationStatus: "Pending",
+  mortgageServicer: "",
+  valuation: "Unreviewed",
+  valuationSource: "",
+  valuationReviewer: "",
+  coverages: structuredClone(coverageTemplate),
+  documents: [],
+  contents: [],
+  communications: [],
+  supplements: [],
+  mortgage: { heldBalance: 0, draws: [], requirements: "" },
+  agreements: [],
+  receipts: [],
+  packages: [],
+  approvals: [],
+  signatures: [],
+  recovery: [],
+  aiPrep: { status: "Not activated", mode: "manual", lastRun: "", notes: "" },
+  notes: "",
+  updatedAt: ""
+});

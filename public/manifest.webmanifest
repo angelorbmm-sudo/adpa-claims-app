@@ -1,0 +1,9 @@
+{
+  "name": "ADPA Claims Workspace",
+  "short_name": "ADPA Claims",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "description": "Private claim-processing workspace for ADPA Claims."
+}

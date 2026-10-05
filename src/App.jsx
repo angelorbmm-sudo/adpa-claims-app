@@ -1,0 +1,320 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { emptyClaim } from "./data/seed.js";
+import { loadWorkspace, nowIso, saveWorkspace, uid } from "./lib/storage.js";
+
+const modules = [
+  ["overview", "Dashboard"],
+  ["intake", "Claim Intake"],
+  ["coverage", "Coverage & Valuation"],
+  ["evidence", "Documents & Evidence"],
+  ["contents", "Contents"],
+  ["communications", "Communications"],
+  ["supplements", "Supplements"],
+  ["mortgage", "Mortgage"],
+  ["agreements", "Agreements"],
+  ["receipts", "Receipts & Depreciation"],
+  ["package", "Claim Package"],
+  ["approvals", "Approvals & Signatures"],
+  ["recovery", "Recovery Follow-up"],
+  ["ai", "AI Preparation"]
+];
+
+function money(v) {
+  return Number(v || 0).toLocaleString(undefined, { style: "currency", currency: "USD" });
+}
+
+function App() {
+  const [workspace, setWorkspace] = useState(() => loadWorkspace() || { claims: [], selectedId: null });
+  const [tab, setTab] = useState("overview");
+  const [draft, setDraft] = useState(() => emptyClaim());
+
+  const selected = useMemo(
+    () => workspace.claims.find(c => c.id === workspace.selectedId) || null,
+    [workspace]
+  );
+
+  useEffect(() => {
+    saveWorkspace(workspace);
+  }, [workspace]);
+
+  useEffect(() => {
+    if (selected) setDraft(structuredClone(selected));
+    else setDraft(emptyClaim());
+  }, [selected?.id, selected?.updatedAt]);
+
+  function createClaim() {
+    const claim = emptyClaim();
+    claim.id = uid("claim");
+    claim.insured = "New Claim";
+    claim.updatedAt = nowIso();
+    setWorkspace(w => ({ ...w, claims: [claim, ...w.claims], selectedId: claim.id }));
+    setTab("intake");
+  }
+
+  function saveClaim(next = draft) {
+    const saved = { ...next, updatedAt: nowIso() };
+    setWorkspace(w => ({
+      ...w,
+      claims: w.claims.map(c => c.id === saved.id ? saved : c),
+      selectedId: saved.id
+    }));
+    setDraft(saved);
+  }
+
+  function patch(field, value) {
+    setDraft(d => ({ ...d, [field]: value }));
+  }
+
+  function patchCoverage(index, field, value) {
+    setDraft(d => {
+      const coverages = d.coverages.map((c, i) => i === index ? { ...c, [field]: Number(value || 0) } : c);
+      return { ...d, coverages };
+    });
+  }
+
+  function addRecord(field, record) {
+    const next = { ...draft, [field]: [...draft[field], { id: uid(field), createdAt: nowIso(), ...record }] };
+    saveClaim(next);
+  }
+
+  async function assemblePackage() {
+    const snapshot = {
+      claimId: draft.id,
+      insured: draft.insured,
+      property: draft.property,
+      carrier: draft.carrier,
+      claimNumber: draft.claimNumber,
+      coverages: draft.coverages,
+      valuation: draft.valuation,
+      contents: draft.contents,
+      supplements: draft.supplements,
+      receipts: draft.receipts,
+      recovery: draft.recovery,
+      documentManifest: draft.documents.map(({ id, name, category, size, createdAt }) => ({ id, name, category, size, createdAt })),
+      assembledAt: nowIso()
+    };
+    const encoded = new TextEncoder().encode(JSON.stringify(snapshot));
+    const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", encoded)))
+      .map(b => b.toString(16).padStart(2, "0")).join("");
+    addRecord("packages", {
+      name: "Claim Package " + new Date().toLocaleString(),
+      snapshotHash: hash,
+      snapshot,
+      status: "Draft"
+    });
+  }
+
+  if (!selected) {
+    return (
+      <div className="app">
+        <header className="topbar"><div><strong>ADPA Claims</strong><span>Private Working Workspace</span></div></header>
+        <main className="empty">
+          <h1>ADPA Claims Workspace</h1>
+          <p>This recovered build keeps regulated decisions behind human and licensed approval gates.</p>
+          <button onClick={createClaim}>Create first claim</button>
+          {workspace.claims.length > 0 && (
+            <div className="claim-list">
+              {workspace.claims.map(c => <button key={c.id} onClick={() => setWorkspace(w => ({ ...w, selectedId: c.id }))}>{c.insured || "Unnamed Claim"}</button>)}
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
+  const totalRequested = draft.coverages.reduce((s, c) => s + Number(c.requested || 0), 0);
+  const totalReceived = draft.coverages.reduce((s, c) => s + Number(c.received || 0), 0);
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <div><strong>ADPA Claims</strong><span>Private Working Workspace</span></div>
+        <div className="actions">
+          <select value={selected.id} onChange={e => setWorkspace(w => ({ ...w, selectedId: e.target.value }))}>
+            {workspace.claims.map(c => <option key={c.id} value={c.id}>{c.insured || "Unnamed Claim"}</option>)}
+          </select>
+          <button onClick={createClaim}>+ New claim</button>
+          <button className="primary" onClick={() => saveClaim()}>Save claim</button>
+        </div>
+      </header>
+
+      <div className="shell">
+        <aside>
+          <div className="claim-card">
+            <b>{draft.insured || "Unnamed Claim"}</b>
+            <small>{draft.carrier || "Carrier not entered"}</small>
+            <small>{draft.claimNumber || "Claim # not entered"}</small>
+          </div>
+          <nav>{modules.map(([key, label]) => <button className={tab === key ? "active" : ""} key={key} onClick={() => setTab(key)}>{label}</button>)}</nav>
+        </aside>
+
+        <main>
+          {tab === "overview" && (
+            <section>
+              <h1>Claim Dashboard</h1>
+              <div className="stats">
+                <Stat label="Requested" value={money(totalRequested)} />
+                <Stat label="Received" value={money(totalReceived)} />
+                <Stat label="Open follow-ups" value={draft.recovery.filter(x => x.status !== "Closed").length} />
+                <Stat label="Evidence files" value={draft.documents.length} />
+              </div>
+              <Panel title="Next controls">
+                <ul>
+                  <li>Confirm policy / coverage source before relying on a coverage conclusion.</li>
+                  <li>Licensed PA approval is separate from operational review.</li>
+                  <li>Client authorization is required before settlement or compromise.</li>
+                  <li>External sending remains disabled in this recovery build.</li>
+                </ul>
+              </Panel>
+            </section>
+          )}
+
+          {tab === "intake" && (
+            <section>
+              <h1>Claim Intake</h1>
+              <div className="grid">
+                <Field label="Insured" value={draft.insured} onChange={v => patch("insured", v)} />
+                <Field label="Property" value={draft.property} onChange={v => patch("property", v)} />
+                <Field label="Carrier" value={draft.carrier} onChange={v => patch("carrier", v)} />
+                <Field label="Claim number" value={draft.claimNumber} onChange={v => patch("claimNumber", v)} />
+                <Field type="date" label="Date of loss" value={draft.dateOfLoss} onChange={v => patch("dateOfLoss", v)} />
+                <Field label="Cause of loss" value={draft.causeOfLoss} onChange={v => patch("causeOfLoss", v)} />
+                <Field label="Mortgage servicer" value={draft.mortgageServicer} onChange={v => patch("mortgageServicer", v)} />
+                <label>Representation status<select value={draft.representationStatus} onChange={e => patch("representationStatus", e.target.value)}><option>Pending</option><option>Active</option><option>Terminated</option></select></label>
+              </div>
+              <label>Internal notes<textarea value={draft.notes} onChange={e => patch("notes", e.target.value)} /></label>
+            </section>
+          )}
+
+          {tab === "coverage" && (
+            <section>
+              <h1>Coverage & Policy Valuation</h1>
+              <div className="table-wrap"><table><thead><tr><th>Coverage</th><th>Limit</th><th>Requested</th><th>Carrier</th><th>Issued</th><th>Received</th></tr></thead><tbody>
+                {draft.coverages.map((c, i) => <tr key={c.key}><td><b>{c.key}</b> {c.name}</td>{["limit","requested","carrier","issued","received"].map(f => <td key={f}><input type="number" value={c[f]} onChange={e => patchCoverage(i, f, e.target.value)} /></td>)}</tr>)}
+              </tbody></table></div>
+              <div className="grid">
+                <label>Policy valuation<select value={draft.valuation} onChange={e => patch("valuation", e.target.value)}><option>Unreviewed</option><option>RCV</option><option>ACV</option><option>Mixed</option><option>Actual Loss Sustained</option></select></label>
+                <Field label="Source / policy provision" value={draft.valuationSource} onChange={v => patch("valuationSource", v)} />
+                <Field label="Reviewer" value={draft.valuationReviewer} onChange={v => patch("valuationReviewer", v)} />
+              </div>
+              <p className="notice">Ordinance / Law is tracked separately and must be tied to policy language and applicable code support.</p>
+            </section>
+          )}
+
+          {tab === "evidence" && <Evidence claim={draft} onAdd={r => addRecord("documents", r)} />}
+          {tab === "contents" && <SimpleRecords title="Contents Review" records={draft.contents} fields={[["item","Item"],["room","Room"],["rcv","Proposed RCV"],["carrier","Carrier Value"],["status","Review Status"]]} onAdd={r => addRecord("contents", r)} />}
+          {tab === "communications" && <SimpleRecords title="Communications & Follow-ups" records={draft.communications} fields={[["direction","Direction"],["party","Party"],["summary","Summary"],["followUp","Follow-up date"]]} onAdd={r => addRecord("communications", r)} />}
+          {tab === "supplements" && <SimpleRecords title="Supplements & Disputes" records={draft.supplements} fields={[["coverage","Coverage"],["issue","Issue"],["requested","Requested"],["carrierResponse","Carrier response"]]} onAdd={r => addRecord("supplements", r)} />}
+          {tab === "mortgage" && <SimpleRecords title="Mortgage Loss Draft" records={draft.mortgage.draws} fields={[["amount","Draw amount"],["status","Status"],["conditions","Conditions"],["date","Date"]]} onAdd={r => {
+            const mortgage = { ...draft.mortgage, draws: [...draft.mortgage.draws, { id: uid("draw"), createdAt: nowIso(), ...r }] };
+            saveClaim({ ...draft, mortgage });
+          }} />}
+          {tab === "agreements" && <SimpleRecords title="Agreement Library & Packets" records={draft.agreements} fields={[["name","Document"],["version","Version"],["signer","Signer"],["status","Status"]]} onAdd={r => addRecord("agreements", r)} />}
+          {tab === "receipts" && <SimpleRecords title="Receipts & Recoverable Depreciation" records={draft.receipts} fields={[["item","Item / invoice"],["replacementCost","Replacement cost"],["requested","Depreciation requested"],["approved","Approved"],["released","Released"]]} onAdd={r => addRecord("receipts", r)} />}
+
+          {tab === "package" && (
+            <section>
+              <h1>Claim-Package Assembly</h1>
+              <p>Creates an immutable-style snapshot record of the current claim data and SHA-256 hash for review binding.</p>
+              <button className="primary" onClick={assemblePackage}>Assemble draft package</button>
+              <RecordList records={draft.packages} render={r => <><b>{r.name}</b><span>Status: {r.status}</span><code>{r.snapshotHash}</code></>} />
+            </section>
+          )}
+
+          {tab === "approvals" && (
+            <section>
+              <h1>Approvals & Signatures</h1>
+              <SimpleRecords title="Approval Records" records={draft.approvals} fields={[["stage","Stage: Operational / Licensed PA / Client"],["reviewer","Reviewer"],["packageHash","Package hash"],["decision","Decision"]]} onAdd={r => addRecord("approvals", r)} embedded />
+              <SimpleRecords title="Signature Records" records={draft.signatures} fields={[["mode","Mode: In-person witnessed / Remote"],["signer","Signer"],["witness","Witness"],["packageHash","Package hash"]]} onAdd={r => addRecord("signatures", r)} embedded />
+              <p className="notice">An in-person witnessed record is not the same as independently verified remote identity. Remote verification remains an external integration.</p>
+            </section>
+          )}
+
+          {tab === "recovery" && <SimpleRecords title="Recovery Follow-up & Depreciation Tracking" records={draft.recovery} fields={[["coverage","Coverage"],["amount","Outstanding amount"],["condition","Recovery condition / proof needed"],["dueDate","Follow-up date"],["status","Status"]]} onAdd={r => addRecord("recovery", r)} />}
+
+          {tab === "ai" && (
+            <section>
+              <h1>AI Claim Preparation</h1>
+              <div className="stats">
+                <Stat label="Mode" value={draft.aiPrep.mode} />
+                <Stat label="Status" value={draft.aiPrep.status} />
+                <Stat label="Last run" value={draft.aiPrep.lastRun || "None"} />
+              </div>
+              <p className="notice">Automatic OpenAI document processing is intentionally not activated in this browser-only recovery build. API keys must be configured server-side and AI output must remain source-linked and human reviewed.</p>
+              <label>Integration notes<textarea value={draft.aiPrep.notes} onChange={e => {
+                const aiPrep = { ...draft.aiPrep, notes: e.target.value };
+                setDraft(d => ({ ...d, aiPrep }));
+              }} /></label>
+            </section>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, value, onChange, type = "text" }) {
+  return <label>{label}<input type={type} value={value || ""} onChange={e => onChange(e.target.value)} /></label>;
+}
+
+function Stat({ label, value }) {
+  return <div className="stat"><small>{label}</small><b>{value}</b></div>;
+}
+
+function Panel({ title, children }) {
+  return <div className="panel"><h2>{title}</h2>{children}</div>;
+}
+
+function RecordList({ records, render }) {
+  if (!records?.length) return <p className="muted">No records yet.</p>;
+  return <div className="records">{records.map(r => <div className="record" key={r.id}>{render(r)}</div>)}</div>;
+}
+
+function SimpleRecords({ title, records, fields, onAdd, embedded = false }) {
+  const initial = Object.fromEntries(fields.map(([k]) => [k, ""]));
+  const [row, setRow] = useState(initial);
+  function submit(e) {
+    e.preventDefault();
+    onAdd(row);
+    setRow(initial);
+  }
+  const content = (
+    <>
+      <h1>{title}</h1>
+      <form className="grid" onSubmit={submit}>
+        {fields.map(([key, label]) => <Field key={key} label={label} value={row[key]} onChange={v => setRow(r => ({ ...r, [key]: v }))} />)}
+        <div className="form-action"><button type="submit">Add record</button></div>
+      </form>
+      <RecordList records={records} render={r => <>{fields.map(([key, label]) => <span key={key}><b>{label}:</b> {String(r[key] ?? "")}</span>)}</>} />
+    </>
+  );
+  return embedded ? <div className="panel">{content}</div> : <section>{content}</section>;
+}
+
+function Evidence({ claim, onAdd }) {
+  function ingest(files) {
+    Array.from(files || []).forEach(file => {
+      onAdd({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        category: "Uncategorized",
+        status: "Local metadata recorded; persistent file storage integration pending"
+      });
+    });
+  }
+  return (
+    <section>
+      <h1>Documents & Evidence</h1>
+      <label className="dropzone" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); ingest(e.dataTransfer.files); }}>
+        <b>Drag & drop photos, videos, PDFs, estimates, receipts, or other evidence</b>
+        <span>or tap to choose files</span>
+        <input type="file" multiple onChange={e => ingest(e.target.files)} />
+      </label>
+      <p className="notice">This recovery build records selected-file metadata only. Production must upload originals to private object storage, preserve hashes / metadata, and report processing failures.</p>
+      <RecordList records={claim.documents} render={r => <><b>{r.name}</b><span>{r.type || "Unknown type"} · {Number(r.size || 0).toLocaleString()} bytes</span><span>{r.status}</span></>} />
+    </section>
+  );
+}
+
+export default App;
