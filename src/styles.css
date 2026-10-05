@@ -131,3 +131,6 @@ td input { min-width:110px; }
 .dispute-money small { color:#6b7280; }
 details summary { cursor:pointer; font-weight:600; }
 @media (max-width:800px){ .dispute-money { grid-template-columns:1fr; } }
+
+.mortgage-table select { min-width:135px; }
+.mortgage-table small { color:#6b7280; }

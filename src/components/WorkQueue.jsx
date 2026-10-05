@@ -7,6 +7,7 @@ const buckets = [
   "Estimating",
   "Contents",
   "ALE / Loss of Use",
+  "Mortgage Loss Draft",
   "Accounting / Depreciation",
   "Carrier Follow-up",
   "Licensed PA / Client Approval"
@@ -174,6 +175,34 @@ function systemExceptions(claim) {
   if (escalatedSupplements.length) {
     add("Carrier Follow-up", "High", escalatedSupplements.length + " dispute item(s) at elevated escalation",
       "One or more disputes are marked for DOI, appraisal, counsel, or executive review.", "supplements");
+  }
+
+  const mortgage = claim.mortgage || {};
+  const mortgageDraws = mortgage.draws || [];
+  const mortgageConditions = mortgage.conditions || [];
+  const openDraws = mortgageDraws.filter(x => !["Released","Closed"].includes(x.status));
+  const overdueDraws = openDraws.filter(x => x.dueDate && isPast(x.dueDate));
+  if (overdueDraws.length) {
+    add("Mortgage Loss Draft", "High", overdueDraws.length + " mortgage draw item(s) overdue",
+      "A lender draw due/follow-up date has passed without release or closure.", "mortgage");
+  }
+
+  const incompleteMortgageConditions = mortgageConditions.filter(x => !["Complete","Waived"].includes(x.status));
+  if (incompleteMortgageConditions.length) {
+    add("Mortgage Loss Draft", "Normal", incompleteMortgageConditions.length + " lender condition(s) incomplete",
+      "Mortgage loss-draft release conditions remain incomplete.", "mortgage");
+  }
+
+  const mortgageReleased = mortgageDraws.reduce((s,x)=>s+Number(x.releasedAmount||0),0) + Number(mortgage.initialRelease||0);
+  if (Number(mortgage.heldBalance||0) > mortgageReleased && mortgage.endorsementStatus === "Complete") {
+    add("Mortgage Loss Draft", "Normal", "Insurance proceeds remain held",
+      "Recorded held funds exceed recorded released funds after endorsement completion.", "mortgage");
+  }
+
+  const inspectionRequired = openDraws.some(x => x.inspectionRequired || x.status === "Inspection Required");
+  if (inspectionRequired && !(mortgage.inspections || []).length) {
+    add("Mortgage Loss Draft", "High", "Inspection required for open draw",
+      "An open mortgage draw requires an inspection, but no inspection record is present.", "mortgage");
   }
 
   const latestPackage = (claim.packages || []).at(-1);
