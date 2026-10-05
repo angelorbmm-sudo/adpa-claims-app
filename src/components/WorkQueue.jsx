@@ -88,10 +88,29 @@ function systemExceptions(claim) {
       "Recoverable depreciation or other recovery follow-up date has passed.", "recovery");
   }
 
-  const overdueComms = (claim.communications || []).filter(x => x.followUp && isPast(x.followUp));
+  const comms = claim.communications || [];
+  const overdueComms = comms.filter(x => x.status !== "Closed" && x.followUp && isPast(x.followUp));
   if (overdueComms.length) {
     add("Carrier Follow-up", "High", overdueComms.length + " carrier follow-up(s) overdue",
       "A recorded communication follow-up date has passed.", "communications");
+  }
+
+  const promised = comms.filter(x => x.status !== "Closed" && x.promisedDate && isPast(x.promisedDate) && !x.promiseSatisfied);
+  if (promised.length) {
+    add("Carrier Follow-up", "High", promised.length + " carrier commitment(s) overdue",
+      "A promised response, payment, estimate, inspection, or decision date has passed.", "communications");
+  }
+
+  const replyNeeded = comms.filter(x => x.status !== "Closed" && x.replyNeeded && !x.replyCompleted);
+  if (replyNeeded.length) {
+    add("Carrier Follow-up", "Normal", replyNeeded.length + " communication(s) need a reply",
+      "One or more inbound communications are marked reply-needed.", "communications");
+  }
+
+  const escalations = comms.filter(x => x.status !== "Closed" && x.escalationStatus === "Escalate");
+  if (escalations.length) {
+    add("Carrier Follow-up", "High", escalations.length + " communication item(s) marked for escalation",
+      "A communication has reached its escalation threshold.", "communications");
   }
 
   const openSupplements = (claim.supplements || []).filter(x => !x.carrierResponse);

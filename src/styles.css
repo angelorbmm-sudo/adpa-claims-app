@@ -80,3 +80,19 @@ td input { min-width:110px; }
 @media (max-width:800px) {
   .evidence-head { flex-direction:column; }
 }
+
+.timeline { display:grid; gap:12px; margin-top:16px; }
+.timeline-item { background:white; border:1px solid #e5e7eb; border-radius:12px; padding:16px; display:grid; gap:8px; }
+.timeline-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+.timeline-head > div { display:flex; gap:6px; flex-wrap:wrap; }
+.timeline-item p { margin:0; white-space:pre-wrap; }
+.draft-box { background:#f9fafb; border:1px solid #e5e7eb; border-radius:9px; padding:10px; display:grid; gap:5px; }
+.comm-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+.pill.alert { background:#991b1b; color:white; }
+.checkbox-label { display:flex; grid-template-columns:auto 1fr; align-items:center; gap:8px; }
+.checkbox-label input { width:auto; }
+.wide { grid-column:1 / -1; }
+@media (max-width:800px) {
+  .timeline-head { flex-direction:column; }
+  .wide { grid-column:auto; }
+}

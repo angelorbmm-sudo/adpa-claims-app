@@ -5,6 +5,7 @@ import EstimateComparison from "./components/EstimateComparison.jsx";
 import PaymentLedger from "./components/PaymentLedger.jsx";
 import WorkQueue from "./components/WorkQueue.jsx";
 import EvidenceEngine from "./components/EvidenceEngine.jsx";
+import CommunicationsHub from "./components/CommunicationsHub.jsx";
 
 const modules = [
   ["overview", "Dashboard"],
@@ -237,7 +238,7 @@ function App() {
           {tab === "estimates" && <EstimateComparison records={draft.estimateComparisons || []} onChange={records => saveClaim({ ...draft, estimateComparisons: records })} />}
           {tab === "payments" && <PaymentLedger payments={draft.payments || []} coverages={draft.coverages} onChange={payments => saveClaim({ ...draft, payments })} />}
           {tab === "contents" && <SimpleRecords title="Contents Review" records={draft.contents} fields={[["item","Item"],["room","Room"],["rcv","Proposed RCV"],["carrier","Carrier Value"],["status","Review Status"]]} onAdd={r => addRecord("contents", r)} />}
-          {tab === "communications" && <SimpleRecords title="Communications & Follow-ups" records={draft.communications} fields={[["direction","Direction"],["party","Party"],["summary","Summary"],["followUp","Follow-up date"]]} onAdd={r => addRecord("communications", r)} />}
+          {tab === "communications" && <CommunicationsHub claim={draft} onChange={communications => saveClaim({ ...draft, communications })} />}
           {tab === "supplements" && <SimpleRecords title="Supplements & Disputes" records={draft.supplements} fields={[["coverage","Coverage"],["issue","Issue"],["requested","Requested"],["carrierResponse","Carrier response"]]} onAdd={r => addRecord("supplements", r)} />}
           {tab === "mortgage" && <SimpleRecords title="Mortgage Loss Draft" records={draft.mortgage.draws} fields={[["amount","Draw amount"],["status","Status"],["conditions","Conditions"],["date","Date"]]} onAdd={r => {
             const mortgage = { ...draft.mortgage, draws: [...draft.mortgage.draws, { id: uid("draw"), createdAt: nowIso(), ...r }] };
