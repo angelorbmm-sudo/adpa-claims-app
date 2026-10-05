@@ -71,3 +71,12 @@ td input { min-width:110px; }
   .grid, .stats { grid-template-columns:1fr; }
   .work-item { flex-direction:column; }
 }
+
+.evidence-record { gap:12px; }
+.evidence-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+.evidence-head > div { display:grid; gap:4px; min-width:0; }
+.evidence-head small { color:#6b7280; }
+.grid.compact { margin:4px 0; }
+@media (max-width:800px) {
+  .evidence-head { flex-direction:column; }
+}

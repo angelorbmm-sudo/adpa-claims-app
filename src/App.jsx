@@ -4,6 +4,7 @@ import { loadWorkspace, nowIso, saveWorkspace, uid } from "./lib/storage.js";
 import EstimateComparison from "./components/EstimateComparison.jsx";
 import PaymentLedger from "./components/PaymentLedger.jsx";
 import WorkQueue from "./components/WorkQueue.jsx";
+import EvidenceEngine from "./components/EvidenceEngine.jsx";
 
 const modules = [
   ["overview", "Dashboard"],
@@ -232,7 +233,7 @@ function App() {
             </section>
           )}
 
-          {tab === "evidence" && <Evidence claim={draft} onAdd={r => addRecord("documents", r)} />}
+          {tab === "evidence" && <EvidenceEngine claim={draft} onChange={documents => saveClaim({ ...draft, documents })} />}
           {tab === "estimates" && <EstimateComparison records={draft.estimateComparisons || []} onChange={records => saveClaim({ ...draft, estimateComparisons: records })} />}
           {tab === "payments" && <PaymentLedger payments={draft.payments || []} coverages={draft.coverages} onChange={payments => saveClaim({ ...draft, payments })} />}
           {tab === "contents" && <SimpleRecords title="Contents Review" records={draft.contents} fields={[["item","Item"],["room","Room"],["rcv","Proposed RCV"],["carrier","Carrier Value"],["status","Review Status"]]} onAdd={r => addRecord("contents", r)} />}
@@ -324,30 +325,5 @@ function SimpleRecords({ title, records, fields, onAdd, embedded = false }) {
   return embedded ? <div className="panel">{content}</div> : <section>{content}</section>;
 }
 
-function Evidence({ claim, onAdd }) {
-  function ingest(files) {
-    Array.from(files || []).forEach(file => {
-      onAdd({
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        category: "Uncategorized",
-        status: "Local metadata recorded; persistent file storage integration pending"
-      });
-    });
-  }
-  return (
-    <section>
-      <h1>Documents & Evidence</h1>
-      <label className="dropzone" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); ingest(e.dataTransfer.files); }}>
-        <b>Drag & drop photos, videos, PDFs, estimates, receipts, or other evidence</b>
-        <span>or tap to choose files</span>
-        <input type="file" multiple onChange={e => ingest(e.target.files)} />
-      </label>
-      <p className="notice">This recovery build records selected-file metadata only. Production must upload originals to private object storage, preserve hashes / metadata, and report processing failures.</p>
-      <RecordList records={claim.documents} render={r => <><b>{r.name}</b><span>{r.type || "Unknown type"} · {Number(r.size || 0).toLocaleString()} bytes</span><span>{r.status}</span></>} />
-    </section>
-  );
-}
 
 export default App;
