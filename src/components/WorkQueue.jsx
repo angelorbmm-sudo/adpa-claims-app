@@ -1,0 +1,237 @@
+import React, { useMemo, useState } from "react";
+import { nowIso, uid } from "../lib/storage.js";
+
+const buckets = [
+  "Intake / Evidence",
+  "Coverage Review",
+  "Estimating",
+  "Contents",
+  "Accounting / Depreciation",
+  "Carrier Follow-up",
+  "Licensed PA / Client Approval"
+];
+
+const priorities = ["Critical", "High", "Normal", "Low"];
+
+function isPast(date) {
+  if (!date) return false;
+  const end = new Date(date + "T23:59:59");
+  return end.getTime() < Date.now();
+}
+
+function daysOld(iso) {
+  if (!iso) return null;
+  return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000));
+}
+
+function money(v) {
+  return Number(v || 0).toLocaleString(undefined, { style: "currency", currency: "USD" });
+}
+
+function paymentMismatch(claim) {
+  const ledger = (claim.payments || []).filter(p => p.status !== "Void").reduce((s, p) => s + Number(p.amount || 0), 0);
+  const coverage = (claim.coverages || []).reduce((s, c) => s + Number(c.issued || 0), 0);
+  return Math.abs(ledger - coverage) > 0.01 ? ledger - coverage : 0;
+}
+
+function systemExceptions(claim) {
+  const out = [];
+  const add = (bucket, priority, title, reason, targetTab) => out.push({
+    id: "system-" + claim.id + "-" + out.length,
+    claimId: claim.id,
+    bucket,
+    priority,
+    title,
+    reason,
+    targetTab,
+    system: true,
+    status: "Open"
+  });
+
+  if (!claim.carrier || !claim.claimNumber || !claim.dateOfLoss) {
+    add("Intake / Evidence", "High", "Incomplete claim intake", "Carrier, claim number, or date of loss is missing.", "intake");
+  }
+
+  if (!claim.documents?.length) {
+    add("Intake / Evidence", "Normal", "No evidence files recorded", "The claim has no evidence/document records yet.", "evidence");
+  }
+
+  if (claim.valuation === "Unreviewed" || !claim.valuationSource || !claim.valuationReviewer) {
+    add("Coverage Review", "High", "Coverage / valuation review incomplete", "Valuation type, source provision, or reviewer is missing.", "coverage");
+  }
+
+  const unresolvedEstimate = (claim.estimateComparisons || []).filter(x => x.status !== "Resolved");
+  if (unresolvedEstimate.length) {
+    const variance = unresolvedEstimate.reduce((sum, r) =>
+      sum + ((Number(r.quantity || 0) * Number(r.adpaUnitPrice || 0)) -
+      (Number(r.carrierQuantity || 0) * Number(r.carrierUnitPrice || 0))), 0);
+    add("Estimating", Math.abs(variance) >= 10000 ? "High" : "Normal",
+      unresolvedEstimate.length + " estimate comparison line(s) unresolved",
+      "Current unresolved variance: " + money(variance) + ".", "estimates");
+  }
+
+  const contentsNeedsReview = (claim.contents || []).filter(x => !x.status || x.status === "Needs review" || x.status === "Pending");
+  if (contentsNeedsReview.length) {
+    add("Contents", "Normal", contentsNeedsReview.length + " contents item(s) need review", "Contents records are not fully reviewed.", "contents");
+  }
+
+  const mismatch = paymentMismatch(claim);
+  if (mismatch) {
+    add("Accounting / Depreciation", "High", "Payment ledger does not reconcile",
+      "Ledger vs coverage-issued difference is " + money(mismatch) + ".", "payments");
+  }
+
+  const openRecovery = (claim.recovery || []).filter(x => x.status !== "Closed");
+  const overdueRecovery = openRecovery.filter(x => isPast(x.dueDate));
+  if (overdueRecovery.length) {
+    add("Accounting / Depreciation", "High", overdueRecovery.length + " recovery item(s) overdue",
+      "Recoverable depreciation or other recovery follow-up date has passed.", "recovery");
+  }
+
+  const overdueComms = (claim.communications || []).filter(x => x.followUp && isPast(x.followUp));
+  if (overdueComms.length) {
+    add("Carrier Follow-up", "High", overdueComms.length + " carrier follow-up(s) overdue",
+      "A recorded communication follow-up date has passed.", "communications");
+  }
+
+  const openSupplements = (claim.supplements || []).filter(x => !x.carrierResponse);
+  if (openSupplements.length) {
+    add("Carrier Follow-up", "Normal", openSupplements.length + " supplement/dispute item(s) awaiting response",
+      "Carrier response has not been recorded.", "supplements");
+  }
+
+  const latestPackage = (claim.packages || []).at(-1);
+  if (latestPackage) {
+    const packageHash = latestPackage.snapshotHash;
+    const licensed = (claim.approvals || []).some(a => a.stage?.toLowerCase().includes("licensed") && a.packageHash === packageHash && /approve/i.test(a.decision || ""));
+    const client = (claim.approvals || []).some(a => a.stage?.toLowerCase().includes("client") && a.packageHash === packageHash && /approve|author/i.test(a.decision || ""));
+    if (!licensed) {
+      add("Licensed PA / Client Approval", "Critical", "Licensed PA approval missing", "Current claim package is not bound to an approved licensed-PA record.", "approvals");
+    } else if (!client) {
+      add("Licensed PA / Client Approval", "High", "Client authorization missing", "Current package lacks matching client authorization.", "approvals");
+    }
+  }
+
+  const age = daysOld(claim.updatedAt);
+  if (age !== null && age >= 7 && claim.representationStatus === "Active") {
+    add("Carrier Follow-up", "Normal", "Claim has been quiet for " + age + " days",
+      "No claim update has been saved in at least 7 days.", "overview");
+  }
+
+  return out;
+}
+
+export default function WorkQueue({ claims, selectedId, onOpenClaim, onUpdateClaim }) {
+  const [bucket, setBucket] = useState("All");
+  const [priority, setPriority] = useState("All");
+  const [manual, setManual] = useState({
+    claimId: selectedId || claims[0]?.id || "",
+    bucket: "Carrier Follow-up",
+    priority: "Normal",
+    title: "",
+    owner: "",
+    dueDate: "",
+    notes: ""
+  });
+
+  const items = useMemo(() => {
+    const system = claims.flatMap(systemExceptions);
+    const user = claims.flatMap(c => (c.workItems || []).map(x => ({ ...x, claimId: c.id, system: false })));
+    return [...system, ...user].sort((a, b) => {
+      const rank = { Critical: 0, High: 1, Normal: 2, Low: 3 };
+      return (rank[a.priority] ?? 9) - (rank[b.priority] ?? 9);
+    });
+  }, [claims]);
+
+  const visible = items.filter(x =>
+    (bucket === "All" || x.bucket === bucket) &&
+    (priority === "All" || x.priority === priority) &&
+    x.status !== "Closed"
+  );
+
+  const counts = useMemo(() => ({
+    critical: items.filter(x => x.status !== "Closed" && x.priority === "Critical").length,
+    high: items.filter(x => x.status !== "Closed" && x.priority === "High").length,
+    overdue: items.filter(x => x.status !== "Closed" && x.dueDate && isPast(x.dueDate)).length,
+    total: items.filter(x => x.status !== "Closed").length
+  }), [items]);
+
+  function addManual(e) {
+    e.preventDefault();
+    if (!manual.claimId || !manual.title.trim()) return;
+    const item = { ...manual, id: uid("work"), createdAt: nowIso(), status: "Open" };
+    onUpdateClaim(manual.claimId, claim => ({ ...claim, workItems: [...(claim.workItems || []), item] }));
+    setManual(m => ({ ...m, title: "", owner: "", dueDate: "", notes: "" }));
+  }
+
+  function closeManual(item) {
+    onUpdateClaim(item.claimId, claim => ({
+      ...claim,
+      workItems: (claim.workItems || []).map(x => x.id === item.id ? { ...x, status: "Closed", closedAt: nowIso() } : x)
+    }));
+  }
+
+  const claimName = id => claims.find(c => c.id === id)?.insured || "Unnamed Claim";
+
+  return (
+    <section>
+      <h1>ADPA Work Queue & Exception Routing</h1>
+      <p>This queue converts claim records into actionable review work. System exceptions are derived from current claim data; manual work items can be assigned separately.</p>
+
+      <div className="stats">
+        <div className="stat"><small>Open items</small><b>{counts.total}</b></div>
+        <div className="stat"><small>Critical</small><b>{counts.critical}</b></div>
+        <div className="stat"><small>High priority</small><b>{counts.high}</b></div>
+        <div className="stat"><small>Overdue manual items</small><b>{counts.overdue}</b></div>
+      </div>
+
+      <div className="panel">
+        <h2>Queue filters</h2>
+        <div className="grid">
+          <label>Bucket<select value={bucket} onChange={e => setBucket(e.target.value)}><option>All</option>{buckets.map(x => <option key={x}>{x}</option>)}</select></label>
+          <label>Priority<select value={priority} onChange={e => setPriority(e.target.value)}><option>All</option>{priorities.map(x => <option key={x}>{x}</option>)}</select></label>
+        </div>
+      </div>
+
+      <div className="work-queue">
+        {visible.length === 0 && <p className="muted">No open work items match these filters.</p>}
+        {visible.map(item => (
+          <div className={"work-item priority-" + item.priority.toLowerCase()} key={item.id}>
+            <div className="work-item-main">
+              <div className="work-item-head">
+                <span className="pill">{item.priority}</span>
+                <span className="pill secondary">{item.bucket}</span>
+                {item.system && <span className="pill system">System exception</span>}
+              </div>
+              <b>{item.title}</b>
+              <span>{claimName(item.claimId)}</span>
+              <small>{item.reason || item.notes || ""}</small>
+              {item.owner && <small>Owner: {item.owner}</small>}
+              {item.dueDate && <small>Due: {item.dueDate}{isPast(item.dueDate) ? " — OVERDUE" : ""}</small>}
+            </div>
+            <div className="work-item-actions">
+              <button onClick={() => onOpenClaim(item.claimId, item.targetTab || "overview")}>Open claim</button>
+              {!item.system && <button onClick={() => closeManual(item)}>Close</button>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="panel">
+        <h2>Add manual work item</h2>
+        <form className="grid" onSubmit={addManual}>
+          <label>Claim<select value={manual.claimId} onChange={e => setManual(m => ({...m, claimId:e.target.value}))}>{claims.map(c => <option value={c.id} key={c.id}>{c.insured || "Unnamed Claim"}</option>)}</select></label>
+          <label>Bucket<select value={manual.bucket} onChange={e => setManual(m => ({...m, bucket:e.target.value}))}>{buckets.map(x => <option key={x}>{x}</option>)}</select></label>
+          <label>Priority<select value={manual.priority} onChange={e => setManual(m => ({...m, priority:e.target.value}))}>{priorities.map(x => <option key={x}>{x}</option>)}</select></label>
+          <label>Owner<input placeholder="Angelo, Nick, estimator..." value={manual.owner} onChange={e => setManual(m => ({...m, owner:e.target.value}))} /></label>
+          <label>Task<input value={manual.title} onChange={e => setManual(m => ({...m, title:e.target.value}))} /></label>
+          <label>Due date<input type="date" value={manual.dueDate} onChange={e => setManual(m => ({...m, dueDate:e.target.value}))} /></label>
+          <label>Notes<textarea value={manual.notes} onChange={e => setManual(m => ({...m, notes:e.target.value}))} /></label>
+          <div className="form-action"><button className="primary" type="submit">Add work item</button></div>
+        </form>
+      </div>
+
+      <p className="notice">System exceptions are workflow prompts, not legal conclusions. Deadlines, coverage positions, settlement authority, licensing requirements, and client authorization still require appropriate source and human review.</p>
+    </section>
+  );
+}

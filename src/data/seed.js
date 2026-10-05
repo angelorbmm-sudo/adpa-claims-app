@@ -33,6 +33,7 @@ export const emptyClaim = () => ({
   recovery: [],
   estimateComparisons: [],
   payments: [],
+  workItems: [],
   aiPrep: { status: "Not activated", mode: "manual", lastRun: "", notes: "" },
   notes: "",
   updatedAt: ""

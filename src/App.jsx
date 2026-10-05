@@ -3,9 +3,11 @@ import { emptyClaim } from "./data/seed.js";
 import { loadWorkspace, nowIso, saveWorkspace, uid } from "./lib/storage.js";
 import EstimateComparison from "./components/EstimateComparison.jsx";
 import PaymentLedger from "./components/PaymentLedger.jsx";
+import WorkQueue from "./components/WorkQueue.jsx";
 
 const modules = [
   ["overview", "Dashboard"],
+  ["workqueue", "Work Queue"],
   ["intake", "Claim Intake"],
   ["coverage", "Coverage & Valuation"],
   ["evidence", "Documents & Evidence"],
@@ -65,6 +67,18 @@ function App() {
     setDraft(saved);
   }
 
+  function updateClaimById(claimId, updater) {
+    setWorkspace(w => ({
+      ...w,
+      claims: w.claims.map(c => c.id === claimId ? { ...updater(c), updatedAt: nowIso() } : c)
+    }));
+  }
+
+  function openClaim(claimId, targetTab = "overview") {
+    setWorkspace(w => ({ ...w, selectedId: claimId }));
+    setTab(targetTab);
+  }
+
   function patch(field, value) {
     setDraft(d => ({ ...d, [field]: value }));
   }
@@ -120,7 +134,7 @@ function App() {
           <button onClick={createClaim}>Create first claim</button>
           {workspace.claims.length > 0 && (
             <div className="claim-list">
-              {workspace.claims.map(c => <button key={c.id} onClick={() => setWorkspace(w => ({ ...w, selectedId: c.id }))}>{c.insured || "Unnamed Claim"}</button>)}
+              {workspace.claims.map(c => <button key={c.id} onClick={() => openClaim(c.id)}>{c.insured || "Unnamed Claim"}</button>)}
             </div>
           )}
         </main>
@@ -137,7 +151,7 @@ function App() {
       <header className="topbar">
         <div><strong>ADPA Claims</strong><span>Private Working Workspace</span></div>
         <div className="actions">
-          <select value={selected.id} onChange={e => setWorkspace(w => ({ ...w, selectedId: e.target.value }))}>
+          <select value={selected.id} onChange={e => openClaim(e.target.value)}>
             {workspace.claims.map(c => <option key={c.id} value={c.id}>{c.insured || "Unnamed Claim"}</option>)}
           </select>
           <button onClick={createClaim}>+ New claim</button>
@@ -162,8 +176,8 @@ function App() {
               <div className="stats">
                 <Stat label="Requested" value={money(totalRequested)} />
                 <Stat label="Received" value={money(totalReceived)} />
-                <Stat label="Open follow-ups" value={draft.recovery.filter(x => x.status !== "Closed").length} />
-                <Stat label="Evidence files" value={draft.documents.length} />
+                <Stat label="Open follow-ups" value={(draft.recovery || []).filter(x => x.status !== "Closed").length} />
+                <Stat label="Evidence files" value={(draft.documents || []).length} />
                 <Stat label="Payment ledger total" value={money(ledgerPaid)} />
               </div>
               <Panel title="Next controls">
@@ -175,6 +189,15 @@ function App() {
                 </ul>
               </Panel>
             </section>
+          )}
+
+          {tab === "workqueue" && (
+            <WorkQueue
+              claims={workspace.claims}
+              selectedId={selected.id}
+              onOpenClaim={openClaim}
+              onUpdateClaim={updateClaimById}
+            />
           )}
 
           {tab === "intake" && (
