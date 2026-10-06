@@ -24,11 +24,13 @@ import PortfolioDashboard from "./components/PortfolioDashboard.jsx";
 import RepresentationContractCenter from "./components/RepresentationContractCenter.jsx";
 import EvidenceStandardsCenter from "./components/EvidenceStandardsCenter.jsx";
 import AgreementPacketCenter from "./components/AgreementPacketCenter.jsx";
+import RoutingControlCenter from "./components/RoutingControlCenter.jsx";
 
 const modules = [
   ["portfolio", "Portfolio Command"],
   ["overview", "Claim Dashboard"],
   ["workqueue", "Work Queue"],
+  ["routing", "Seven-Bucket Routing"],
   ["intake", "Claim Intake"],
   ["compliance", "State Compliance"],
   ["representation", "Representation & Contract"],
@@ -172,6 +174,7 @@ function App() {
       evidencePlan: draft.evidencePlan || {},
       issues: draft.issues || [],
       lifecycle: draft.lifecycle || {},
+      routing: draft.routing || {},
       communications: draft.communications || [],
       aiPrep: draft.aiPrep || {},
       aiFindings: draft.aiFindings || [],
@@ -275,6 +278,7 @@ function App() {
             </section>
           )}
 
+          {tab === "routing" && <RoutingControlCenter claim={draft} onChange={routing => saveClaim({ ...draft, routing })} />}
           {tab === "workqueue" && (
             <WorkQueue
               claims={workspace.claims}
