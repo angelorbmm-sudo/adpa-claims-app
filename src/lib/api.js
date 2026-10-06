@@ -16,9 +16,10 @@ async function request(path, options={}){
 
 export async function fetchClaims(){ return request("/api/claims"); }
 export async function fetchClaim(id){ return request("/api/claims/"+encodeURIComponent(id)); }
-export async function saveClaimRemote(claim){ return request("/api/claims/"+encodeURIComponent(claim.id),{method:"PUT",body:JSON.stringify(claim)}); }
+export async function saveClaimRemote(claim,expectedVersion){ return request("/api/claims/"+encodeURIComponent(claim.id),{method:"PUT",body:JSON.stringify({...claim,...(expectedVersion===undefined?{}:{_expectedVersion:expectedVersion})})}); }
 export async function preflightWorkspace(claims){ return request("/api/migration/preflight",{method:"POST",body:JSON.stringify({claims})}); }
 export async function importWorkspace(claims,mode="skip_existing"){ return request("/api/migration/workspace",{method:"POST",body:JSON.stringify({claims,mode,confirm:true})}); }
 export async function fetchAudit(claimId){ return request("/api/audit/claims/"+encodeURIComponent(claimId)); }
 
 export async function releaseCheck(claimId){ return request("/api/claims/"+encodeURIComponent(claimId)+"/release-check",{method:"POST"}); }
+export async function closureCheck(claimId){ return request("/api/claims/"+encodeURIComponent(claimId)+"/closure-check",{method:"POST"}); }
