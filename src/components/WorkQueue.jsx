@@ -176,6 +176,23 @@ function systemExceptions(claim) {
       "A communication has reached its escalation threshold.", "communications");
   }
 
+  const deadlineClocks = claim.deadlineClocks || [];
+  const openClocks = deadlineClocks.filter(x => x.status !== "Satisfied" && x.dueDate);
+  const lateClocks = openClocks.filter(x => isPast(x.dueDate));
+  if (lateClocks.length) {
+    add("Carrier Follow-up", "Critical", lateClocks.length + " carrier regulatory clock(s) late",
+      "Recorded carrier response deadline has passed. Preserve chronology, verify the controlling rule, and prepare escalation/follow-up.", "deadlines");
+  }
+  const dueSoonClocks = openClocks.filter(x => {
+    const due = new Date(x.dueDate + "T23:59:59").getTime();
+    const reminder = x.reminderDate ? new Date(x.reminderDate + "T00:00:00").getTime() : null;
+    return !isPast(x.dueDate) && reminder && Date.now() >= reminder && Date.now() <= due;
+  });
+  if (dueSoonClocks.length) {
+    add("Carrier Follow-up", "High", dueSoonClocks.length + " carrier deadline(s) in pre-deadline window",
+      "A state-aware response clock has entered its warning window. Prepare a documented pre-deadline follow-up.", "deadlines");
+  }
+
   const supplements = claim.supplements || [];
   const openSupplements = supplements.filter(x => !["Resolved","Closed","Approved"].includes(x.status));
   if (openSupplements.length) {
