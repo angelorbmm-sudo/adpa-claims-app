@@ -71,7 +71,7 @@ function money(v) {
 }
 
 function packageRelevantClaim(claim) {
-  const { packages, approvals, signatures, releaseRecords, updatedAt, ...substantive } = claim || {};
+  const { packages, approvals, signatures, releaseRecords, closure, updatedAt, ...substantive } = claim || {};
   return JSON.stringify(substantive);
 }
 
@@ -187,7 +187,6 @@ function App() {
       routing: draft.routing || {},
       criticalEvents: draft.criticalEvents || [],
       contractorCommitments: draft.contractorCommitments || [],
-      closure: draft.closure || {},
       communications: draft.communications || [],
       aiPrep: draft.aiPrep || {},
       aiFindings: draft.aiFindings || [],
