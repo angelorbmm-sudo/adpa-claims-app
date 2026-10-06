@@ -6,8 +6,9 @@ const blank = { state: "CA", ruleKey: "claimant_communication", triggerDate: "",
 
 function statusFor(clock) {
   if (clock.status === "Satisfied") return "Satisfied";
-  if (!clock.dueDate) return "Needs review";
-  const left = daysFromToday(clock.dueDate);
+  const effectiveDue = clock.verifiedDueDate || clock.dueDate;
+  if (!effectiveDue) return "Needs review";
+  const left = daysFromToday(effectiveDue);
   if (left < 0) return "LATE";
   if (left <= Number(clock.leadDays || 2)) return "PRE-DEADLINE";
   return "Running";
@@ -15,12 +16,13 @@ function statusFor(clock) {
 
 function draftNotice(claim, clock) {
   const rule = ruleFor(clock.state, clock.ruleKey);
-  const late = clock.dueDate && daysFromToday(clock.dueDate) < 0;
+  const effectiveDue = clock.verifiedDueDate || clock.dueDate;
+  const late = effectiveDue && daysFromToday(effectiveDue) < 0;
   return `Subject: ${late ? "Overdue Response" : "Time-Sensitive Follow-Up"} — ${claim.claimNumber || "Claim"} — ${clock.subject || rule?.label || "Claim communication"}
 
 Dear ${clock.carrierParty || "Adjuster"},
 
-I am following up regarding our communication dated ${clock.triggerDate || "[date]"} concerning ${clock.subject || "the above claim"}. Our records reflect a response deadline of ${clock.dueDate || "[deadline]"} under ${clock.authority || rule?.authority || "the applicable claim-handling rule"}.
+I am following up regarding our communication dated ${clock.triggerDate || "[date]"} concerning ${clock.subject || "the above claim"}. Our records reflect a response deadline of ${effectiveDue || "[deadline]"} under ${clock.authority || rule?.authority || "the applicable claim-handling rule"}.
 
 ${late ? `The recorded response deadline has passed without a complete response reflected in our file. Please provide the response promptly or identify the specific reason additional time is required.` : `Please provide a complete response before the applicable deadline.`} We are maintaining a contemporaneous claim chronology and would appreciate your timely attention.
 
@@ -74,6 +76,22 @@ export default function CarrierDeadlineCenter({ claim, onChange }) {
     patch(clock.id, { preDeadlineNoticeAt: nowIso(), preDeadlineNoticeDraft: draftNotice(claim, clock) }, "Deadline follow-up notice prepared");
   }
 
+  function verifyDueDate(clock) {
+    const current = clock.verifiedDueDate || clock.dueDate || "";
+    const next = window.prompt("Verified due date (YYYY-MM-DD)", current);
+    if (!next) return;
+    const reason = window.prompt("Reason / source for verification or override", "Holiday/calendar verification");
+    if (!reason) return;
+    onChange(clocks.map(c => c.id === clock.id ? {
+      ...c,
+      verifiedDueDate: next,
+      dueDateVerificationReason: reason,
+      dueDateVerifiedAt: nowIso(),
+      updatedAt: nowIso(),
+      audit: [...(c.audit || []), { at: nowIso(), action: "Due date verified/overridden", detail: `Calculated ${c.dueDate || "none"}; verified ${next}; ${reason}` }]
+    } : c));
+  }
+
   function markSatisfied(clock) {
     patch(clock.id, { status: "Satisfied", satisfiedAt: nowIso() }, "Carrier response recorded / clock satisfied");
   }
@@ -109,21 +127,22 @@ export default function CarrierDeadlineCenter({ claim, onChange }) {
         {clocks.length === 0 && <p className="muted">No regulatory clocks recorded yet.</p>}
         {[...clocks].sort((a,b) => String(a.dueDate).localeCompare(String(b.dueDate))).map(c => {
           const state = statusFor(c);
-          const left = daysFromToday(c.dueDate);
+          const effectiveDue = c.verifiedDueDate || c.dueDate;
+          const left = daysFromToday(effectiveDue);
           return <div className="timeline-item" key={c.id}>
             <div className="timeline-head">
               <div><span className="pill">{c.state}</span><span className="pill secondary">{c.authority}</span><span className={state === "LATE" ? "pill alert" : "pill system"}>{state}</span></div>
-              <b>{c.dueDate || "Prompt-action review"}</b>
+              <b>{effectiveDue || "Prompt-action review"}</b>
             </div>
             <b>{c.subject || c.ruleLabel}</b>
             <span>{c.ruleLabel}</span>
-            <small>Trigger: {c.triggerDate} · Rule: {c.dayCount} {c.dayUnit} days · Reminder: {c.reminderDate || "manual"}</small>
-            {c.dueDate && <small>{left < 0 ? `${Math.abs(left)} day(s) late` : `${left} day(s) remaining`}</small>}
+            <small>Trigger: {c.triggerDate} · Rule: {c.dayCount} {c.dayUnit} days · Calculated due: {c.dueDate || "manual"} · Reminder: {c.reminderDate || "manual"}</small>\n            {c.verifiedDueDate && <small><b>Verified due:</b> {c.verifiedDueDate} — {c.dueDateVerificationReason}</small>}
+            {effectiveDue && <small>{left < 0 ? `${Math.abs(left)} day(s) late` : `${left} day(s) remaining`}</small>}
             {c.sourceRef && <small><b>Evidence:</b> {c.sourceRef}</small>}
             {c.preDeadlineNoticeDraft && <div className="draft-box"><b>{state === "LATE" ? "Overdue response notice" : "Pre-deadline notice"}</b><p style={{whiteSpace:"pre-wrap"}}>{c.preDeadlineNoticeDraft}</p><small>Prepared {c.preDeadlineNoticeAt}. Sending remains separately controlled.</small></div>}
             <div className="comm-actions">
               {state !== "Satisfied" && !c.preDeadlineNoticeAt && <button type="button" onClick={() => markNotice(c)}>{state === "LATE" ? "Prepare overdue notice" : "Prepare pre-deadline notice"}</button>}
-              {state !== "Satisfied" && <button type="button" onClick={() => markSatisfied(c)}>Record carrier response</button>}
+              <button type="button" onClick={() => verifyDueDate(c)}>Verify / override due date</button>\n              {state !== "Satisfied" && <button type="button" onClick={() => markSatisfied(c)}>Record carrier response</button>}
             </div>
             {(c.audit || []).length > 0 && <details><summary>Audit trail ({c.audit.length})</summary>{c.audit.map((a,i)=><small key={i}>{a.at} — {a.action}{a.detail ? " — "+a.detail : ""}</small>)}</details>}
           </div>;
