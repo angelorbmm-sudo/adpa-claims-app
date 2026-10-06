@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { nowIso, uid } from "../lib/storage.js";
 import { complianceStatus } from "../lib/stateCompliance.js";
+import { claimWorkflowIntelligence } from "../lib/workflowIntelligence.js";
 
 function money(v) {
   return Number(v || 0).toLocaleString(undefined, { style: "currency", currency: "USD" });
@@ -32,6 +33,14 @@ function prepareFindings(claim) {
   const supplements = claim.supplements || [];
   const recovery = claim.recovery || [];
   const gate = complianceStatus(claim);
+  const workflow = claimWorkflowIntelligence(claim);
+  if (workflow.next && workflow.next.status !== "Complete") {
+    addFinding(findings, "Workflow", workflow.next.status.includes("Blocked") || workflow.next.status === "Needs PA Review" ? "High" : "Normal",
+      "Recommended next step — " + workflow.next.label,
+      workflow.next.nextAction + " Current stage status: " + workflow.next.status + ".",
+      [], "General");
+  }
+
   if (!gate.cleared) {
     addFinding(findings, "Compliance", "High", "ABSTAIN — compliance gate is on HOLD",
       "Substantive external claim action should not be released until these items are resolved: " + gate.blockers.join("; ") + ".",
@@ -150,6 +159,7 @@ function buildDraftSummary(claim, findings) {
   const requested = (claim.coverages || []).reduce((s,c)=>s+Number(c.requested||0),0);
   const received = (claim.coverages || []).reduce((s,c)=>s+Number(c.received||0),0);
   const high = findings.filter(f=>f.severity==="High").length;
+  const workflow = claimWorkflowIntelligence(claim);
   return [
     "Claim preparation summary — DRAFT / HUMAN REVIEW REQUIRED",
     "",
@@ -163,6 +173,8 @@ function buildDraftSummary(claim, findings) {
     "Recorded received total: " + money(received),
     "Evidence records: " + (claim.documents || []).length,
     "Open AI findings: " + findings.length + " (" + high + " high priority)",
+    "Recommended next step: " + workflow.next.label + " — " + workflow.next.status,
+    "Next action: " + workflow.next.nextAction,
     "",
     "This draft is generated from structured claim records only. It is not a coverage opinion, settlement authority, legal advice, or an autonomous public-adjuster decision."
   ].join("\n");
