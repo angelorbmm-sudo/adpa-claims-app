@@ -102,13 +102,13 @@ function systemExceptions(claim) {
     add("Contents", "Normal", contentsNeedsReview.length + " contents item(s) need review", "Contents records are not fully reviewed.", "contents");
   }
 
-  const contentsMissingSource = contents.filter(x => Number(x.rcv || 0) > 0 && !x.replacementSource);
+  const contentsMissingSource = contents.filter(x => Number(x.unitRcv || x.rcv || 0) > 0 && !x.replacementSource);
   if (contentsMissingSource.length) {
     add("Contents", "High", contentsMissingSource.length + " contents item(s) lack replacement support",
       "RCV is entered without a replacement source or pricing reference.", "contents");
   }
 
-  const contentsVariance = contents.reduce((sum, x) => sum + ((Number(x.rcv || 0) * Number(x.quantity || 1)) - Number(x.carrierRcv || x.carrier || 0)), 0);
+  const contentsVariance = contents.reduce((sum, x) => sum + ((Number(x.unitRcv || x.rcv || 0) * Number(x.quantity || 1)) - Number(x.carrierRcv || x.carrier || 0)), 0);
   if (Math.abs(contentsVariance) >= 5000) {
     add("Contents", "High", "Material contents valuation variance",
       "Current ADPA-versus-carrier contents RCV variance is " + money(contentsVariance) + ".", "contents");
@@ -239,7 +239,7 @@ function systemExceptions(claim) {
       "One or more supplement or dispute items remain unresolved.", "supplements");
   }
 
-  const overdueSupplements = supplements.filter(x => x.responseDueDate && isPast(x.responseDueDate) && !["Resolved","Closed","Approved"].includes(x.status));
+  const overdueSupplements = supplements.filter(x => (x.responseDueDate || x.followUpDate) && isPast(x.responseDueDate || x.followUpDate) && !["Resolved","Closed","Approved"].includes(x.status));
   if (overdueSupplements.length) {
     add("Carrier Follow-up", "High", overdueSupplements.length + " supplement response(s) overdue",
       "Carrier response due date has passed for one or more supplement/dispute items.", "supplements");
