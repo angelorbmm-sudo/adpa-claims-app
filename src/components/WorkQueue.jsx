@@ -176,6 +176,43 @@ function systemExceptions(claim) {
       "A communication has reached its escalation threshold.", "communications");
   }
 
+  const compliance = claim.compliance || {};
+  const complianceBlockers = [];
+  if (!claim.jurisdiction) complianceBlockers.push("jurisdiction");
+  if (compliance.licenseStatus !== "Verified") complianceBlockers.push("license");
+  if (compliance.contractStatus !== "Executed") complianceBlockers.push("contract");
+  if (claim.jurisdiction === "CA" && compliance.disclosureStatus !== "Delivered before contract") complianceBlockers.push("CA disclosure");
+  if (!compliance.policyStatus || compliance.policyStatus === "Missing") complianceBlockers.push("policy");
+  if (complianceBlockers.length) {
+    add("Licensed PA / Client Approval", "Critical", "Compliance gate HOLD",
+      "External action is blocked pending: " + complianceBlockers.join(", ") + ".", "compliance");
+  }
+
+  const issues = claim.issues || [];
+  const openIssues = issues.filter(x => x.status !== "Resolved");
+  const unapprovedIssues = openIssues.filter(x => x.licensedReview !== "Approved");
+  if (unapprovedIssues.length) {
+    add("Licensed PA / Client Approval", "High", unapprovedIssues.length + " issue position(s) await PA review",
+      "Open negotiation positions require licensed review before substantive external use.", "issues");
+  }
+  const missingIssueEvidence = openIssues.filter(x => !x.evidenceRefs || !x.policyRef);
+  if (missingIssueEvidence.length) {
+    add("Intake / Evidence", "High", missingIssueEvidence.length + " issue file(s) lack policy/evidence support",
+      "Issue positions should be source-linked before negotiation or escalation.", "issues");
+  }
+
+  const depreciation = claim.receipts || [];
+  const depreciationReady = depreciation.filter(x => x.status === "Ready to request");
+  if (depreciationReady.length) {
+    add("Accounting / Depreciation", "Normal", depreciationReady.length + " depreciation item(s) ready to request",
+      "Replacement proof is recorded and recoverable depreciation can be prepared for carrier submission.", "receipts");
+  }
+  const depreciationOverdue = depreciation.filter(x => x.carrierDueDate && isPast(x.carrierDueDate) && !["Released"].includes(x.status));
+  if (depreciationOverdue.length) {
+    add("Accounting / Depreciation", "High", depreciationOverdue.length + " depreciation recovery response(s) overdue",
+      "Recorded carrier due date has passed for a recoverable depreciation request.", "receipts");
+  }
+
   const deadlineClocks = claim.deadlineClocks || [];
   const openClocks = deadlineClocks.filter(x => x.status !== "Satisfied" && (x.verifiedDueDate || x.dueDate));
   const lateClocks = openClocks.filter(x => isPast(x.verifiedDueDate || x.dueDate));
