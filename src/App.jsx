@@ -27,6 +27,7 @@ import AgreementPacketCenter from "./components/AgreementPacketCenter.jsx";
 import RoutingControlCenter from "./components/RoutingControlCenter.jsx";
 import CriticalEventCenter from "./components/CriticalEventCenter.jsx";
 import ContractorCommitmentCenter from "./components/ContractorCommitmentCenter.jsx";
+import ClaimClosureAuditCenter from "./components/ClaimClosureAuditCenter.jsx";
 
 const modules = [
   ["portfolio", "Portfolio Command"],
@@ -57,6 +58,7 @@ const modules = [
   ["package", "Claim Package"],
   ["approvals", "Approvals & Signatures"],
   ["recovery", "Recovery Follow-up"],
+  ["closure", "Closure & Final Audit"],
   ["ai", "AI Preparation"]
 ];
 
@@ -181,6 +183,7 @@ function App() {
       routing: draft.routing || {},
       criticalEvents: draft.criticalEvents || [],
       contractorCommitments: draft.contractorCommitments || [],
+      closure: draft.closure || {},
       communications: draft.communications || [],
       aiPrep: draft.aiPrep || {},
       aiFindings: draft.aiFindings || [],
@@ -364,6 +367,8 @@ function App() {
           )}
 
           {tab === "recovery" && <SimpleRecords title="Recovery Follow-up & Depreciation Tracking" records={draft.recovery} fields={[["coverage","Coverage"],["amount","Outstanding amount"],["condition","Recovery condition / proof needed"],["dueDate","Follow-up date"],["status","Status"]]} onAdd={r => addRecord("recovery", r)} />}
+
+          {tab === "closure" && <ClaimClosureAuditCenter claim={draft} onChange={closure => saveClaim({ ...draft, closure })} />}
 
           {tab === "ai" && (
             <AIClaimReviewCenter
