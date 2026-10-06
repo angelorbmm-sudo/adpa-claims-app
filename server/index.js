@@ -6,6 +6,7 @@ import { storageStatus } from "./storage.js";
 import claimsRouter from "./routes/claims.js";
 import auditRouter from "./routes/audit.js";
 import migrationRouter from "./routes/migration.js";
+import documentsRouter from "./routes/documents.js";
 
 assertServerConfig();
 
@@ -19,6 +20,7 @@ app.use("/api",authenticate);
 app.use("/api/claims",claimsRouter);
 app.use("/api/audit",auditRouter);
 app.use("/api/migration",migrationRouter);
+app.use("/api/documents",documentsRouter);
 
 app.use((err,req,res,next)=>{
   console.error(err);
