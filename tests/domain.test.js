@@ -8,6 +8,7 @@ import {claimWorkflowIntelligence} from "../src/lib/workflowIntelligence.js";
 import {phase6CaliforniaWaterClaim,phase6CaliforniaDenialClaim,phase6ContentsHeavyClaim,phase6MortgageLossDraftClaim,phase6NevadaClaim,phase6SyntheticClaims} from "../src/data/phase6Claims.js";
 import {prepareClaimReview,claimPreparationSummary} from "../src/lib/claimPreparation.js";
 import {draftCommunicationOptions,communicationDraftByType} from "../src/lib/draftCommunications.js";
+import {estimateLineAnalysis,estimateIntelligence,contentsIntelligence,estimatingSummary} from "../src/lib/estimatingIntelligence.js";
 
 const base=()=>({coverages:[],payments:[],receipts:[],issues:[],supplements:[],recovery:[],criticalEvents:[],deadlineClocks:[],packages:[],mortgage:{},compliance:{},representation:{}});
 
@@ -67,3 +68,9 @@ test("Phase 8B water claim offers supplement and depreciation follow-ups",()=>{c
 test("Phase 8B mortgage draft carries exact lender-held amount",()=>{const d=communicationDraftByType(phase6MortgageLossDraftClaim(),"Mortgage / Loss Draft");assert.ok(d);assert.ok(d.body.includes("$115,000"));});
 test("Phase 8B substantive supplement draft requires PA review",()=>{const d=communicationDraftByType(phase6CaliforniaWaterClaim(),"Supplement Follow-up");assert.equal(d.requiresPAReview,true);assert.equal(d.sendAllowed,false);});
 test("Phase 8B denial status draft remains review-gated",()=>{const d=communicationDraftByType(phase6CaliforniaDenialClaim(),"Status Follow-up");assert.ok(d);assert.equal(d.requiresPAReview,true);assert.equal(d.sendAllowed,false);});
+
+test("Phase 9 classifies missing scope when carrier has zero line value",()=>{const x=estimateLineAnalysis({quantity:10,adpaUnitPrice:100,carrierQuantity:0,carrierUnitPrice:0,status:"Needs review"});assert.equal(x.variance,1000);assert.equal(x.varianceCategory,"Missing scope");});
+test("Phase 9 supports total-level estimate fixtures as well as line items",()=>{const x=estimateIntelligence(phase2CaliforniaFireClaim().estimateComparisons);assert.equal(x.adpa,340000);assert.equal(x.carrier,285000);assert.equal(x.variance,55000);});
+test("Phase 9 contents intelligence calculates RCV ACV depreciation and variance",()=>{const x=contentsIntelligence(phase2CaliforniaFireClaim().contents);assert.equal(x.count,2);assert.ok(x.rcv>0);assert.ok(x.calculatedAcv<x.rcv);assert.ok(x.variance>0);});
+test("Phase 9 contents-heavy fixture keeps 150 items in review",()=>{const x=contentsIntelligence(phase6ContentsHeavyClaim().contents);assert.equal(x.count,2000);assert.equal(x.needsReview,150);});
+test("Phase 9 summary exposes source and review gaps without making coverage conclusions",()=>{const x=estimatingSummary(phase6CaliforniaWaterClaim());assert.ok(x.estimate.needsReview>0);assert.ok(x.flags.length>0);});
