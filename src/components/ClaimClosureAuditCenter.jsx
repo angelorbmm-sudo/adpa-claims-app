@@ -17,17 +17,23 @@ export default function ClaimClosureAuditCenter({claim,onChange}){
  function closeClaim(){
   if(allBlockers.length)return;
   const event={id:uid("closure"),type:"Closed",at:nowIso(),reason:reason||"Final reconciliation complete",packageHash:hash,summary:{requested:r.requested,received:r.ledgerReceived,depreciationOutstanding:r.depreciationOutstanding,lenderHeld:r.lenderHeld}};
-  onChange({...closure,status:"Closed",closedAt:event.at,closedPackageHash:hash,events:[...(closure.events||[]),event]});
+  const nextClosure={...closure,status:"Closed",closedAt:event.at,closedPackageHash:hash,events:[...(closure.events||[]),event]};
+  const routing=claim.routing||{events:[]};
+  const nextRouting={...routing,currentBucket:"CLOSED",events:[...(routing.events||[]),{at:event.at,from:routing.currentBucket||"",to:"CLOSED",reason:"Final closure audit passed and was authorized",ruleVersion:"ADPA routing v1 — 2026-10-06"}]};
+  onChange({closure:nextClosure,routing:nextRouting});
   setReason("");
  }
  function exportAudit(){
-  const report={reportType:"ADPA_FINAL_CLAIM_AUDIT_V1",generatedAt:nowIso(),claim:{id:claim.id,insured:claim.insured,property:claim.property,carrier:claim.carrier,claimNumber:claim.claimNumber,dateOfLoss:claim.dateOfLoss,jurisdiction:claim.jurisdiction},closure,finalPackage:{version:finalPackage?.version||null,hash},financial:{requested:r.requested,carrier:r.carrier,coverageReceived:r.coverageReceived,ledgerReceived:r.ledgerReceived,depreciationOutstanding:r.depreciationOutstanding,lenderHeld:r.lenderHeld},approvals:{licensedPA:paApproved,client:clientAuthorized},blockers:allBlockers};
+  const report={reportType:"ADPA_FINAL_CLAIM_AUDIT_V1",generatedAt:nowIso(),claim:{id:claim.id,insured:claim.insured,property:claim.property,carrier:claim.carrier,claimNumber:claim.claimNumber,dateOfLoss:claim.dateOfLoss,jurisdiction:claim.jurisdiction},closure,finalPackage:{version:finalPackage?.version||null,hash},financial:{requested:r.requested,carrier:r.carrier,coverageReceived:r.coverageReceived,ledgerReceived:r.ledgerReceived,depreciationOutstanding:r.depreciationOutstanding,lenderHeld:r.lenderHeld,coverages:claim.coverages||[]},approvals:{licensedPA:paApproved,client:clientAuthorized},blockers:allBlockers};
   const blob=new Blob([JSON.stringify(report,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="ADPA-final-audit-"+(claim.claimNumber||claim.id||"claim")+".json";a.click();URL.revokeObjectURL(url);
  }
  function reopen(){
   if(!reason.trim())return;
   const event={id:uid("closure"),type:"Reopened",at:nowIso(),reason:reason.trim(),priorClosedPackageHash:closure.closedPackageHash||""};
-  onChange({...closure,status:"Reopened",reopenedAt:event.at,events:[...(closure.events||[]),event]});setReason("");
+  const nextClosure={...closure,status:"Reopened",reopenedAt:event.at,events:[...(closure.events||[]),event]};
+  const routing=claim.routing||{events:[]};
+  const nextRouting={...routing,currentBucket:"B1",events:[...(routing.events||[]),{at:event.at,from:routing.currentBucket||"CLOSED",to:"B1",reason:"Claim reopened: "+reason.trim(),ruleVersion:"ADPA routing v1 — 2026-10-06"}]};
+  onChange({closure:nextClosure,routing:nextRouting});setReason("");
  }
  return <section><h1>Claim Closure & Final Audit Center</h1><p>Final control before a claim becomes Closed/Audit. ADPA must reconcile money, remaining rights/recoveries, lender funds, open disputes, critical events, deadlines and the exact approved package version.</p>
  <div className="stats"><div className="stat"><small>Closure status</small><b>{closure.status||"Open"}</b></div><div className="stat"><small>Requested</small><b>{money(r.requested)}</b></div><div className="stat"><small>Ledger received</small><b>{money(r.ledgerReceived)}</b></div><div className="stat"><small>Depreciation outstanding</small><b>{money(r.depreciationOutstanding)}</b></div><div className="stat"><small>Lender held</small><b>{money(r.lenderHeld)}</b></div><div className="stat"><small>Closure blockers</small><b>{allBlockers.length}</b></div></div>
