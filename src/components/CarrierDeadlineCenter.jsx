@@ -120,7 +120,7 @@ export default function CarrierDeadlineCenter({ claim, onChange }) {
             <small>Trigger: {c.triggerDate} · Rule: {c.dayCount} {c.dayUnit} days · Reminder: {c.reminderDate || "manual"}</small>
             {c.dueDate && <small>{left < 0 ? `${Math.abs(left)} day(s) late` : `${left} day(s) remaining`}</small>}
             {c.sourceRef && <small><b>Evidence:</b> {c.sourceRef}</small>}
-            {c.preDeadlineNoticeDraft && <div className="draft-box"><b>Pre-deadline notice</b><p style={{whiteSpace:"pre-wrap"}}>{c.preDeadlineNoticeDraft}</p><small>Prepared {c.preDeadlineNoticeAt}. Sending remains separately controlled.</small></div>}
+            {c.preDeadlineNoticeDraft && <div className="draft-box"><b>{state === "LATE" ? "Overdue response notice" : "Pre-deadline notice"}</b><p style={{whiteSpace:"pre-wrap"}}>{c.preDeadlineNoticeDraft}</p><small>Prepared {c.preDeadlineNoticeAt}. Sending remains separately controlled.</small></div>}
             <div className="comm-actions">
               {state !== "Satisfied" && !c.preDeadlineNoticeAt && <button type="button" onClick={() => markNotice(c)}>{state === "LATE" ? "Prepare overdue notice" : "Prepare pre-deadline notice"}</button>}
               {state !== "Satisfied" && <button type="button" onClick={() => markSatisfied(c)}>Record carrier response</button>}
