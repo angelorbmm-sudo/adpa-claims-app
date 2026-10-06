@@ -35,7 +35,7 @@ export default function ComplianceCenter({ claim, onChange }) {
       <p><b>Representation:</b> {rules.contractRule}</p>
       <p><b>Records:</b> {rules.recordRule}</p>
       <p><b>Legal boundary:</b> {rules.legalAdviceRule}</p>
-      <small>Primary sources are recorded in the code rule set. Legal/counsel review remains required where a claim turns on legal advice, litigation strategy, or unsettled interpretation.</small>
+      <small>Primary sources — verified research set 2026-10-06:</small><div className="records">{rules.sources.map((s,i)=><div className="record" key={i}><b>{s.label}</b><small>{s.url}</small></div>)}</div><small>Legal/counsel review remains required where a claim turns on legal advice, litigation strategy, or unsettled interpretation.</small>
     </div>
   </section>;
 }
