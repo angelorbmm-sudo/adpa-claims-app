@@ -108,6 +108,14 @@ router.post("/:id/closure-check", requirePermission("claims:approve"), requireVe
     if(mortgageHeld>0.01) reasons.push("Mortgage/loss-draft funds remain held.");
     if((claim.issues||[]).some(x=>x.status!=="Resolved")) reasons.push("Open issue files remain.");
     if((claim.criticalEvents||[]).some(x=>x.status!=="Resolved")) reasons.push("Open critical events remain.");
+    if((claim.supplements||[]).some(x=>!["Resolved","Closed","Approved","Paid"].includes(x.status))) reasons.push("Open supplement/dispute records remain.");
+    if((claim.recovery||[]).some(x=>x.status!=="Closed")) reasons.push("Open recovery follow-ups remain.");
+    if((claim.deadlineClocks||[]).some(x=>x.status!=="Satisfied"&&(x.verifiedDueDate||x.dueDate)&&new Date((x.verifiedDueDate||x.dueDate)+"T23:59:59").getTime()<Date.now())) reasons.push("Overdue carrier clocks remain unresolved.");
+    const compliance=claim.compliance||{}, representation=claim.representation||{};
+    if(compliance.licenseStatus!=="Verified") reasons.push("Claim compliance record does not show verified PA license.");
+    if(!(compliance.contractStatus==="Executed"||(representation.templateVerified&&representation.signedDate&&representation.insuredCopyDelivered&&representation.feeTermsVerified))) reasons.push("Representation contract is not verified.");
+    if(claim.jurisdiction==="CA"&&!(compliance.disclosureStatus==="Delivered before contract"||representation.disclosureBeforeSigning)) reasons.push("California disclosure-before-contract sequence is not verified.");
+
     const pkg=(claim.packages||[]).at(-1), hash=pkg?.snapshotHash||"";
     if(!pkg||pkg.status==="Superseded"||String(pkg.status||"").startsWith("Stale")) reasons.push("Final package is missing or stale.");
     const approvals=claim.approvals||[];
