@@ -208,6 +208,7 @@ function App() {
             <b>{draft.insured || "Unnamed Claim"}</b>
             <small>{draft.carrier || "Carrier not entered"}</small>
             <small>{draft.claimNumber || "Claim # not entered"}</small>
+            <small>{draft.jurisdiction || "State?"} · Compliance {complianceGate.cleared ? "CLEAR" : "HOLD"} · {openIssues.length} open issue(s) · {deadlineLate} late clock(s)</small>
           </div>
           <nav>{modules.map(([key, label]) => <button className={tab === key ? "active" : ""} key={key} onClick={() => setTab(key)}>{label}</button>)}</nav>
         </aside>
@@ -295,7 +296,6 @@ function App() {
           {tab === "mortgage" && <MortgageLossDraftCenter claim={draft} onChange={mortgage => saveClaim({ ...draft, mortgage })} />}
           {tab === "agreements" && <SimpleRecords title="Agreement Library & Packets" records={draft.agreements} fields={[["name","Document"],["version","Version"],["signer","Signer"],["status","Status"]]} onAdd={r => addRecord("agreements", r)} />}
           {tab === "receipts" && <DepreciationRecoveryCenter claim={draft} onChange={receipts => saveClaim({ ...draft, receipts })} />}
-          {false && <SimpleRecords title="Receipts & Recoverable Depreciation" records={draft.receipts} fields={[["item","Item / invoice"],["replacementCost","Replacement cost"],["requested","Depreciation requested"],["approved","Approved"],["released","Released"]]} onAdd={r => addRecord("receipts", r)} />}
 
           {tab === "package" && (
             <section>
