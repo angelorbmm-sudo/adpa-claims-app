@@ -62,7 +62,7 @@ router.put("/:id", requirePermission("claims:write"), async (req,res,next)=>{
         updated_by=EXCLUDED.updated_by, updated_at=now()`,
       [parsed.id,req.user.organization_id,parsed.insured,parsed.property,parsed.carrier,parsed.claimNumber,parsed.dateOfLoss,parsed.causeOfLoss,parsed.jurisdiction,parsed.representationStatus,parsed.mortgageServicer,parsed.valuation,parsed.valuationSource,parsed.valuationReviewer,parsed.notes,parsed,nextVersion,req.user.id]
     );
-    await writeAuditEvent({actorUserId:req.user.id,claimId:parsed.id,action:before.rowCount?"claim.update":"claim.create",entityType:"claim",entityId:parsed.id,before:before.rows[0]?.data_json||null,after:parsed,metadata:{version:nextVersion,organizationId:req.user.organization_id}});
+    await writeAuditEvent({actorUserId:req.user.id,organizationId:req.user.organization_id,claimId:parsed.id,action:before.rowCount?"claim.update":"claim.create",entityType:"claim",entityId:parsed.id,before:before.rows[0]?.data_json||null,after:parsed,metadata:{version:nextVersion,organizationId:req.user.organization_id}});
     res.json({claim:parsed,version:nextVersion});
   }catch(e){next(e);}
 });
@@ -87,7 +87,7 @@ router.post("/:id/release-check", requirePermission("claims:release"), requireVe
       if(!ok) reasons.push(stage+" missing for current package.");
     }
     const result={ready:reasons.length===0,reasons,packageHash:hash,jurisdiction:claim.jurisdiction,verifiedPALicense:req.verifiedPALicense};
-    await writeAuditEvent({actorUserId:req.user.id,claimId:req.params.id,action:"claim.release_check",entityType:"claim",entityId:req.params.id,before:null,after:result,metadata:{organizationId:req.user.organization_id}});
+    await writeAuditEvent({actorUserId:req.user.id,organizationId:req.user.organization_id,claimId:req.params.id,action:"claim.release_check",entityType:"claim",entityId:req.params.id,before:null,after:result,metadata:{organizationId:req.user.organization_id}});
     res.json(result);
   }catch(e){next(e);}
 });
@@ -122,7 +122,7 @@ router.post("/:id/closure-check", requirePermission("claims:approve"), requireVe
     if(!approvals.some(a=>a.packageHash===hash&&a.stage==="Licensed PA Approval"&&/approve/i.test(a.decision||"")&&!a.revokedAt)) reasons.push("Licensed PA approval missing.");
     if(!approvals.some(a=>a.packageHash===hash&&a.stage==="Client Authorization"&&/author|approve/i.test(a.decision||"")&&!a.revokedAt)) reasons.push("Client authorization missing.");
     const result={ready:!reasons.length,reasons,packageHash:hash,financial:{ledgerReceived:received,coverageReceived,depreciationOutstanding:dep,mortgageHeld},verifiedPALicense:req.verifiedPALicense};
-    await writeAuditEvent({actorUserId:req.user.id,claimId:req.params.id,action:"claim.closure_check",entityType:"claim",entityId:req.params.id,before:null,after:result,metadata:{organizationId:req.user.organization_id}});
+    await writeAuditEvent({actorUserId:req.user.id,organizationId:req.user.organization_id,claimId:req.params.id,action:"claim.closure_check",entityType:"claim",entityId:req.params.id,before:null,after:result,metadata:{organizationId:req.user.organization_id}});
     res.json(result);
   }catch(e){next(e);}
 });
