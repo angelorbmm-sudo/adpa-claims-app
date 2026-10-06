@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS user_licenses (
 CREATE INDEX IF NOT EXISTS idx_user_licenses_user_state ON user_licenses(user_id, jurisdiction);
 
 CREATE TABLE IF NOT EXISTS claims (
-  id text PRIMARY KEY,
+  id text NOT NULL,
   organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   insured text,
   property text,
@@ -58,7 +58,8 @@ CREATE TABLE IF NOT EXISTS claims (
   created_by text REFERENCES users(id),
   updated_by text REFERENCES users(id),
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (organization_id, id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_claims_org ON claims(organization_id);
@@ -66,7 +67,7 @@ CREATE INDEX IF NOT EXISTS idx_claims_updated ON claims(updated_at DESC);
 
 CREATE TABLE IF NOT EXISTS claim_documents (
   id text PRIMARY KEY,
-  claim_id text NOT NULL REFERENCES claims(id) ON DELETE CASCADE,
+  claim_id text NOT NULL,
   organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   category text,
   coverage_tag text,
@@ -80,10 +81,12 @@ CREATE TABLE IF NOT EXISTS claim_documents (
   source text,
   metadata_json jsonb NOT NULL DEFAULT '{}'::jsonb,
   created_by text REFERENCES users(id),
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT claim_documents_org_claim_fkey FOREIGN KEY (organization_id, claim_id) REFERENCES claims(organization_id, id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_claim_documents_claim ON claim_documents(claim_id);
+CREATE INDEX IF NOT EXISTS idx_claim_documents_org_claim ON claim_documents(organization_id, claim_id);
 
 CREATE TABLE IF NOT EXISTS audit_events (
   id bigserial PRIMARY KEY,
@@ -101,6 +104,7 @@ CREATE TABLE IF NOT EXISTS audit_events (
 
 CREATE INDEX IF NOT EXISTS idx_audit_claim ON audit_events(claim_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_org ON audit_events(organization_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_org_claim ON audit_events(organization_id, claim_id, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS migration_imports (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
