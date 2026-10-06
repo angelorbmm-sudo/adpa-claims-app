@@ -21,6 +21,8 @@ import DepreciationRecoveryCenter from "./components/DepreciationRecoveryCenter.
 import ClaimLifecycleChronology from "./components/ClaimLifecycleChronology.jsx";
 import { complianceStatus } from "./lib/stateCompliance.js";
 import PortfolioDashboard from "./components/PortfolioDashboard.jsx";
+import RepresentationContractCenter from "./components/RepresentationContractCenter.jsx";
+import EvidenceStandardsCenter from "./components/EvidenceStandardsCenter.jsx";
 import AgreementPacketCenter from "./components/AgreementPacketCenter.jsx";
 
 const modules = [
@@ -29,9 +31,11 @@ const modules = [
   ["workqueue", "Work Queue"],
   ["intake", "Claim Intake"],
   ["compliance", "State Compliance"],
+  ["representation", "Representation & Contract"],
   ["coverage", "Coverage & Valuation"],
   ["policy", "Policy & Endorsements"],
   ["evidence", "Documents & Evidence"],
+  ["proofplan", "Evidence Standards"],
   ["contents", "Contents"],
   ["ale", "ALE / Loss of Use"],
   ["estimates", "Estimate Comparison"],
@@ -142,6 +146,8 @@ function App() {
       jurisdiction: draft.jurisdiction || "CA",
       deadlineClocks: draft.deadlineClocks || [],
       compliance: draft.compliance || {},
+      representation: draft.representation || {},
+      evidencePlan: draft.evidencePlan || {},
       issues: draft.issues || [],
       lifecycle: draft.lifecycle || {},
       communications: draft.communications || [],
@@ -293,8 +299,10 @@ function App() {
           )}
 
           {tab === "compliance" && <ComplianceCenter claim={draft} onChange={compliance => saveClaim({ ...draft, compliance })} />}
+          {tab === "representation" && <RepresentationContractCenter claim={draft} onChange={representation => saveClaim({ ...draft, representation })} />}
           {tab === "policy" && <PolicyEndorsementCenter claim={draft} onChange={policyAnalysis => saveClaim({ ...draft, policyAnalysis })} />}
           {tab === "evidence" && <EvidenceEngine claim={draft} onChange={documents => saveClaim({ ...draft, documents })} />}
+          {tab === "proofplan" && <EvidenceStandardsCenter claim={draft} onChange={evidencePlan => saveClaim({ ...draft, evidencePlan })} />}
           {tab === "estimates" && <EstimateComparison records={draft.estimateComparisons || []} onChange={records => saveClaim({ ...draft, estimateComparisons: records })} />}
           {tab === "payments" && <PaymentLedger payments={draft.payments || []} coverages={draft.coverages} onChange={payments => saveClaim({ ...draft, payments })} />}
           {tab === "contents" && <ContentsValuationCenter items={draft.contents || []} onChange={contents => saveClaim({ ...draft, contents })} />}
