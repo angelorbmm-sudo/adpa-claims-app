@@ -333,9 +333,9 @@ function systemExceptions(claim) {
       "An open mortgage draw requires an inspection, but no inspection record is present.", "mortgage");
   }
 
-  const latestPackage = (claim.packages || []).at(-1);
-  if (latestPackage) {
-    const packageHash = latestPackage.snapshotHash;
+  const approvalPackage = (claim.packages || []).at(-1);
+  if (approvalPackage) {
+    const packageHash = approvalPackage.snapshotHash;
     const operational = (claim.approvals || []).some(a => a.stage?.toLowerCase().includes("operational") && a.packageHash === packageHash && /approve/i.test(a.decision || ""));
     const licensed = (claim.approvals || []).some(a => a.stage?.toLowerCase().includes("licensed") && a.packageHash === packageHash && /approve/i.test(a.decision || ""));
     const client = (claim.approvals || []).some(a => a.stage?.toLowerCase().includes("client") && a.packageHash === packageHash && /approve|author/i.test(a.decision || ""));
