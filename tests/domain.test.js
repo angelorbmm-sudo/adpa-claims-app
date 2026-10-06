@@ -5,6 +5,7 @@ import {complianceStatus} from "../src/lib/stateCompliance.js";
 import {DEADLINE_RULES,addCalendarDays,addWorkingDays,calculateDueDate,ruleFor} from "../src/lib/deadlineRules.js";
 import {phase2CaliforniaFireClaim} from "../src/data/phase2FireClaim.js";
 import {claimWorkflowIntelligence} from "../src/lib/workflowIntelligence.js";
+import {phase6CaliforniaWaterClaim,phase6CaliforniaDenialClaim,phase6ContentsHeavyClaim,phase6MortgageLossDraftClaim,phase6NevadaClaim,phase6SyntheticClaims} from "../src/data/phase6Claims.js";
 
 const base=()=>({coverages:[],payments:[],receipts:[],issues:[],supplements:[],recovery:[],criticalEvents:[],deadlineClocks:[],packages:[],mortgage:{},compliance:{},representation:{}});
 
@@ -42,3 +43,10 @@ test("Phase 2 fire claim correctly remains open with real workflow blockers",()=
 
 test("Phase 5 distinguishes records present from stage resolved",()=>{const w=claimWorkflowIntelligence(phase2CaliforniaFireClaim());const by=Object.fromEntries(w.stages.map(s=>[s.key,s]));assert.equal(by.intake.status,"Complete");assert.equal(by.policy.status,"Complete");assert.equal(by.payments.status,"Complete");assert.equal(by.issues.status,"Blocked / Needs Attention");assert.equal(by.package.status,"Not Started");assert.equal(by.approvals.status,"Blocked / Needs Attention");assert.equal(by.recovery.status,"Blocked / Needs Attention");});
 test("Phase 5 surfaces PA review separately from operational progress",()=>{const c=phase2CaliforniaFireClaim();c.policyAnalysis.reviewStatus="Pending";const w=claimWorkflowIntelligence(c);assert.equal(w.stages.find(s=>s.key==="policy").status,"Needs PA Review");});
+
+test("Phase 6 library contains five distinct synthetic claim patterns",()=>{const x=phase6SyntheticClaims();assert.equal(x.length,5);assert.equal(new Set(x.map(c=>c.id)).size,5);assert.ok(x.every(c=>c.notes.includes("NO REAL CLIENT DATA")));});
+test("Phase 6 water claim surfaces evidence/estimate work and depreciation",()=>{const c=phase6CaliforniaWaterClaim(),w=claimWorkflowIntelligence(c);assert.equal(w.stages.find(s=>s.key==="evidence").status,"In Progress");assert.equal(w.stages.find(s=>s.key==="estimates").status,"In Progress");assert.ok(reconciliationForClaim(c).depreciationOutstanding>0);});
+test("Phase 6 denial claim keeps dispute and critical event open",()=>{const c=phase6CaliforniaDenialClaim(),r=reconciliationForClaim(c);assert.equal(r.openIssues.length,1);assert.equal(r.openCritical.length,1);assert.equal(claimWorkflowIntelligence(c).stages.find(s=>s.key==="issues").status,"Blocked / Needs Attention");});
+test("Phase 6 contents-heavy claim carries 2000 items and unresolved review",()=>{const c=phase6ContentsHeavyClaim();assert.equal(c.contents.length,2000);assert.equal(claimWorkflowIntelligence(c).stages.find(s=>s.key==="estimates").status,"In Progress");});
+test("Phase 6 mortgage claim exposes lender-held funds",()=>{const c=phase6MortgageLossDraftClaim();assert.equal(reconciliationForClaim(c).lenderHeld,115000);assert.equal(claimWorkflowIntelligence(c).stages.find(s=>s.key==="recovery").status,"Blocked / Needs Attention");});
+test("Phase 6 Nevada claim remains jurisdiction-specific",()=>{const c=phase6NevadaClaim();assert.equal(c.jurisdiction,"NV");assert.equal(c.deadlineClocks[0].ruleKey,"claim_ack");assert.ok(ruleFor("NV","claim_ack"));});
