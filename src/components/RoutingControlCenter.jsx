@@ -20,8 +20,7 @@ function remainingMortgage(m={}){
 function route(claim){
  const reasons=[]; const gate=complianceStatus(claim); const rep=claim.representation||{};
  if(!gate.cleared||!rep.templateVerified||!rep.signedDate){reasons.push("Authority/compliance/representation gate incomplete");return {bucket:"B0",reasons};}
- const critical=(claim.issues||[]).some(x=>x.status!=="Resolved"&&["DOI complaint consideration","Appraisal consideration","Counsel review"].includes(x.escalation))||
-   (claim.communications||[]).some(x=>/EUO|examination under oath|SIU|fraud|litigation|attorney|counsel/i.test((x.subject||"")+" "+(x.summary||"")));
+ const critical=(claim.criticalEvents||[]).some(x=>x.status!=="Resolved") || (claim.issues||[]).some(x=>x.status!=="Resolved"&&["DOI complaint consideration","Appraisal consideration","Counsel review"].includes(x.escalation)) || (claim.communications||[]).some(x=>/EUO|examination under oath|SIU|fraud|litigation|attorney|counsel/i.test((x.subject||"")+" "+(x.summary||"")));
  if(critical){reasons.push("Specialist/legal/critical trigger recorded");return {bucket:"B6",reasons};}
  const docs=claim.documents||[]; const policyReady=(claim.compliance||{}).policyStatus&&claim.compliance.policyStatus!=="Missing";
  if(!policyReady||docs.length===0){reasons.push("Policy/evidence build incomplete");return {bucket:"B1",reasons};}
