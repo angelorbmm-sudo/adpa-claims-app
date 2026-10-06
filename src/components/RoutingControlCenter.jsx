@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { nowIso } from "../lib/storage.js";
 import { complianceStatus } from "../lib/stateCompliance.js";
+import { closureBlockers } from "../lib/claimReconciliation.js";
 
 const BUCKETS=[
  ["B0","Intake Hold","Missing contract/authority/license/policy/safety essential"],
@@ -13,10 +14,6 @@ const BUCKETS=[
  ["CLOSED","Closed / Audit","Reconciled and authorized closure; reopen reason required"]
 ];
 
-function remainingMortgage(m={}){
- const released=(m.draws||[]).reduce((s,x)=>s+Number(x.releasedAmount||0),0)+Number(m.initialRelease||0);
- return Math.max(0,Number(m.heldBalance||0)-released);
-}
 function route(claim){
  const reasons=[]; const gate=complianceStatus(claim); const rep=claim.representation||{};
  if(!gate.cleared||!rep.templateVerified||!rep.signedDate){reasons.push("Authority/compliance/representation gate incomplete");return {bucket:"B0",reasons};}
@@ -35,13 +32,10 @@ function route(claim){
 }
 export default function RoutingControlCenter({claim,onChange}){
  const routing=claim.routing||{events:[]}; const recommended=useMemo(()=>route(claim),[claim]);
- const dep=(claim.receipts||[]).reduce((s,x)=>s+Number(x.recoverableDepreciation||0)-Number(x.released||0),0);
- const mortgage=remainingMortgage(claim.mortgage||{});
  const openIssues=(claim.issues||[]).filter(x=>x.status!=="Resolved").length;
- const late=(claim.deadlineClocks||[]).filter(x=>x.status!=="Satisfied"&&(x.verifiedDueDate||x.dueDate)&&new Date((x.verifiedDueDate||x.dueDate)+"T23:59:59")<new Date()).length;
- const closeBlockers=[]; if(dep>0)closeBlockers.push("recoverable depreciation outstanding");if(mortgage>0)closeBlockers.push("mortgage funds still held");if(openIssues)closeBlockers.push("open issue files");if(late)closeBlockers.push("late carrier clocks unresolved");if(!complianceStatus(claim).cleared)closeBlockers.push("compliance HOLD");
+ const closeBlockers=closureBlockers(claim,complianceStatus(claim)).blockers;
  function assign(bucket,reason){
-  if(bucket==="CLOSED"&&closeBlockers.length)return;
+  if(bucket==="CLOSED"&&(closeBlockers.length||claim.closure?.status!=="Closed"))return;
   const event={at:nowIso(),from:routing.currentBucket||"",to:bucket,reason:reason||"Manual reviewed assignment",ruleVersion:"ADPA routing v1 — 2026-10-06"};
   onChange({...routing,currentBucket:bucket,events:[...(routing.events||[]),event],updatedAt:nowIso()});
  }
@@ -49,8 +43,8 @@ export default function RoutingControlCenter({claim,onChange}){
  <div className="stats"><div className="stat"><small>Current bucket</small><b>{routing.currentBucket||"Not assigned"}</b></div><div className="stat"><small>Recommended</small><b>{recommended.bucket}</b></div><div className="stat"><small>Open issues</small><b>{openIssues}</b></div><div className="stat"><small>Closure blockers</small><b>{closeBlockers.length}</b></div></div>
  <div className="notice"><b>Routing reason:</b> {recommended.reasons.join(" · ")}</div>
  <button className="primary" onClick={()=>assign(recommended.bucket,"System recommendation accepted: "+recommended.reasons.join("; "))}>Accept recommended bucket</button>
- <div className="records">{BUCKETS.map(([id,name,desc])=><div className="record" key={id}><b>{id} — {name}</b><span>{desc}</span><button disabled={id==="CLOSED"&&closeBlockers.length>0} onClick={()=>assign(id,"Manual assignment after review")}>Assign</button></div>)}</div>
- {closeBlockers.length>0&&<div className="release-banner blocked"><b>CLOSURE BLOCKED</b><span>{closeBlockers.join(" · ")}</span></div>}
+ <div className="records">{BUCKETS.map(([id,name,desc])=><div className="record" key={id}><b>{id} — {name}</b><span>{desc}</span><button disabled={id==="CLOSED"&&(closeBlockers.length>0||claim.closure?.status!=="Closed")} onClick={()=>assign(id,"Manual assignment after review")}>Assign</button></div>)}</div>
+ {closeBlockers.length>0&&<div className="release-banner blocked"><b>CLOSURE BLOCKED</b><span>{closeBlockers.join(" · ")}</span></div>}<p className="notice">Closed/Audit is assigned through the Claim Closure & Final Audit Center after PA/client authorization; it cannot be used as a manual shortcut.</p>
  <div className="panel"><h2>Routing audit</h2>{(routing.events||[]).slice().reverse().map((e,i)=><div className="record" key={i}><b>{e.from||"Unassigned"} → {e.to}</b><span>{e.reason}</span><small>{e.at} · {e.ruleVersion}</small></div>)}</div>
  </section>
 }
