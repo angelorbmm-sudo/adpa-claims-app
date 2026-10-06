@@ -32,6 +32,7 @@ import ClaimClosureAuditCenter from "./components/ClaimClosureAuditCenter.jsx";
 import FinalFinancialReconciliation from "./components/FinalFinancialReconciliation.jsx";
 import DataTransitionCenter from "./components/DataTransitionCenter.jsx";
 import { reconciliationForClaim, closureBlockers } from "./lib/claimReconciliation.js";
+import { claimWorkflowIntelligence } from "./lib/workflowIntelligence.js";
 
 const modules = [
   ["portfolio", "Portfolio Command"],
@@ -306,6 +307,7 @@ function App() {
   const deadlineLate = (draft.deadlineClocks || []).filter(x => x.status !== "Satisfied" && (x.verifiedDueDate || x.dueDate) && new Date((x.verifiedDueDate || x.dueDate)+"T23:59:59").getTime() < Date.now()).length;
   const depreciationOutstanding = (draft.receipts || []).reduce((s,x)=>s+Number(x.recoverableDepreciation||0)-Number(x.released||0),0);
   const workflow = workflowForClaim(draft, complianceGate);
+  const intelligence = claimWorkflowIntelligence(draft);
 
   return (
     <div className="app">
@@ -338,11 +340,12 @@ function App() {
               <h1>Claim Dashboard</h1>
               <div className="panel">
                 <h2>Claim Workflow</h2>
-                <p><b>Recommended next step:</b> {workflow.next.label}</p>
-                <p className="muted">{workflow.next.help}</p>
-                <button className="primary" onClick={() => setTab(workflow.next.key)}>Continue claim →</button>
+                <p><b>Recommended next step:</b> {intelligence.next.label} — {intelligence.next.status}</p>
+                <p className="muted">{intelligence.next.nextAction}</p>
+                <button className="primary" onClick={() => setTab(intelligence.next.targetTab)}>Continue claim →</button>
+                <div className="workflow-summary"><span>Complete: {intelligence.counts["Complete"]}</span><span>In progress: {intelligence.counts["In Progress"]}</span><span>Needs attention: {intelligence.counts["Blocked / Needs Attention"]}</span><span>PA review: {intelligence.counts["Needs PA Review"]}</span></div>
                 <div className="workflow-strip">
-                  {workflow.stages.map(s => <button key={s.key} className={s.done ? "workflow-done" : ""} onClick={() => setTab(s.key)}>{s.done ? "✓ " : ""}{s.label}</button>)}
+                  {intelligence.stages.map(s => <button key={s.key} className={s.status==="Complete" ? "workflow-done" : s.status==="Needs PA Review" ? "workflow-pa" : s.status==="Blocked / Needs Attention" ? "workflow-blocked" : ""} title={s.detail} onClick={() => setTab(s.targetTab)}>{s.status==="Complete" ? "✓ " : ""}{s.label}<small>{s.status}</small></button>)}
                 </div>
                 {workflow.closure.blockers.length > 0 && <details><summary>{workflow.closure.blockers.length} closure blocker(s)</summary><ul>{workflow.closure.blockers.map((b,i)=><li key={i}>{b}</li>)}</ul></details>}
               </div>
