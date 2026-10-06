@@ -121,7 +121,8 @@ function App() {
   const [workspace, setWorkspace] = useState(() => loadWorkspace() || (isDemo ? demoWorkspace() : { claims: [], selectedId: null }));
   const [tab, setTab] = useState("portfolio");
   const [menuOpen, setMenuOpen] = useState(false);
-  const navigate = key => { setTab(key); setMenuOpen(false); };
+  const navigate = key => { setTab(key); setMenuOpen(false); window.scrollTo({ top: 0, behavior: "auto" }); };
+  const toggleMenu = () => { setMenuOpen(open => !open); window.scrollTo({ top: 0, behavior: "auto" }); };
   useEffect(() => {
     const close = e => { if (e.key === "Escape") setMenuOpen(false); };
     window.addEventListener("keydown", close);
@@ -328,7 +329,7 @@ function App() {
           </select></label>
           <button className="new-claim" onClick={createClaim}><Icon name="plus"/>New claim</button>
           <button className="primary save-claim" onClick={() => saveClaim()}>Save claim</button>
-          <button className="menu-toggle" aria-label={menuOpen ? "Close modules" : "Open modules"} aria-expanded={menuOpen} aria-controls="module-navigation" onClick={() => setMenuOpen(!menuOpen)}><Icon name={menuOpen ? "close" : "menu"}/></button>
+          <button className="menu-toggle" aria-label={menuOpen ? "Close modules" : "Open modules"} aria-expanded={menuOpen} aria-controls="module-navigation" onClick={toggleMenu}><Icon name={menuOpen ? "close" : "menu"}/></button>
         </div>
       </header>
       <div className={`shell ${menuOpen ? "menu-open" : ""}`}>
@@ -481,7 +482,7 @@ function App() {
         <button className={tab === "overview" ? "active" : ""} onClick={() => navigate("overview")}><Icon name="claim"/>Claim</button>
         <button className="mobile-create" onClick={createClaim}><Icon name="plus"/>New claim</button>
         <button className={tab === "workqueue" ? "active" : ""} onClick={() => navigate("workqueue")}><Icon name="tasks"/>Tasks</button>
-        <button aria-expanded={menuOpen} aria-controls="module-navigation" onClick={() => setMenuOpen(!menuOpen)}><Icon name={menuOpen ? "close" : "menu"}/>Modules</button>
+        <button aria-expanded={menuOpen} aria-controls="module-navigation" onClick={toggleMenu}><Icon name={menuOpen ? "close" : "menu"}/>Modules</button>
       </nav>
     </div>
   );
