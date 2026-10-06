@@ -155,12 +155,19 @@ function App() {
     const encoded = new TextEncoder().encode(JSON.stringify(snapshot));
     const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", encoded)))
       .map(b => b.toString(16).padStart(2, "0")).join("");
-    addRecord("packages", {
-      name: "Claim Package " + new Date().toLocaleString(),
+    const existing = draft.packages || [];
+    const superseded = existing.map(p => p.status === "Superseded" ? p : { ...p, status: "Superseded", supersededAt: nowIso() });
+    const nextPackage = {
+      id: uid("packages"),
+      createdAt: nowIso(),
+      version: existing.length + 1,
+      name: "Claim Package v" + (existing.length + 1) + " — " + new Date().toLocaleString(),
       snapshotHash: hash,
       snapshot,
-      status: "Draft"
-    });
+      status: "Draft",
+      priorPackageHash: existing.at(-1)?.snapshotHash || ""
+    };
+    saveClaim({ ...draft, packages: [...superseded, nextPackage] });
   }
 
   if (!selected) {
@@ -303,7 +310,7 @@ function App() {
           {tab === "package" && (
             <section>
               <h1>Claim-Package Assembly</h1>
-              <p>Creates an immutable-style snapshot record of the current claim data and SHA-256 hash for review binding.</p>
+              <p>Creates a versioned snapshot of the current claim record and SHA-256 hash. A new package supersedes the prior package while preserving its hash, approvals, and history.</p>
               <button className="primary" onClick={assemblePackage}>Assemble draft package</button>
               <RecordList records={draft.packages} render={r => <><b>{r.name}</b><span>Status: {r.status}</span><code>{r.snapshotHash}</code></>} />
             </section>
