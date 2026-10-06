@@ -136,13 +136,15 @@ export default function CarrierDeadlineCenter({ claim, onChange }) {
             </div>
             <b>{c.subject || c.ruleLabel}</b>
             <span>{c.ruleLabel}</span>
-            <small>Trigger: {c.triggerDate} · Rule: {c.dayCount} {c.dayUnit} days · Calculated due: {c.dueDate || "manual"} · Reminder: {c.reminderDate || "manual"}</small>\n            {c.verifiedDueDate && <small><b>Verified due:</b> {c.verifiedDueDate} — {c.dueDateVerificationReason}</small>}
+            <small>Trigger: {c.triggerDate} · Rule: {c.dayCount} {c.dayUnit} days · Calculated due: {c.dueDate || "manual"} · Reminder: {c.reminderDate || "manual"}</small>
+            {c.verifiedDueDate && <small><b>Verified due:</b> {c.verifiedDueDate} — {c.dueDateVerificationReason}</small>}
             {effectiveDue && <small>{left < 0 ? `${Math.abs(left)} day(s) late` : `${left} day(s) remaining`}</small>}
             {c.sourceRef && <small><b>Evidence:</b> {c.sourceRef}</small>}
             {c.preDeadlineNoticeDraft && <div className="draft-box"><b>{state === "LATE" ? "Overdue response notice" : "Pre-deadline notice"}</b><p style={{whiteSpace:"pre-wrap"}}>{c.preDeadlineNoticeDraft}</p><small>Prepared {c.preDeadlineNoticeAt}. Sending remains separately controlled.</small></div>}
             <div className="comm-actions">
               {state !== "Satisfied" && !c.preDeadlineNoticeAt && <button type="button" onClick={() => markNotice(c)}>{state === "LATE" ? "Prepare overdue notice" : "Prepare pre-deadline notice"}</button>}
-              <button type="button" onClick={() => verifyDueDate(c)}>Verify / override due date</button>\n              {state !== "Satisfied" && <button type="button" onClick={() => markSatisfied(c)}>Record carrier response</button>}
+              <button type="button" onClick={() => verifyDueDate(c)}>Verify / override due date</button>
+              {state !== "Satisfied" && <button type="button" onClick={() => markSatisfied(c)}>Record carrier response</button>}
             </div>
             {(c.audit || []).length > 0 && <details><summary>Audit trail ({c.audit.length})</summary>{c.audit.map((a,i)=><small key={i}>{a.at} — {a.action}{a.detail ? " — "+a.detail : ""}</small>)}</details>}
           </div>;
