@@ -4,6 +4,7 @@ import {reconciliationForClaim,closureBlockers,mortgageRemaining,receivedPayment
 import {complianceStatus} from "../src/lib/stateCompliance.js";
 import {DEADLINE_RULES,addCalendarDays,addWorkingDays,calculateDueDate,ruleFor} from "../src/lib/deadlineRules.js";
 import {phase2CaliforniaFireClaim} from "../src/data/phase2FireClaim.js";
+import {claimWorkflowIntelligence} from "../src/lib/workflowIntelligence.js";
 
 const base=()=>({coverages:[],payments:[],receipts:[],issues:[],supplements:[],recovery:[],criticalEvents:[],deadlineClocks:[],packages:[],mortgage:{},compliance:{},representation:{}});
 
@@ -38,3 +39,6 @@ test("NV and CA rule registries remain separate",()=>{assert.notEqual(DEADLINE_R
 test("Phase 2 synthetic fire claim exercises major claim domains",()=>{const c=phase2CaliforniaFireClaim();assert.equal(c.jurisdiction,"CA");assert.ok(c.documents.length>=4);assert.ok(c.contents.length>=2);assert.ok(c.issues.length>=2);assert.ok(c.supplements.length>=1);assert.ok(c.payments.length>=4);assert.ok(c.receipts.length>=1);assert.ok(c.mortgage.draws.length>=1);assert.ok(c.recovery.length>=2);});
 test("Phase 2 fire claim payment ledger reconciles received coverage",()=>{const r=reconciliationForClaim(phase2CaliforniaFireClaim());assert.equal(r.ledgerDifference,0);assert.equal(r.ledgerReceived,329000);assert.equal(r.coverageReceived,329000);});
 test("Phase 2 fire claim correctly remains open with real workflow blockers",()=>{const c=phase2CaliforniaFireClaim();const b=closureBlockers(c,complianceStatus(c)).blockers;assert.ok(b.some(x=>x.includes("Final claim package")));assert.ok(b.some(x=>x.includes("depreciation")));assert.ok(b.some(x=>x.includes("Mortgage")));assert.ok(b.some(x=>x.includes("issue file")));assert.ok(b.some(x=>x.includes("supplement")));assert.ok(b.some(x=>x.includes("recovery")));});
+
+test("Phase 5 distinguishes records present from stage resolved",()=>{const w=claimWorkflowIntelligence(phase2CaliforniaFireClaim());const by=Object.fromEntries(w.stages.map(s=>[s.key,s]));assert.equal(by.intake.status,"Complete");assert.equal(by.policy.status,"Complete");assert.equal(by.payments.status,"Complete");assert.equal(by.issues.status,"Blocked / Needs Attention");assert.equal(by.package.status,"Not Started");assert.equal(by.approvals.status,"Blocked / Needs Attention");assert.equal(by.recovery.status,"Blocked / Needs Attention");});
+test("Phase 5 surfaces PA review separately from operational progress",()=>{const c=phase2CaliforniaFireClaim();c.policyAnalysis.reviewStatus="Pending";const w=claimWorkflowIntelligence(c);assert.equal(w.stages.find(s=>s.key==="policy").status,"Needs PA Review");});
