@@ -176,6 +176,17 @@ function systemExceptions(claim) {
       "A communication has reached its escalation threshold.", "communications");
   }
 
+  const criticalEvents = (claim.criticalEvents || []).filter(x => x.status !== "Resolved");
+  if (criticalEvents.length) {
+    add("Licensed PA / Client Approval", "Critical", criticalEvents.length + " critical event(s) require specialist review",
+      "EUO/appraisal/denial/SIU/litigation/expert/deadline/privacy/safety events stay out of routine automation.", "critical");
+  }
+  const overdueCritical = criticalEvents.filter(x => x.dueDate && isPast(x.dueDate));
+  if (overdueCritical.length) {
+    add("Licensed PA / Client Approval", "Critical", overdueCritical.length + " critical event deadline(s) overdue",
+      "Immediate licensed/specialist review required; do not infer waiver or legal consequence automatically.", "critical");
+  }
+
   const latestPackage = (claim.packages || []).at(-1);
   if (latestPackage && String(latestPackage.status || "").startsWith("Stale")) {
     add("Licensed PA / Client Approval", "Critical", "Claim package is stale",
