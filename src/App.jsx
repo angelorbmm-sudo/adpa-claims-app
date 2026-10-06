@@ -261,7 +261,7 @@ function App() {
           {tab === "payments" && <PaymentLedger payments={draft.payments || []} coverages={draft.coverages} onChange={payments => saveClaim({ ...draft, payments })} />}
           {tab === "contents" && <ContentsValuationCenter items={draft.contents || []} onChange={contents => saveClaim({ ...draft, contents })} />}
           {tab === "ale" && <ALEManagementCenter claim={draft} onChange={changes => saveClaim({ ...draft, ...changes })} />}
-          {tab === "communications" && <CommunicationsHub claim={draft} onChange={communications => saveClaim({ ...draft, communications })} onDeadlineChange={deadlineClocks => saveClaim({ ...draft, deadlineClocks })} />}
+          {tab === "communications" && <CommunicationsHub claim={draft} onChange={communications => saveClaim({ ...draft, communications })} onDeadlineChange={deadlineClocks => updateClaimById(selected.id, claim => ({ ...claim, deadlineClocks }))} />}
           {tab === "deadlines" && <CarrierDeadlineCenter claim={draft} onChange={deadlineClocks => saveClaim({ ...draft, deadlineClocks })} />}
           {tab === "supplements" && <SupplementsDisputeCenter claim={draft} onChange={supplements => saveClaim({ ...draft, supplements })} />}
           {tab === "mortgage" && <MortgageLossDraftCenter claim={draft} onChange={mortgage => saveClaim({ ...draft, mortgage })} />}
