@@ -32,6 +32,7 @@ export const emptyClaim = () => ({
   lifecycle: {},
   routing: { currentBucket: "", events: [] },
   criticalEvents: [],
+  contractorCommitments: [],
   evidencePlan: {},
   supplements: [],
   mortgage: { servicer: "", accountReference: "", contactName: "", contactPhone: "", contactEmail: "", portal: "", claimCheckAmount: 0, heldBalance: 0, endorsedAmount: 0, initialRelease: 0, requirements: "", endorsementStatus: "Not started", draws: [], inspections: [], documents: [], conditions: [], finalCompletionDate: "", notes: "" },
