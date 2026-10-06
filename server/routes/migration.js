@@ -45,7 +45,7 @@ router.post("/workspace", requirePermission("claims:write"), async (req,res,next
         await client.query(
           `INSERT INTO claims (id,organization_id,insured,property,carrier,claim_number,date_of_loss,cause_of_loss,jurisdiction,representation_status,mortgage_servicer,valuation,valuation_source,valuation_reviewer,notes,data_json,created_by,updated_by)
            VALUES ($1,$2,$3,$4,$5,$6,NULLIF($7,'')::date,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$17)
-           ON CONFLICT (id) DO UPDATE SET insured=EXCLUDED.insured, property=EXCLUDED.property, carrier=EXCLUDED.carrier,
+           ON CONFLICT (organization_id, id) DO UPDATE SET insured=EXCLUDED.insured, property=EXCLUDED.property, carrier=EXCLUDED.carrier,
              claim_number=EXCLUDED.claim_number,date_of_loss=EXCLUDED.date_of_loss,cause_of_loss=EXCLUDED.cause_of_loss,
              jurisdiction=EXCLUDED.jurisdiction,representation_status=EXCLUDED.representation_status,mortgage_servicer=EXCLUDED.mortgage_servicer,
              valuation=EXCLUDED.valuation,valuation_source=EXCLUDED.valuation_source,valuation_reviewer=EXCLUDED.valuation_reviewer,
