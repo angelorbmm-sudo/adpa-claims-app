@@ -73,3 +73,17 @@ Do not delete the user's browser data until:
 ## Important boundary
 
 This backend foundation is code-complete for architecture and handoff, but it is not the same as a deployed production system. Cloud infrastructure, database credentials, identity provider, object storage, backups, monitoring, and final security validation must still be provisioned and tested.
+
+
+## 2026-10-06 compliance/claims-control expansion
+
+The browser workspace now includes California/Nevada compliance, representation/cancellation controls, state carrier deadline clocks, evidence standards, issue/negotiation files, seven-bucket routing, critical-event/EUO/appraisal/counsel routing, litigation-ready chronology, recoverable depreciation tracking, stale-package invalidation, and portfolio reporting.
+
+Backend foundations added:
+- indexed claim jurisdiction;
+- user_licenses table for jurisdiction-specific PA license verification;
+- claims:negotiate / claims:release / compliance:override permissions;
+- requireVerifiedPALicenseForClaim middleware;
+- POST /api/claims/:id/release-check server-side readiness gate.
+
+Important: these controls are foundations. The browser app still uses localStorage by default and the production identity/database/storage/email/e-sign environment is not deployed. Material outbound actions must remain disabled until server persistence, license verification data, immutable audit logging, private object storage, role enforcement, and delivery integrations are production-configured and tested.
