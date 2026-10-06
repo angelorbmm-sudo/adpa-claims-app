@@ -118,6 +118,7 @@ function App() {
         const remote = await fetchClaims();
         if (cancelled) return;
         const claims = remote.claims || [];
+        setServerVersions(remote.versions || {});
         setWorkspace(w => ({
           claims,
           selectedId: claims.some(c => c.id === w.selectedId) ? w.selectedId : (claims[0]?.id || null)
