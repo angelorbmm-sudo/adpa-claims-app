@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { nowIso, uid } from "../lib/storage.js";
+import { estimateIntelligence } from "../lib/estimatingIntelligence.js";
 
 const blank = {
   room: "",
@@ -22,6 +23,8 @@ function money(v) {
 
 export default function EstimateComparison({ records, onChange }) {
   const [row, setRow] = useState(blank);
+
+  const intelligence = useMemo(() => estimateIntelligence(records), [records]);
 
   const totals = useMemo(() => records.reduce((t, r) => {
     const adpa = number(r.quantity) * number(r.adpaUnitPrice);
@@ -56,7 +59,8 @@ export default function EstimateComparison({ records, onChange }) {
         <div className="stat"><small>ADPA supported total</small><b>{money(totals.adpa)}</b></div>
         <div className="stat"><small>Carrier total</small><b>{money(totals.carrier)}</b></div>
         <div className="stat"><small>Current variance</small><b>{money(totals.variance)}</b></div>
-        <div className="stat"><small>Lines requiring review</small><b>{records.filter(r => r.status !== "Resolved").length}</b></div>
+        <div className="stat"><small>Lines requiring review</small><b>{intelligence.needsReview}</b></div>
+        <div className="stat"><small>Unsupported variance lines</small><b>{intelligence.missingSources}</b></div>
       </div>
 
       <form onSubmit={submit} className="grid">
@@ -76,7 +80,7 @@ export default function EstimateComparison({ records, onChange }) {
 
       <div className="table-wrap">
         <table>
-          <thead><tr><th>Coverage</th><th>Room / trade</th><th>Description</th><th>ADPA</th><th>Carrier</th><th>Variance</th><th>Source</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Coverage</th><th>Room / trade</th><th>Description</th><th>ADPA</th><th>Carrier</th><th>Variance</th><th>Variance type</th><th>Source</th><th>Status</th><th></th></tr></thead>
           <tbody>
             {records.map(r => {
               const adpa = number(r.quantity) * number(r.adpaUnitPrice);
@@ -88,7 +92,8 @@ export default function EstimateComparison({ records, onChange }) {
                 <td>{money(adpa)}</td>
                 <td>{money(carrier)}</td>
                 <td>{money(adpa-carrier)}</td>
-                <td>{r.source}</td>
+                <td>{intelligence.lines.find(x=>x.id===r.id)?.varianceCategory}</td>
+                <td>{r.source || (Math.abs(adpa-carrier)>0.01 ? "SOURCE NEEDED" : "")}</td>
                 <td>{r.status}</td>
                 <td><button type="button" onClick={() => remove(r.id)}>Remove</button></td>
               </tr>;
@@ -96,6 +101,7 @@ export default function EstimateComparison({ records, onChange }) {
           </tbody>
         </table>
       </div>
+      <div className="panel"><h2>Variance intelligence</h2><p>{Object.entries(intelligence.byCategory).map(([k,v])=>k+": "+money(v)).join(" · ") || "No categorized variance yet."}</p></div>
       <p className="notice">This comparison is a working analysis. It does not itself establish coverage, entitlement, code applicability, or settlement authority. Preserve estimate versions and supporting sources.</p>
     </section>
   );
