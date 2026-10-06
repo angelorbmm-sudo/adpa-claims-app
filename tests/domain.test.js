@@ -6,6 +6,7 @@ import {DEADLINE_RULES,addCalendarDays,addWorkingDays,calculateDueDate,ruleFor} 
 import {phase2CaliforniaFireClaim} from "../src/data/phase2FireClaim.js";
 import {claimWorkflowIntelligence} from "../src/lib/workflowIntelligence.js";
 import {phase6CaliforniaWaterClaim,phase6CaliforniaDenialClaim,phase6ContentsHeavyClaim,phase6MortgageLossDraftClaim,phase6NevadaClaim,phase6SyntheticClaims} from "../src/data/phase6Claims.js";
+import {prepareClaimReview,claimPreparationSummary} from "../src/lib/claimPreparation.js";
 
 const base=()=>({coverages:[],payments:[],receipts:[],issues:[],supplements:[],recovery:[],criticalEvents:[],deadlineClocks:[],packages:[],mortgage:{},compliance:{},representation:{}});
 
@@ -53,3 +54,9 @@ test("Phase 6 Nevada claim remains jurisdiction-specific",()=>{const c=phase6Nev
 
 test("workflow intelligence gives each Phase 6 claim an actionable next step",()=>{for(const c of phase6SyntheticClaims()){const w=claimWorkflowIntelligence(c);assert.ok(w.next);assert.ok(w.next.label);assert.ok(w.next.nextAction);assert.notEqual(w.next.status,"Complete");}});
 test("Phase 6 denial workflow does not silently complete authority or recovery",()=>{const w=claimWorkflowIntelligence(phase6CaliforniaDenialClaim());assert.notEqual(w.stages.find(s=>s.key==="approvals").status,"Complete");assert.notEqual(w.stages.find(s=>s.key==="closure").status,"Complete");});
+
+test("Phase 8A prepares actionable findings for every synthetic master claim",()=>{for(const c of [phase2CaliforniaFireClaim(),...phase6SyntheticClaims()]){const p=prepareClaimReview(c);assert.ok(p.findings.length>0);assert.ok(p.findings.every(f=>f.nextAction));assert.ok(p.workflow.next);}});
+test("Phase 8A contents fixture identifies unfinished valuation work",()=>{const p=prepareClaimReview(phase6ContentsHeavyClaim());const f=p.findings.find(x=>x.type==="Contents Review");assert.ok(f);assert.equal(f.severity,"High");assert.ok(f.title.includes("150"));});
+test("Phase 8A mortgage fixture identifies exact lender-held balance",()=>{const p=prepareClaimReview(phase6MortgageLossDraftClaim());const f=p.findings.find(x=>x.type==="Mortgage");assert.ok(f);assert.ok(f.title.includes("Mortgage"));assert.equal(p.reconciliation.lenderHeld,115000);});
+test("Phase 8A denial fixture requires licensed handling for critical event",()=>{const p=prepareClaimReview(phase6CaliforniaDenialClaim());assert.ok(p.findings.some(x=>x.type==="Critical Event"&&x.requiresPA));});
+test("Phase 8A summary remains explicitly draft and human-reviewed",()=>{const s=claimPreparationSummary(phase6CaliforniaWaterClaim());assert.ok(s.includes("DRAFT / HUMAN REVIEW REQUIRED"));assert.ok(s.includes("not a coverage opinion"));});
