@@ -26,7 +26,7 @@ export const DEADLINE_RULES = {
 
 export function addCalendarDays(date,days){const d=new Date(date+"T12:00:00");d.setDate(d.getDate()+Number(days||0));return d.toISOString().slice(0,10);}
 export function addWorkingDays(date,days){const d=new Date(date+"T12:00:00");let remaining=Number(days||0);while(remaining>0){d.setDate(d.getDate()+1);if(d.getDay()!==0&&d.getDay()!==6)remaining--;}return d.toISOString().slice(0,10);}
-export function calculateDueDate(startDate,rule){if(!startDate||!rule||rule.unit==="prompt"||rule.unit==="before")return "";return rule.unit==="working"?addWorkingDays(startDate,rule.days):addCalendarDays(startDate,rule.days);}
+export function calculateDueDate(startDate,rule){if(!startDate||!rule||rule.unit==="prompt")return "";if(rule.unit==="before"){const d=new Date(startDate+"T12:00:00");d.setDate(d.getDate()-Number(rule.days||0));return d.toISOString().slice(0,10);}return rule.unit==="working"?addWorkingDays(startDate,rule.days):addCalendarDays(startDate,rule.days);}
 export function reminderDate(dueDate,leadDays=2){if(!dueDate)return "";const d=new Date(dueDate+"T12:00:00");d.setDate(d.getDate()-Number(leadDays||2));return d.toISOString().slice(0,10);}
 export function daysFromToday(date){if(!date)return null;return Math.ceil((new Date(date+"T23:59:59").getTime()-Date.now())/86400000);}
 export function ruleFor(state,key){return (DEADLINE_RULES[state]||[]).find(r=>r.key===key);}
