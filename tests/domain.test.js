@@ -7,6 +7,7 @@ import {phase2CaliforniaFireClaim} from "../src/data/phase2FireClaim.js";
 import {claimWorkflowIntelligence} from "../src/lib/workflowIntelligence.js";
 import {phase6CaliforniaWaterClaim,phase6CaliforniaDenialClaim,phase6ContentsHeavyClaim,phase6MortgageLossDraftClaim,phase6NevadaClaim,phase6SyntheticClaims} from "../src/data/phase6Claims.js";
 import {prepareClaimReview,claimPreparationSummary} from "../src/lib/claimPreparation.js";
+import {draftCommunicationOptions,communicationDraftByType} from "../src/lib/draftCommunications.js";
 
 const base=()=>({coverages:[],payments:[],receipts:[],issues:[],supplements:[],recovery:[],criticalEvents:[],deadlineClocks:[],packages:[],mortgage:{},compliance:{},representation:{}});
 
@@ -60,3 +61,9 @@ test("Phase 8A contents fixture identifies unfinished valuation work",()=>{const
 test("Phase 8A mortgage fixture identifies exact lender-held balance",()=>{const p=prepareClaimReview(phase6MortgageLossDraftClaim());const f=p.findings.find(x=>x.type==="Mortgage");assert.ok(f);assert.ok(f.title.includes("Mortgage"));assert.equal(p.reconciliation.lenderHeld,115000);});
 test("Phase 8A denial fixture requires licensed handling for critical event",()=>{const p=prepareClaimReview(phase6CaliforniaDenialClaim());assert.ok(p.findings.some(x=>x.type==="Critical Event"&&x.requiresPA));});
 test("Phase 8A summary remains explicitly draft and human-reviewed",()=>{const s=claimPreparationSummary(phase6CaliforniaWaterClaim());assert.ok(s.includes("DRAFT / HUMAN REVIEW REQUIRED"));assert.ok(s.includes("not a coverage opinion"));});
+
+test("Phase 8B drafts are always human-review only and never send-enabled",()=>{for(const c of [phase2CaliforniaFireClaim(),...phase6SyntheticClaims()]){const d=draftCommunicationOptions(c).options;assert.ok(d.length>0);assert.ok(d.every(x=>x.status==="DRAFT / HUMAN REVIEW REQUIRED"&&x.sendAllowed===false));}});
+test("Phase 8B water claim offers supplement and depreciation follow-ups",()=>{const d=draftCommunicationOptions(phase6CaliforniaWaterClaim()).options;assert.ok(d.some(x=>x.type==="Supplement Follow-up"));assert.ok(d.some(x=>x.type==="Depreciation Follow-up"));});
+test("Phase 8B mortgage draft carries exact lender-held amount",()=>{const d=communicationDraftByType(phase6MortgageLossDraftClaim(),"Mortgage / Loss Draft");assert.ok(d);assert.ok(d.body.includes("$115,000"));});
+test("Phase 8B substantive supplement draft requires PA review",()=>{const d=communicationDraftByType(phase6CaliforniaWaterClaim(),"Supplement Follow-up");assert.equal(d.requiresPAReview,true);assert.equal(d.sendAllowed,false);});
+test("Phase 8B denial status draft remains review-gated",()=>{const d=communicationDraftByType(phase6CaliforniaDenialClaim(),"Status Follow-up");assert.ok(d);assert.equal(d.requiresPAReview,true);assert.equal(d.sendAllowed,false);});
