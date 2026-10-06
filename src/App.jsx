@@ -20,9 +20,11 @@ import IssueNegotiationCenter from "./components/IssueNegotiationCenter.jsx";
 import DepreciationRecoveryCenter from "./components/DepreciationRecoveryCenter.jsx";
 import ClaimLifecycleChronology from "./components/ClaimLifecycleChronology.jsx";
 import { complianceStatus } from "./lib/stateCompliance.js";
+import PortfolioDashboard from "./components/PortfolioDashboard.jsx";
 
 const modules = [
-  ["overview", "Dashboard"],
+  ["portfolio", "Portfolio Command"],
+  ["overview", "Claim Dashboard"],
   ["workqueue", "Work Queue"],
   ["intake", "Claim Intake"],
   ["compliance", "State Compliance"],
@@ -214,6 +216,7 @@ function App() {
         </aside>
 
         <main>
+          {tab === "portfolio" && <PortfolioDashboard claims={workspace.claims} onOpenClaim={openClaim} />}
           {tab === "overview" && (
             <section>
               <h1>Claim Dashboard</h1>
