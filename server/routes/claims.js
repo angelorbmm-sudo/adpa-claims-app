@@ -13,6 +13,7 @@ const ClaimPayload = z.object({
   claimNumber: z.string().optional().default(""),
   dateOfLoss: z.string().optional().default(""),
   causeOfLoss: z.string().optional().default(""),
+  jurisdiction: z.enum(["CA","NV"]).optional().default("CA"),
   representationStatus: z.string().optional().default(""),
   mortgageServicer: z.string().optional().default(""),
   valuation: z.string().optional().default(""),
@@ -43,16 +44,16 @@ router.put("/:id", requirePermission("claims:write"), async (req,res,next)=>{
     const nextVersion=(before.rows[0]?.version||0)+1;
     await query(
       `INSERT INTO claims
-       (id,organization_id,insured,property,carrier,claim_number,date_of_loss,cause_of_loss,representation_status,mortgage_servicer,valuation,valuation_source,valuation_reviewer,notes,data_json,version,created_by,updated_by)
-       VALUES ($1,$2,$3,$4,$5,$6,NULLIF($7,'')::date,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$17)
+       (id,organization_id,insured,property,carrier,claim_number,date_of_loss,cause_of_loss,jurisdiction,representation_status,mortgage_servicer,valuation,valuation_source,valuation_reviewer,notes,data_json,version,created_by,updated_by)
+       VALUES ($1,$2,$3,$4,$5,$6,NULLIF($7,'')::date,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)
        ON CONFLICT (id) DO UPDATE SET
         insured=EXCLUDED.insured, property=EXCLUDED.property, carrier=EXCLUDED.carrier,
         claim_number=EXCLUDED.claim_number, date_of_loss=EXCLUDED.date_of_loss, cause_of_loss=EXCLUDED.cause_of_loss,
-        representation_status=EXCLUDED.representation_status, mortgage_servicer=EXCLUDED.mortgage_servicer,
+        jurisdiction=EXCLUDED.jurisdiction, representation_status=EXCLUDED.representation_status, mortgage_servicer=EXCLUDED.mortgage_servicer,
         valuation=EXCLUDED.valuation, valuation_source=EXCLUDED.valuation_source, valuation_reviewer=EXCLUDED.valuation_reviewer,
         notes=EXCLUDED.notes, data_json=EXCLUDED.data_json, version=EXCLUDED.version,
         updated_by=EXCLUDED.updated_by, updated_at=now()`,
-      [parsed.id,req.user.organization_id,parsed.insured,parsed.property,parsed.carrier,parsed.claimNumber,parsed.dateOfLoss,parsed.causeOfLoss,parsed.representationStatus,parsed.mortgageServicer,parsed.valuation,parsed.valuationSource,parsed.valuationReviewer,parsed.notes,parsed,nextVersion,req.user.id]
+      [parsed.id,req.user.organization_id,parsed.insured,parsed.property,parsed.carrier,parsed.claimNumber,parsed.dateOfLoss,parsed.causeOfLoss,parsed.jurisdiction,parsed.representationStatus,parsed.mortgageServicer,parsed.valuation,parsed.valuationSource,parsed.valuationReviewer,parsed.notes,parsed,nextVersion,req.user.id]
     );
     await writeAuditEvent({actorUserId:req.user.id,claimId:parsed.id,action:before.rowCount?"claim.update":"claim.create",entityType:"claim",entityId:parsed.id,before:before.rows[0]?.data_json||null,after:parsed,metadata:{version:nextVersion,organizationId:req.user.organization_id}});
     res.json({claim:parsed,version:nextVersion});
