@@ -176,6 +176,29 @@ function systemExceptions(claim) {
       "A communication has reached its escalation threshold.", "communications");
   }
 
+  const representation = claim.representation || {};
+  const representationGaps = [];
+  if (!representation.templateVerified) representationGaps.push("template");
+  if (!representation.signedDate) representationGaps.push("signed date");
+  if (!representation.insuredCopyDelivered) representationGaps.push("insured copy");
+  if (claim.jurisdiction === "CA" && !representation.disclosureBeforeSigning) representationGaps.push("CA disclosure sequence");
+  if (claim.jurisdiction === "CA" && !representation.cancellationNoticeDelivered) representationGaps.push("cancellation notice");
+  if (!representation.feeTermsVerified) representationGaps.push("fee/initials");
+  if (representationGaps.length) {
+    add("Licensed PA / Client Approval", "Critical", "Representation file incomplete",
+      "Verify before regulated action: " + representationGaps.join(", ") + ".", "representation");
+  }
+
+  const evidencePlan = claim.evidencePlan || {};
+  let proofMissing = 0;
+  Object.values(evidencePlan).forEach(section => Object.values(section || {}).forEach(item => {
+    if (item?.status === "Missing" || item?.status === "Requested") proofMissing += 1;
+  }));
+  if (proofMissing) {
+    add("Intake / Evidence", "Normal", proofMissing + " tracked proof item(s) still open",
+      "Evidence Standards contains missing/requested support that may affect claim positions.", "proofplan");
+  }
+
   const compliance = claim.compliance || {};
   const complianceBlockers = [];
   if (!claim.jurisdiction) complianceBlockers.push("jurisdiction");
