@@ -176,6 +176,12 @@ function systemExceptions(claim) {
       "A communication has reached its escalation threshold.", "communications");
   }
 
+  const latestPackage = (claim.packages || []).at(-1);
+  if (latestPackage && String(latestPackage.status || "").startsWith("Stale")) {
+    add("Licensed PA / Client Approval", "Critical", "Claim package is stale",
+      "Claim data changed after the latest package snapshot. Reassemble a new version before relying on prior approvals or release readiness.", "package");
+  }
+
   const representation = claim.representation || {};
   const representationGaps = [];
   if (!representation.templateVerified) representationGaps.push("template");
