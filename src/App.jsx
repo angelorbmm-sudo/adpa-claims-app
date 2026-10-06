@@ -26,6 +26,7 @@ import EvidenceStandardsCenter from "./components/EvidenceStandardsCenter.jsx";
 import AgreementPacketCenter from "./components/AgreementPacketCenter.jsx";
 import RoutingControlCenter from "./components/RoutingControlCenter.jsx";
 import CriticalEventCenter from "./components/CriticalEventCenter.jsx";
+import ContractorCommitmentCenter from "./components/ContractorCommitmentCenter.jsx";
 
 const modules = [
   ["portfolio", "Portfolio Command"],
@@ -42,6 +43,7 @@ const modules = [
   ["contents", "Contents"],
   ["ale", "ALE / Loss of Use"],
   ["estimates", "Estimate Comparison"],
+  ["contractor", "Contractor Commitment"],
   ["payments", "Payment Ledger"],
   ["communications", "Communications"],
   ["deadlines", "Carrier Deadline Clock"],
@@ -178,6 +180,7 @@ function App() {
       lifecycle: draft.lifecycle || {},
       routing: draft.routing || {},
       criticalEvents: draft.criticalEvents || [],
+      contractorCommitments: draft.contractorCommitments || [],
       communications: draft.communications || [],
       aiPrep: draft.aiPrep || {},
       aiFindings: draft.aiFindings || [],
@@ -330,6 +333,7 @@ function App() {
           {tab === "evidence" && <EvidenceEngine claim={draft} onChange={documents => saveClaim({ ...draft, documents })} />}
           {tab === "proofplan" && <EvidenceStandardsCenter claim={draft} onChange={evidencePlan => saveClaim({ ...draft, evidencePlan })} />}
           {tab === "estimates" && <EstimateComparison records={draft.estimateComparisons || []} onChange={records => saveClaim({ ...draft, estimateComparisons: records })} />}
+          {tab === "contractor" && <ContractorCommitmentCenter claim={draft} onChange={contractorCommitments => saveClaim({ ...draft, contractorCommitments })} />}
           {tab === "payments" && <PaymentLedger payments={draft.payments || []} coverages={draft.coverages} onChange={payments => saveClaim({ ...draft, payments })} />}
           {tab === "contents" && <ContentsValuationCenter items={draft.contents || []} onChange={contents => saveClaim({ ...draft, contents })} />}
           {tab === "ale" && <ALEManagementCenter claim={draft} onChange={changes => saveClaim({ ...draft, ...changes })} />}
