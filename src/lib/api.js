@@ -24,3 +24,7 @@ export async function fetchAudit(claimId){ return request("/api/audit/claims/"+e
 
 export async function releaseCheck(claimId){ return request("/api/claims/"+encodeURIComponent(claimId)+"/release-check",{method:"POST"}); }
 export async function closureCheck(claimId){ return request("/api/claims/"+encodeURIComponent(claimId)+"/closure-check",{method:"POST"}); }
+
+export async function fetchEvidence(claimId){ return request("/api/documents/"+encodeURIComponent(claimId)); }
+export async function createEvidenceUploadIntent(claimId,metadata){ return request("/api/documents/"+encodeURIComponent(claimId)+"/upload-intent",{method:"POST",body:JSON.stringify(metadata)}); }
+export async function completeEvidenceUpload(claimId,documentId){ return request("/api/documents/"+encodeURIComponent(claimId)+"/"+encodeURIComponent(documentId)+"/complete",{method:"POST",body:"{}"}); }
