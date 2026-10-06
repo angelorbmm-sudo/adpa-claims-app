@@ -25,6 +25,7 @@ import RepresentationContractCenter from "./components/RepresentationContractCen
 import EvidenceStandardsCenter from "./components/EvidenceStandardsCenter.jsx";
 import AgreementPacketCenter from "./components/AgreementPacketCenter.jsx";
 import RoutingControlCenter from "./components/RoutingControlCenter.jsx";
+import CriticalEventCenter from "./components/CriticalEventCenter.jsx";
 
 const modules = [
   ["portfolio", "Portfolio Command"],
@@ -45,6 +46,7 @@ const modules = [
   ["communications", "Communications"],
   ["deadlines", "Carrier Deadline Clock"],
   ["issues", "Issues & Negotiation"],
+  ["critical", "Critical Events / EUO"],
   ["chronology", "Lifecycle & Chronology"],
   ["supplements", "Supplements"],
   ["mortgage", "Mortgage"],
@@ -175,6 +177,7 @@ function App() {
       issues: draft.issues || [],
       lifecycle: draft.lifecycle || {},
       routing: draft.routing || {},
+      criticalEvents: draft.criticalEvents || [],
       communications: draft.communications || [],
       aiPrep: draft.aiPrep || {},
       aiFindings: draft.aiFindings || [],
@@ -333,6 +336,7 @@ function App() {
           {tab === "communications" && <CommunicationsHub claim={draft} onChange={communications => saveClaim({ ...draft, communications })} onDeadlineChange={deadlineClocks => updateClaimById(selected.id, claim => ({ ...claim, deadlineClocks }))} />}
           {tab === "deadlines" && <CarrierDeadlineCenter claim={draft} onChange={deadlineClocks => saveClaim({ ...draft, deadlineClocks })} />}
           {tab === "issues" && <IssueNegotiationCenter claim={draft} onChange={issues => saveClaim({ ...draft, issues })} />}
+          {tab === "critical" && <CriticalEventCenter claim={draft} onChange={criticalEvents => saveClaim({ ...draft, criticalEvents })} />}
           {tab === "chronology" && <ClaimLifecycleChronology claim={draft} onChange={lifecycle => saveClaim({ ...draft, lifecycle })} />}
           {tab === "supplements" && <SupplementsDisputeCenter claim={draft} onChange={supplements => saveClaim({ ...draft, supplements })} />}
           {tab === "mortgage" && <MortgageLossDraftCenter claim={draft} onChange={mortgage => saveClaim({ ...draft, mortgage })} />}
