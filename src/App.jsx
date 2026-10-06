@@ -28,6 +28,7 @@ import RoutingControlCenter from "./components/RoutingControlCenter.jsx";
 import CriticalEventCenter from "./components/CriticalEventCenter.jsx";
 import ContractorCommitmentCenter from "./components/ContractorCommitmentCenter.jsx";
 import ClaimClosureAuditCenter from "./components/ClaimClosureAuditCenter.jsx";
+import FinalFinancialReconciliation from "./components/FinalFinancialReconciliation.jsx";
 
 const modules = [
   ["portfolio", "Portfolio Command"],
@@ -46,6 +47,7 @@ const modules = [
   ["estimates", "Estimate Comparison"],
   ["contractor", "Contractor Commitment"],
   ["payments", "Payment Ledger"],
+  ["financial", "Final Financial Reconciliation"],
   ["communications", "Communications"],
   ["deadlines", "Carrier Deadline Clock"],
   ["issues", "Issues & Negotiation"],
@@ -338,6 +340,7 @@ function App() {
           {tab === "estimates" && <EstimateComparison records={draft.estimateComparisons || []} onChange={records => saveClaim({ ...draft, estimateComparisons: records })} />}
           {tab === "contractor" && <ContractorCommitmentCenter claim={draft} onChange={contractorCommitments => saveClaim({ ...draft, contractorCommitments })} />}
           {tab === "payments" && <PaymentLedger payments={draft.payments || []} coverages={draft.coverages} onChange={payments => saveClaim({ ...draft, payments })} />}
+          {tab === "financial" && <FinalFinancialReconciliation claim={draft} />}
           {tab === "contents" && <ContentsValuationCenter items={draft.contents || []} onChange={contents => saveClaim({ ...draft, contents })} />}
           {tab === "ale" && <ALEManagementCenter claim={draft} onChange={changes => saveClaim({ ...draft, ...changes })} />}
           {tab === "communications" && <CommunicationsHub claim={draft} onChange={communications => saveClaim({ ...draft, communications })} onDeadlineChange={deadlineClocks => updateClaimById(selected.id, claim => ({ ...claim, deadlineClocks }))} />}
