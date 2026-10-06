@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { nowIso, uid } from "../lib/storage.js";
+import { calculateDueDate, reminderDate, ruleFor } from "../lib/deadlineRules.js";
 
 const blank = {
   direction: "Inbound",
@@ -18,7 +19,10 @@ const blank = {
   approvalStatus: "Draft only",
   escalationStatus: "Normal",
   owner: "",
-  status: "Open"
+  status: "Open",
+  startDeadlineClock: false,
+  deadlineState: "CA",
+  deadlineRuleKey: "claimant_communication"
 };
 
 function isPast(date) {
@@ -26,7 +30,7 @@ function isPast(date) {
   return new Date(date + "T23:59:59").getTime() < Date.now();
 }
 
-export default function CommunicationsHub({ claim, onChange }) {
+export default function CommunicationsHub({ claim, onChange, onDeadlineChange }) {
   const [row, setRow] = useState(blank);
   const records = claim.communications || [];
 
@@ -40,8 +44,35 @@ export default function CommunicationsHub({ claim, onChange }) {
   function add(e) {
     e.preventDefault();
     if (!row.summary.trim() && !row.subject.trim()) return;
-    onChange([...records, { ...row, id: uid("communication"), createdAt: nowIso() }]);
-    setRow(blank);
+    const communicationId = uid("communication");
+    onChange([...records, { ...row, id: communicationId, createdAt: nowIso() }]);
+    if (row.direction === "Outbound" && row.startDeadlineClock && row.receivedSentDate && onDeadlineChange) {
+      const rule = ruleFor(row.deadlineState, row.deadlineRuleKey);
+      if (rule) {
+        const dueDate = calculateDueDate(row.receivedSentDate, rule);
+        const clock = {
+          id: uid("deadline"),
+          state: row.deadlineState,
+          ruleKey: row.deadlineRuleKey,
+          triggerDate: row.receivedSentDate,
+          dueDate,
+          reminderDate: reminderDate(dueDate, 2),
+          leadDays: 2,
+          authority: rule.authority,
+          ruleLabel: rule.label,
+          dayCount: rule.days,
+          dayUnit: rule.unit,
+          subject: row.subject || row.summary,
+          carrierParty: row.party,
+          sourceRef: "Communication " + communicationId,
+          status: "Open",
+          createdAt: nowIso(),
+          audit: [{ at: nowIso(), action: "Clock created from outbound communication", detail: rule.authority }]
+        };
+        onDeadlineChange([...(claim.deadlineClocks || []), clock]);
+      }
+    }
+    setRow({ ...blank, deadlineState: claim.jurisdiction || "CA" });
   }
 
   function patch(id, field, value) {
@@ -78,6 +109,9 @@ export default function CommunicationsHub({ claim, onChange }) {
           <label>Promised date<input type="date" value={row.promisedDate} onChange={e => setRow(r=>({...r,promisedDate:e.target.value}))}/></label>
           <label>Escalation<select value={row.escalationStatus} onChange={e => setRow(r=>({...r,escalationStatus:e.target.value}))}><option>Normal</option><option>Watch</option><option>Escalate</option></select></label>
           <label className="checkbox-label"><input type="checkbox" checked={row.replyNeeded} onChange={e => setRow(r=>({...r,replyNeeded:e.target.checked}))}/>Reply needed</label>
+          <label className="checkbox-label"><input type="checkbox" checked={row.startDeadlineClock} onChange={e => setRow(r=>({...r,startDeadlineClock:e.target.checked}))}/>Start carrier response clock</label>
+          {row.startDeadlineClock && <label>Deadline jurisdiction<select value={row.deadlineState} onChange={e => setRow(r=>({...r,deadlineState:e.target.value}))}><option value="CA">California</option><option value="NV">Nevada</option></select></label>}
+          {row.startDeadlineClock && <label>Clock type<select value={row.deadlineRuleKey} onChange={e => setRow(r=>({...r,deadlineRuleKey:e.target.value}))}><option value="claimant_communication">Response to claimant communication</option><option value="proof_decision">Proof-of-loss decision</option><option value="claim_ack">Claim acknowledgment</option></select></label>}
           <label>Approval state<select value={row.approvalStatus} onChange={e => setRow(r=>({...r,approvalStatus:e.target.value}))}><option>Draft only</option><option>Staff reviewed</option><option>Licensed PA approved</option><option>Sent externally</option></select></label>
           <label className="wide">Summary<textarea value={row.summary} onChange={e => setRow(r=>({...r,summary:e.target.value}))}/></label>
           <label className="wide">Draft reply<textarea placeholder="Draft only until approved/sent through a connected delivery workflow." value={row.draftReply} onChange={e => setRow(r=>({...r,draftReply:e.target.value}))}/></label>
