@@ -1,4 +1,5 @@
 import { emptyClaim } from "./seed.js";
+import { phase2CaliforniaFireClaim } from "./phase2FireClaim.js";
 
 function claim(id, insured, carrier, claimNumber, cause, requested, received) {
   const c = emptyClaim();
@@ -50,6 +51,7 @@ function claim(id, insured, carrier, claimNumber, cause, requested, received) {
 
 export function demoWorkspace() {
   const claims = [
+    phase2CaliforniaFireClaim(),
     claim("demo-fire","Demo Fire Claim","Sample Mutual","DEMO-1001","Fire / smoke",220000,90000),
     claim("demo-water","Demo Water Claim","Example Insurance","DEMO-1002","Water damage",85000,30000),
     claim("demo-storm","Demo Storm Claim","Practice Casualty","DEMO-1003","Wind / tree impact",140000,50000)
