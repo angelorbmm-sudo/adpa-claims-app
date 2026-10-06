@@ -147,3 +147,8 @@ details summary { cursor:pointer; font-weight:600; }
   padding: 10px 14px;
 }
 .demo-banner + .topbar { top: 42px; }
+
+.workflow-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.workflow-strip button{font-size:12px;padding:8px 10px;border-radius:999px}
+.workflow-strip .workflow-done{font-weight:700;border-color:currentColor}
+@media(max-width:720px){.workflow-strip{display:grid;grid-template-columns:1fr 1fr}.workflow-strip button{text-align:left}.panel>.primary{width:100%}}
