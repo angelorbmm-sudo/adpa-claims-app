@@ -14,7 +14,7 @@ export function reconciliationForClaim(claim){
   const carrier=coverages.reduce((s,c)=>s+n(c.carrier),0);
   const depreciationRecoverable=receipts.reduce((s,x)=>s+n(x.recoverableDepreciation),0);
   const depreciationReleased=receipts.reduce((s,x)=>s+n(x.released),0);
-  const depreciationOutstanding=Math.max(0,depreciationRecoverable-depreciationReleased);
+  const depreciationOutstanding=receipts.reduce((s,x)=>s+(x.disposition==="Documented unrecoverable/waived"?0:Math.max(0,n(x.recoverableDepreciation)-n(x.released))),0);
   const lenderHeld=mortgageRemaining(claim.mortgage||{});
   const openIssues=(claim.issues||[]).filter(x=>x.status!=="Resolved");
   const openSupplements=(claim.supplements||[]).filter(x=>!["Resolved","Closed","Paid"].includes(x.status));
