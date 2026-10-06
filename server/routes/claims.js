@@ -4,6 +4,7 @@ import { query } from "../db.js";
 import { requirePermission } from "../auth.js";
 import { writeAuditEvent } from "../audit.js";
 import { requireVerifiedPALicenseForClaim } from "../compliance.js";
+import { financialInvariants } from "../financial.js";
 
 const router = Router();
 const ClaimPayload = z.object({
@@ -97,15 +98,8 @@ router.post("/:id/closure-check", requirePermission("claims:approve"), requireVe
     const db=await query("SELECT data_json FROM claims WHERE id=$1 AND organization_id=$2",[req.params.id,req.user.organization_id]);
     if(!db.rowCount) return res.status(404).json({error:"Claim not found."});
     const claim=db.rows[0].data_json||{}, reasons=[];
-    const n=v=>Number(v||0);
-    const payments=claim.payments||[], coverages=claim.coverages||[], receipts=claim.receipts||[];
-    const received=payments.filter(p=>p.receivedDate||p.depositedDate||p.status==="Received"||p.status==="Deposited").reduce((s,p)=>s+n(p.amount),0);
-    const coverageReceived=coverages.reduce((s,x)=>s+n(x.received),0);
-    if(Math.abs(received-coverageReceived)>0.01) reasons.push("Payment ledger does not reconcile to coverage received totals.");
-    const dep=receipts.reduce((s,x)=>s+(x.disposition==="Documented unrecoverable/waived"?0:Math.max(0,n(x.recoverableDepreciation)-n(x.released))),0);
-    if(dep>0.01) reasons.push("Recoverable depreciation remains outstanding.");
-    const m=claim.mortgage||{}, mortgageHeld=Math.max(0,n(m.heldBalance)-n(m.initialRelease)-(m.draws||[]).reduce((s,x)=>s+n(x.releasedAmount),0));
-    if(mortgageHeld>0.01) reasons.push("Mortgage/loss-draft funds remain held.");
+    const financial=financialInvariants(claim);
+    reasons.push(...financial.reasons);
     if((claim.issues||[]).some(x=>x.status!=="Resolved")) reasons.push("Open issue files remain.");
     if((claim.criticalEvents||[]).some(x=>x.status!=="Resolved")) reasons.push("Open critical events remain.");
     if((claim.supplements||[]).some(x=>!["Resolved","Closed","Approved","Paid"].includes(x.status))) reasons.push("Open supplement/dispute records remain.");
@@ -121,7 +115,7 @@ router.post("/:id/closure-check", requirePermission("claims:approve"), requireVe
     const approvals=claim.approvals||[];
     if(!approvals.some(a=>a.packageHash===hash&&a.stage==="Licensed PA Approval"&&/approve/i.test(a.decision||"")&&!a.revokedAt)) reasons.push("Licensed PA approval missing.");
     if(!approvals.some(a=>a.packageHash===hash&&a.stage==="Client Authorization"&&/author|approve/i.test(a.decision||"")&&!a.revokedAt)) reasons.push("Client authorization missing.");
-    const result={ready:!reasons.length,reasons,packageHash:hash,financial:{ledgerReceived:received,coverageReceived,depreciationOutstanding:dep,mortgageHeld},verifiedPALicense:req.verifiedPALicense};
+    const result={ready:!reasons.length,reasons,packageHash:hash,financial:financial.dollars,financialExactCents:financial.cents,verifiedPALicense:req.verifiedPALicense};
     await writeAuditEvent({actorUserId:req.user.id,organizationId:req.user.organization_id,claimId:req.params.id,action:"claim.closure_check",entityType:"claim",entityId:req.params.id,before:null,after:result,metadata:{organizationId:req.user.organization_id}});
     res.json(result);
   }catch(e){next(e);}
