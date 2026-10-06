@@ -177,16 +177,18 @@ function systemExceptions(claim) {
   }
 
   const deadlineClocks = claim.deadlineClocks || [];
-  const openClocks = deadlineClocks.filter(x => x.status !== "Satisfied" && x.dueDate);
-  const lateClocks = openClocks.filter(x => isPast(x.dueDate));
+  const openClocks = deadlineClocks.filter(x => x.status !== "Satisfied" && (x.verifiedDueDate || x.dueDate));
+  const lateClocks = openClocks.filter(x => isPast(x.verifiedDueDate || x.dueDate));
   if (lateClocks.length) {
     add("Carrier Follow-up", "Critical", lateClocks.length + " carrier regulatory clock(s) late",
       "Recorded carrier response deadline has passed. Preserve chronology, verify the controlling rule, and prepare escalation/follow-up.", "deadlines");
   }
   const dueSoonClocks = openClocks.filter(x => {
-    const due = new Date(x.dueDate + "T23:59:59").getTime();
-    const reminder = x.reminderDate ? new Date(x.reminderDate + "T00:00:00").getTime() : null;
-    return !isPast(x.dueDate) && reminder && Date.now() >= reminder && Date.now() <= due;
+    const effectiveDue = x.verifiedDueDate || x.dueDate;
+    const due = new Date(effectiveDue + "T23:59:59").getTime();
+    const reminderDate = x.verifiedDueDate ? new Date(new Date(effectiveDue + "T12:00:00").getTime() - Number(x.leadDays || 2) * 86400000).toISOString().slice(0,10) : x.reminderDate;
+    const reminder = reminderDate ? new Date(reminderDate + "T00:00:00").getTime() : null;
+    return !isPast(effectiveDue) && reminder && Date.now() >= reminder && Date.now() <= due;
   });
   if (dueSoonClocks.length) {
     add("Carrier Follow-up", "High", dueSoonClocks.length + " carrier deadline(s) in pre-deadline window",
