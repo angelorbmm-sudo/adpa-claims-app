@@ -1,6 +1,7 @@
 const base = import.meta.env.VITE_API_BASE_URL || "";
 
 export function apiEnabled(){ return Boolean(base); }
+export function apiBase(){ return base; }
 
 async function request(path, options={}){
   const token = sessionStorage.getItem("adpa-access-token");
