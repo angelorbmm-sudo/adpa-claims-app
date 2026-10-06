@@ -152,3 +152,9 @@ details summary { cursor:pointer; font-weight:600; }
 .workflow-strip button{font-size:12px;padding:8px 10px;border-radius:999px}
 .workflow-strip .workflow-done{font-weight:700;border-color:currentColor}
 @media(max-width:720px){.workflow-strip{display:grid;grid-template-columns:1fr 1fr}.workflow-strip button{text-align:left}.panel>.primary{width:100%}}
+
+.workflow-strip button small{display:block;font-size:10px;margin-top:3px;opacity:.8}
+.workflow-strip .workflow-pa{font-weight:700;border-width:2px}
+.workflow-strip .workflow-blocked{font-weight:700;border-style:dashed}
+.workflow-summary{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0;font-size:12px}
+.workflow-summary span{border:1px solid currentColor;border-radius:999px;padding:5px 9px}
