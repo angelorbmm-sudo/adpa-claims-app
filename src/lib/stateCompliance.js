@@ -73,12 +73,19 @@ export const ESCALATION_LEVELS = [
 
 export function complianceStatus(claim) {
   const c = claim.compliance || {};
+  const r = claim.representation || {};
   const blockers = [];
-  if (!claim.jurisdiction) blockers.push("Jurisdiction not confirmed");
+  const state = claim.jurisdiction;
+  const representationVerified = c.contractStatus === "Executed" || (
+    !!r.templateVerified && !!r.signedDate && !!r.insuredCopyDelivered && !!r.feeTermsVerified &&
+    (state !== "CA" || (!!r.disclosureBeforeSigning && !!r.cancellationNoticeDelivered))
+  );
+  const disclosureVerified = state !== "CA" || c.disclosureStatus === "Delivered before contract" || !!r.disclosureBeforeSigning;
+  if (!state) blockers.push("Jurisdiction not confirmed");
   if (c.licenseStatus !== "Verified") blockers.push("PA license not verified for claim jurisdiction");
-  if (c.contractStatus !== "Executed") blockers.push("Representation contract not executed/verified");
-  if (claim.jurisdiction === "CA" && c.disclosureStatus !== "Delivered before contract") blockers.push("California pre-contract disclosure sequence not verified");
-  if (c.cancellationStatus === "Open") blockers.push("Client cancellation period still open — review before irreversible action");
+  if (!representationVerified) blockers.push("Representation contract not executed/verified");
+  if (!disclosureVerified) blockers.push("California pre-contract disclosure sequence not verified");
+  if (c.cancellationStatus === "Open" || (state === "CA" && r.signedDate && !r.cancellationExpired)) blockers.push("Client cancellation period open/unverified — review before irreversible action");
   if (!c.policyStatus || c.policyStatus === "Missing") blockers.push("Policy not collected");
   return { cleared: blockers.length === 0, blockers };
 }
