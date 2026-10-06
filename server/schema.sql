@@ -22,6 +22,21 @@ CREATE TABLE IF NOT EXISTS organization_members (
   PRIMARY KEY (organization_id, user_id)
 );
 
+CREATE TABLE IF NOT EXISTS user_licenses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  jurisdiction text NOT NULL,
+  license_type text NOT NULL DEFAULT 'public_adjuster',
+  license_number text,
+  status text NOT NULL DEFAULT 'unverified',
+  expires_on date,
+  verified_at timestamptz,
+  verification_source text,
+  UNIQUE(user_id, jurisdiction, license_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_licenses_user_state ON user_licenses(user_id, jurisdiction);
+
 CREATE TABLE IF NOT EXISTS claims (
   id text PRIMARY KEY,
   organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -31,6 +46,7 @@ CREATE TABLE IF NOT EXISTS claims (
   claim_number text,
   date_of_loss date,
   cause_of_loss text,
+  jurisdiction text,
   representation_status text,
   mortgage_servicer text,
   valuation text,
@@ -95,3 +111,6 @@ CREATE TABLE IF NOT EXISTS migration_imports (
   imported_at timestamptz NOT NULL DEFAULT now(),
   details_json jsonb NOT NULL DEFAULT '{}'::jsonb
 );
+
+ALTER TABLE claims ADD COLUMN IF NOT EXISTS jurisdiction text;
+CREATE INDEX IF NOT EXISTS idx_claims_jurisdiction ON claims(organization_id, jurisdiction);
