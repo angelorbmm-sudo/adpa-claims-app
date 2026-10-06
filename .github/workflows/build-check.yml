@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund
+      - run: npm install --no-fund
       - run: npm run build
       - name: Run domain regression tests
         run: npm test
@@ -22,4 +22,5 @@ jobs:
           node --check server/index.js
           node --check server/routes/claims.js
           node --check server/routes/migration.js
+          node --check server/routes/documents.js
           node --check server/compliance.js
