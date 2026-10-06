@@ -40,9 +40,15 @@ router.get("/:id", requirePermission("claims:read"), async (req,res,next)=>{
 
 router.put("/:id", requirePermission("claims:write"), async (req,res,next)=>{
   try{
-    const parsed=ClaimPayload.parse({...req.body,id:req.params.id});
+    const expectedVersion=req.body?._expectedVersion;
+    const { _expectedVersion, ...body }=req.body||{};
+    const parsed=ClaimPayload.parse({...body,id:req.params.id});
     const before=await query("SELECT data_json,version FROM claims WHERE id=$1 AND organization_id=$2",[req.params.id,req.user.organization_id]);
-    const nextVersion=(before.rows[0]?.version||0)+1;
+    const currentVersion=before.rows[0]?.version||0;
+    if(expectedVersion!==undefined&&Number(expectedVersion)!==currentVersion){
+      return res.status(409).json({error:"Claim changed since it was loaded. Refresh and reconcile before saving.",currentVersion});
+    }
+    const nextVersion=currentVersion+1;
     await query(
       `INSERT INTO claims
        (id,organization_id,insured,property,carrier,claim_number,date_of_loss,cause_of_loss,jurisdiction,representation_status,mortgage_servicer,valuation,valuation_source,valuation_reviewer,notes,data_json,version,created_by,updated_by)
@@ -82,6 +88,33 @@ router.post("/:id/release-check", requirePermission("claims:release"), requireVe
     }
     const result={ready:reasons.length===0,reasons,packageHash:hash,jurisdiction:claim.jurisdiction,verifiedPALicense:req.verifiedPALicense};
     await writeAuditEvent({actorUserId:req.user.id,claimId:req.params.id,action:"claim.release_check",entityType:"claim",entityId:req.params.id,before:null,after:result,metadata:{organizationId:req.user.organization_id}});
+    res.json(result);
+  }catch(e){next(e);}
+});
+
+router.post("/:id/closure-check", requirePermission("claims:approve"), requireVerifiedPALicenseForClaim, async (req,res,next)=>{
+  try{
+    const db=await query("SELECT data_json FROM claims WHERE id=$1 AND organization_id=$2",[req.params.id,req.user.organization_id]);
+    if(!db.rowCount) return res.status(404).json({error:"Claim not found."});
+    const claim=db.rows[0].data_json||{}, reasons=[];
+    const n=v=>Number(v||0);
+    const payments=claim.payments||[], coverages=claim.coverages||[], receipts=claim.receipts||[];
+    const received=payments.filter(p=>p.receivedDate||p.depositedDate||p.status==="Received"||p.status==="Deposited").reduce((s,p)=>s+n(p.amount),0);
+    const coverageReceived=coverages.reduce((s,x)=>s+n(x.received),0);
+    if(Math.abs(received-coverageReceived)>0.01) reasons.push("Payment ledger does not reconcile to coverage received totals.");
+    const dep=receipts.reduce((s,x)=>s+(x.disposition==="Documented unrecoverable/waived"?0:Math.max(0,n(x.recoverableDepreciation)-n(x.released))),0);
+    if(dep>0.01) reasons.push("Recoverable depreciation remains outstanding.");
+    const m=claim.mortgage||{}, mortgageHeld=Math.max(0,n(m.heldBalance)-n(m.initialRelease)-(m.draws||[]).reduce((s,x)=>s+n(x.releasedAmount),0));
+    if(mortgageHeld>0.01) reasons.push("Mortgage/loss-draft funds remain held.");
+    if((claim.issues||[]).some(x=>x.status!=="Resolved")) reasons.push("Open issue files remain.");
+    if((claim.criticalEvents||[]).some(x=>x.status!=="Resolved")) reasons.push("Open critical events remain.");
+    const pkg=(claim.packages||[]).at(-1), hash=pkg?.snapshotHash||"";
+    if(!pkg||pkg.status==="Superseded"||String(pkg.status||"").startsWith("Stale")) reasons.push("Final package is missing or stale.");
+    const approvals=claim.approvals||[];
+    if(!approvals.some(a=>a.packageHash===hash&&a.stage==="Licensed PA Approval"&&/approve/i.test(a.decision||"")&&!a.revokedAt)) reasons.push("Licensed PA approval missing.");
+    if(!approvals.some(a=>a.packageHash===hash&&a.stage==="Client Authorization"&&/author|approve/i.test(a.decision||"")&&!a.revokedAt)) reasons.push("Client authorization missing.");
+    const result={ready:!reasons.length,reasons,packageHash:hash,financial:{ledgerReceived:received,coverageReceived,depreciationOutstanding:dep,mortgageHeld},verifiedPALicense:req.verifiedPALicense};
+    await writeAuditEvent({actorUserId:req.user.id,claimId:req.params.id,action:"claim.closure_check",entityType:"claim",entityId:req.params.id,before:null,after:result,metadata:{organizationId:req.user.organization_id}});
     res.json(result);
   }catch(e){next(e);}
 });
