@@ -25,8 +25,8 @@ const ClaimPayload = z.object({
 
 router.get("/", requirePermission("claims:read"), async (req,res,next)=>{
   try{
-    const r=await query("SELECT data_json FROM claims WHERE organization_id=$1 ORDER BY updated_at DESC",[req.user.organization_id]);
-    res.json({claims:r.rows.map(x=>x.data_json)});
+    const r=await query("SELECT id,data_json,version FROM claims WHERE organization_id=$1 ORDER BY updated_at DESC",[req.user.organization_id]);
+    res.json({claims:r.rows.map(x=>x.data_json),versions:Object.fromEntries(r.rows.map(x=>[x.id,x.version]))});
   }catch(e){next(e);}
 });
 
