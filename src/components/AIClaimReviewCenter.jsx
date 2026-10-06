@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { nowIso, uid } from "../lib/storage.js";
+import { complianceStatus } from "../lib/stateCompliance.js";
 
 function money(v) {
   return Number(v || 0).toLocaleString(undefined, { style: "currency", currency: "USD" });
@@ -30,6 +31,27 @@ function prepareFindings(claim) {
   const comms = claim.communications || [];
   const supplements = claim.supplements || [];
   const recovery = claim.recovery || [];
+  const gate = complianceStatus(claim);
+  if (!gate.cleared) {
+    addFinding(findings, "Compliance", "High", "ABSTAIN — compliance gate is on HOLD",
+      "Substantive external claim action should not be released until these items are resolved: " + gate.blockers.join("; ") + ".",
+      [], "General");
+  }
+
+  const openIssues = (claim.issues || []).filter(x => x.status !== "Resolved");
+  const unsupportedIssues = openIssues.filter(x => !x.evidenceRefs || !x.policyRef);
+  if (unsupportedIssues.length) {
+    addFinding(findings, "Evidence Gap", "High", unsupportedIssues.length + " open issue position(s) lack source support",
+      "Negotiation positions should be linked to policy language and evidence before external use.",
+      unsupportedIssues.map(x => x.id), "General");
+  }
+  const unapprovedIssues = openIssues.filter(x => x.licensedReview !== "Approved");
+  if (unapprovedIssues.length) {
+    addFinding(findings, "Licensed Review", "High", unapprovedIssues.length + " issue position(s) require licensed PA review",
+      "AI may organize and draft these issues, but the substantive position remains withheld pending licensed review.",
+      unapprovedIssues.map(x => x.id), "General");
+  }
+
 
   if (claim.valuation === "Unreviewed" || !claim.valuationSource) {
     addFinding(findings, "Coverage", "High", "Policy valuation not fully reviewed",
