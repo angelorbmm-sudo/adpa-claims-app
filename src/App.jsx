@@ -7,6 +7,7 @@ import PaymentLedger from "./components/PaymentLedger.jsx";
 import WorkQueue from "./components/WorkQueue.jsx";
 import EvidenceEngine from "./components/EvidenceEngine.jsx";
 import CommunicationsHub from "./components/CommunicationsHub.jsx";
+import CarrierDeadlineCenter from "./components/CarrierDeadlineCenter.jsx";
 import AuthorityReleaseControl from "./components/AuthorityReleaseControl.jsx";
 import AIClaimReviewCenter from "./components/AIClaimReviewCenter.jsx";
 import ContentsValuationCenter from "./components/ContentsValuationCenter.jsx";
@@ -27,6 +28,7 @@ const modules = [
   ["estimates", "Estimate Comparison"],
   ["payments", "Payment Ledger"],
   ["communications", "Communications"],
+  ["deadlines", "Carrier Deadline Clock"],
   ["supplements", "Supplements"],
   ["mortgage", "Mortgage"],
   ["agreements", "Agreements"],
@@ -126,6 +128,8 @@ function App() {
       ale: draft.ale || {},
       mortgage: draft.mortgage || {},
       policyAnalysis: draft.policyAnalysis || {},
+      jurisdiction: draft.jurisdiction || "CA",
+      deadlineClocks: draft.deadlineClocks || [],
       documentManifest: draft.documents.map(({ id, name, category, size, createdAt }) => ({ id, name, category, size, createdAt })),
       assembledAt: nowIso()
     };
@@ -227,6 +231,7 @@ function App() {
                 <Field label="Carrier" value={draft.carrier} onChange={v => patch("carrier", v)} />
                 <Field label="Claim number" value={draft.claimNumber} onChange={v => patch("claimNumber", v)} />
                 <Field type="date" label="Date of loss" value={draft.dateOfLoss} onChange={v => patch("dateOfLoss", v)} />
+                <label>Claim jurisdiction<select value={draft.jurisdiction || "CA"} onChange={e => patch("jurisdiction", e.target.value)}><option value="CA">California</option><option value="NV">Nevada</option></select></label>
                 <Field label="Cause of loss" value={draft.causeOfLoss} onChange={v => patch("causeOfLoss", v)} />
                 <Field label="Mortgage servicer" value={draft.mortgageServicer} onChange={v => patch("mortgageServicer", v)} />
                 <label>Representation status<select value={draft.representationStatus} onChange={e => patch("representationStatus", e.target.value)}><option>Pending</option><option>Active</option><option>Terminated</option></select></label>
@@ -257,6 +262,7 @@ function App() {
           {tab === "contents" && <ContentsValuationCenter items={draft.contents || []} onChange={contents => saveClaim({ ...draft, contents })} />}
           {tab === "ale" && <ALEManagementCenter claim={draft} onChange={changes => saveClaim({ ...draft, ...changes })} />}
           {tab === "communications" && <CommunicationsHub claim={draft} onChange={communications => saveClaim({ ...draft, communications })} />}
+          {tab === "deadlines" && <CarrierDeadlineCenter claim={draft} onChange={deadlineClocks => saveClaim({ ...draft, deadlineClocks })} />}
           {tab === "supplements" && <SupplementsDisputeCenter claim={draft} onChange={supplements => saveClaim({ ...draft, supplements })} />}
           {tab === "mortgage" && <MortgageLossDraftCenter claim={draft} onChange={mortgage => saveClaim({ ...draft, mortgage })} />}
           {tab === "agreements" && <SimpleRecords title="Agreement Library & Packets" records={draft.agreements} fields={[["name","Document"],["version","Version"],["signer","Signer"],["status","Status"]]} onAdd={r => addRecord("agreements", r)} />}
