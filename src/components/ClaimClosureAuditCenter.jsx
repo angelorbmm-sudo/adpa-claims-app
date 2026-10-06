@@ -20,6 +20,10 @@ export default function ClaimClosureAuditCenter({claim,onChange}){
   onChange({...closure,status:"Closed",closedAt:event.at,closedPackageHash:hash,events:[...(closure.events||[]),event]});
   setReason("");
  }
+ function exportAudit(){
+  const report={reportType:"ADPA_FINAL_CLAIM_AUDIT_V1",generatedAt:nowIso(),claim:{id:claim.id,insured:claim.insured,property:claim.property,carrier:claim.carrier,claimNumber:claim.claimNumber,dateOfLoss:claim.dateOfLoss,jurisdiction:claim.jurisdiction},closure,finalPackage:{version:finalPackage?.version||null,hash},financial:{requested:r.requested,carrier:r.carrier,coverageReceived:r.coverageReceived,ledgerReceived:r.ledgerReceived,depreciationOutstanding:r.depreciationOutstanding,lenderHeld:r.lenderHeld},approvals:{licensedPA:paApproved,client:clientAuthorized},blockers:allBlockers};
+  const blob=new Blob([JSON.stringify(report,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="ADPA-final-audit-"+(claim.claimNumber||claim.id||"claim")+".json";a.click();URL.revokeObjectURL(url);
+ }
  function reopen(){
   if(!reason.trim())return;
   const event={id:uid("closure"),type:"Reopened",at:nowIso(),reason:reason.trim(),priorClosedPackageHash:closure.closedPackageHash||""};
@@ -36,7 +40,7 @@ export default function ClaimClosureAuditCenter({claim,onChange}){
  <div className="panel"><h2>Final controls</h2><div className="release-gates"><Gate label="Compliance" ok={gate.cleared}/><Gate label="Current final package" ok={r.packageCurrent}/><Gate label="Money reconciled" ok={Math.abs(r.ledgerDifference)<=0.01}/><Gate label="Depreciation recovered/dispositioned" ok={r.depreciationOutstanding<=0.01}/><Gate label="Mortgage funds released/dispositioned" ok={r.lenderHeld<=0.01}/><Gate label="Licensed PA approval" ok={paApproved}/><Gate label="Client authorization" ok={clientAuthorized}/></div></div>
  {allBlockers.length>0?<div className="release-banner blocked"><b>CLOSURE BLOCKED</b><span>{allBlockers.join(" · ")}</span></div>:<div className="release-banner ready"><b>READY FOR FINAL CLOSURE</b><span>All recorded closure gates are clear for the current package.</span></div>}
  <label>Closure / reopen reason<textarea value={reason} onChange={e=>setReason(e.target.value)} placeholder="Why this claim is closing, or exact reason it must be reopened"/></label>
- <div className="comm-actions"><button className="primary" disabled={allBlockers.length>0||closure.status==="Closed"} onClick={closeClaim}>Close claim & create audit event</button><button disabled={closure.status!=="Closed"||!reason.trim()} onClick={reopen}>Reopen with reason</button></div>
+ <div className="comm-actions"><button className="primary" disabled={allBlockers.length>0||closure.status==="Closed"} onClick={closeClaim}>Close claim & create audit event</button><button disabled={closure.status!=="Closed"||!reason.trim()} onClick={reopen}>Reopen with reason</button><button onClick={exportAudit}>Export final audit record</button></div>
  <div className="panel"><h2>Closure audit history</h2>{(closure.events||[]).slice().reverse().map(e=><div className="record" key={e.id}><b>{e.type} — {e.at}</b><span>{e.reason}</span><small>Package: {e.packageHash||e.priorClosedPackageHash||"—"}</small></div>)}</div>
  <p className="notice">Closure records facts and authorization; it does not waive rights by itself. Any release, settlement agreement, limitations issue, legal dispute or represented-party matter remains subject to the applicable approval/counsel controls.</p>
  </section>
