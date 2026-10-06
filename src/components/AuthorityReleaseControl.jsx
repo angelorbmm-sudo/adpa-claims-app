@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { nowIso, uid } from "../lib/storage.js";
+import { complianceStatus } from "../lib/stateCompliance.js";
 
 const approvalStages = [
   "Operational Review",
@@ -56,6 +57,7 @@ export default function AuthorityReleaseControl({ claim, onChange }) {
   const [releaseNotes, setReleaseNotes] = useState("");
 
   const packageHash = latestPackage?.snapshotHash || "";
+  const complianceGate = complianceStatus(claim);
 
   const gates = useMemo(() => {
     if (!latestPackage) return {
@@ -82,7 +84,7 @@ export default function AuthorityReleaseControl({ claim, onChange }) {
     };
   }, [latestPackage, approvals, signatures, packageHash]);
 
-  const releaseReady = gates.package && gates.current && gates.operational && gates.licensed && gates.client;
+  const releaseReady = complianceGate.cleared && gates.package && gates.current && gates.operational && gates.licensed && gates.client;
 
   function addApproval(e) {
     e.preventDefault();
@@ -119,6 +121,7 @@ export default function AuthorityReleaseControl({ claim, onChange }) {
 
   function attemptRelease() {
     const reasons = [];
+    if (!complianceGate.cleared) reasons.push("State compliance gate HOLD: " + complianceGate.blockers.join(", ") + ".");
     if (!latestPackage) reasons.push("No claim package exists.");
     if (latestPackage && !gates.current) reasons.push("The selected package is superseded.");
     if (!gates.operational) reasons.push("Operational approval missing.");
@@ -148,6 +151,7 @@ export default function AuthorityReleaseControl({ claim, onChange }) {
       <p>This module separates operational review, licensed public-adjuster approval, client authorization, signature evidence, and actual external delivery.</p>
 
       <div className="release-gates">
+        <Gate label="State compliance / authority" ok={complianceGate.cleared} />
         <Gate label="Current package" ok={gates.package && gates.current} />
         <Gate label="Operational approval" ok={gates.operational} />
         <Gate label="Licensed PA approval" ok={gates.licensed} />
