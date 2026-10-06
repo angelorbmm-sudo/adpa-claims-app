@@ -1,0 +1,24 @@
+import React, { useMemo, useState } from "react";
+import { nowIso, uid } from "../lib/storage.js";
+
+const blank={coverage:"C",item:"",description:"",rcv:"",acvPaid:"",recoverableDepreciation:"",nonrecoverableDepreciation:"",replacementCost:"",replacementDate:"",receiptRef:"",proofRef:"",carrierRequestDate:"",carrierDueDate:"",released:"",releasedDate:"",status:"Needs replacement proof",notes:""};
+
+export default function DepreciationRecoveryCenter({ claim,onChange }) {
+  const [row,setRow]=useState(blank); const rows=claim.receipts||[];
+  const totals=useMemo(()=>rows.reduce((a,x)=>({recoverable:a.recoverable+Number(x.recoverableDepreciation||0),released:a.released+Number(x.released||0),replacement:a.replacement+Number(x.replacementCost||0)}),{recoverable:0,released:0,replacement:0}),[rows]);
+  const money=v=>Number(v||0).toLocaleString(undefined,{style:"currency",currency:"USD"});
+  function add(e){e.preventDefault();onChange([...rows,{...row,id:uid("receipt"),createdAt:nowIso()}]);setRow(blank);}
+  function patch(id,changes){onChange(rows.map(x=>x.id===id?{...x,...changes,updatedAt:nowIso()}:x));}
+  return <section><h1>Receipts & Recoverable Depreciation Center</h1>
+    <p>Track replacement proof, ACV already paid, recoverable/nonrecoverable depreciation, carrier requests, releases, and outstanding recovery by item.</p>
+    <div className="stats"><div className="stat"><small>Recoverable</small><b>{money(totals.recoverable)}</b></div><div className="stat"><small>Released</small><b>{money(totals.released)}</b></div><div className="stat"><small>Still outstanding</small><b>{money(totals.recoverable-totals.released)}</b></div><div className="stat"><small>Replacement spend</small><b>{money(totals.replacement)}</b></div></div>
+    <form className="grid panel" onSubmit={add}>
+      {["coverage","item","description","receiptRef","proofRef"].map(k=><label key={k}>{k.replace(/([A-Z])/g," $1")}<input value={row[k]} onChange={e=>setRow(r=>({...r,[k]:e.target.value}))}/></label>)}
+      {["rcv","acvPaid","recoverableDepreciation","nonrecoverableDepreciation","replacementCost"].map(k=><label key={k}>{k.replace(/([A-Z])/g," $1")}<input type="number" value={row[k]} onChange={e=>setRow(r=>({...r,[k]:e.target.value}))}/></label>)}
+      {["replacementDate","carrierRequestDate","carrierDueDate"].map(k=><label key={k}>{k.replace(/([A-Z])/g," $1")}<input type="date" value={row[k]} onChange={e=>setRow(r=>({...r,[k]:e.target.value}))}/></label>)}
+      <label>Status<select value={row.status} onChange={e=>setRow(r=>({...r,status:e.target.value}))}><option>Needs replacement proof</option><option>Ready to request</option><option>Requested</option><option>Carrier reviewing</option><option>Partially released</option><option>Released</option><option>Disputed</option></select></label>
+      <label>Notes<textarea value={row.notes} onChange={e=>setRow(r=>({...r,notes:e.target.value}))}/></label><div className="form-action"><button className="primary">Add recovery item</button></div>
+    </form>
+    <div className="timeline">{rows.map(x=>{const out=Number(x.recoverableDepreciation||0)-Number(x.released||0);return <div className="timeline-item" key={x.id}><div className="timeline-head"><div><span className="pill">{x.coverage}</span><span className="pill system">{x.status}</span></div><b>{money(out)} outstanding</b></div><b>{x.item||x.description}</b><small>RCV {money(x.rcv)} · ACV paid {money(x.acvPaid)} · Recoverable {money(x.recoverableDepreciation)} · Released {money(x.released)}</small><small>Receipt: {x.receiptRef||"Missing"} · Proof: {x.proofRef||"Missing"} · Request: {x.carrierRequestDate||"Not sent"} · Due: {x.carrierDueDate||"Not set"}</small><div className="comm-actions"><button onClick={()=>patch(x.id,{status:"Requested",carrierRequestDate:x.carrierRequestDate||new Date().toISOString().slice(0,10)})}>Mark requested</button><button onClick={()=>patch(x.id,{status:"Released",released:x.recoverableDepreciation,releasedDate:new Date().toISOString().slice(0,10)})}>Mark fully released</button></div></div>})}</div>
+  </section>;
+}
