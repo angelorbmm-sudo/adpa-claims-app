@@ -87,3 +87,18 @@ Backend foundations added:
 - POST /api/claims/:id/release-check server-side readiness gate.
 
 Important: these controls are foundations. The browser app still uses localStorage by default and the production identity/database/storage/email/e-sign environment is not deployed. Material outbound actions must remain disabled until server persistence, license verification data, immutable audit logging, private object storage, role enforcement, and delivery integrations are production-configured and tested.
+
+
+## Closure and production-transition controls added 2026-10-06
+- canonical browser reconciliation helper for coverage/payment/depreciation/mortgage closure checks;
+- Claim Closure & Final Audit Center with reasoned reopen and exportable audit record;
+- Final Financial Reconciliation Center with duplicate/unallocated/unreceived payment exceptions;
+- migration preflight endpoint and explicit confirm/mode on import;
+- existing records default to skip rather than silent overwrite;
+- migration import/replacement audit events;
+- optimistic concurrency on claim saves using expected version (HTTP 409 on stale write);
+- server-side PA-license release check and closure check;
+- automatic private-repository demo deployment disabled; demo deployment is manual only;
+- CI now builds the frontend and syntax-checks critical backend files.
+
+See docs/PRODUCTION_DATA_CUTOVER.md before any live client-data migration.
