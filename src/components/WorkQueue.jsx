@@ -176,6 +176,14 @@ function systemExceptions(claim) {
       "A communication has reached its escalation threshold.", "communications");
   }
 
+  const contractorCommitments = claim.contractorCommitments || [];
+  const lockedContractors = contractorCommitments.filter(x => x.commitmentStatus === "Locked commitment");
+  const contractorReview = lockedContractors.filter(x => x.paReassessment !== "Approved after licensed review" || x.clientInstruction !== "Authorized");
+  if (contractorReview.length) {
+    add("Licensed PA / Client Approval", "High", contractorReview.length + " contractor commitment(s) await PA/client review",
+      "Contractor feasibility does not authorize compromise; preserve scope/price and obtain PA reassessment plus client instruction.", "contractor");
+  }
+
   const criticalEvents = (claim.criticalEvents || []).filter(x => x.status !== "Resolved");
   if (criticalEvents.length) {
     add("Licensed PA / Client Approval", "Critical", criticalEvents.length + " critical event(s) require specialist review",
