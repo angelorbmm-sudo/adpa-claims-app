@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { emptyClaim } from "./data/seed.js";
 import { demoWorkspace } from "./data/demo.js";
 import { loadWorkspace, nowIso, saveWorkspace, uid } from "./lib/storage.js";
+import { apiEnabled, fetchClaims, saveClaimRemote } from "./lib/api.js";
 import EstimateComparison from "./components/EstimateComparison.jsx";
 import PaymentLedger from "./components/PaymentLedger.jsx";
 import WorkQueue from "./components/WorkQueue.jsx";
@@ -96,6 +97,8 @@ function App() {
   const [workspace, setWorkspace] = useState(() => loadWorkspace() || (isDemo ? demoWorkspace() : { claims: [], selectedId: null }));
   const [tab, setTab] = useState("overview");
   const [draft, setDraft] = useState(() => emptyClaim());
+  const [serverVersions, setServerVersions] = useState({});
+  const [syncState, setSyncState] = useState(apiEnabled() ? "Loading authoritative server data…" : "Browser workspace mode");
 
   const selected = useMemo(
     () => workspace.claims.find(c => c.id === workspace.selectedId) || null,
@@ -103,26 +106,67 @@ function App() {
   );
 
   useEffect(() => {
+    // localStorage is a local draft/cache only when the API is enabled.
     saveWorkspace(workspace);
   }, [workspace]);
+
+  useEffect(() => {
+    if (!apiEnabled()) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const remote = await fetchClaims();
+        if (cancelled) return;
+        const claims = remote.claims || [];
+        setWorkspace(w => ({
+          claims,
+          selectedId: claims.some(c => c.id === w.selectedId) ? w.selectedId : (claims[0]?.id || null)
+        }));
+        setSyncState("Server authoritative");
+      } catch (error) {
+        if (!cancelled) setSyncState("SERVER UNAVAILABLE — local cache is read-only until connection returns");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     if (selected) setDraft(structuredClone(selected));
     else setDraft(emptyClaim());
   }, [selected?.id, selected?.updatedAt]);
 
-  function createClaim() {
+  async function persistAuthoritative(claim) {
+    if (!apiEnabled()) return claim;
+    const result = await saveClaimRemote(claim, serverVersions[claim.id]);
+    setServerVersions(v => ({ ...v, [claim.id]: result.version }));
+    setSyncState("Server authoritative · saved");
+    return result.claim;
+  }
+
+  async function createClaim() {
     const claim = emptyClaim();
     claim.id = uid("claim");
     claim.insured = "New Claim";
     claim.updatedAt = nowIso();
-    setWorkspace(w => ({ ...w, claims: [claim, ...w.claims], selectedId: claim.id }));
+    if (apiEnabled()) {
+      try {
+        const saved = await persistAuthoritative(claim);
+        setWorkspace(w => ({ ...w, claims: [saved, ...w.claims], selectedId: saved.id }));
+      } catch (error) {
+        setSyncState("SAVE FAILED — server remains authoritative");
+        return;
+      }
+    } else setWorkspace(w => ({ ...w, claims: [claim, ...w.claims], selectedId: claim.id }));
     setTab("intake");
   }
 
-  function saveClaim(next = draft) {
+  async function saveClaim(next = draft) {
     const guarded = markPackageStaleIfNeeded(draft, next);
-    const saved = { ...guarded, updatedAt: nowIso() };
+    let saved = { ...guarded, updatedAt: nowIso() };
+    if (apiEnabled()) {
+      try { saved = await persistAuthoritative(saved); }
+      catch (error) { setSyncState("SAVE FAILED — server remains authoritative"); return; }
+    }
     setWorkspace(w => ({
       ...w,
       claims: w.claims.map(c => c.id === saved.id ? saved : c),
@@ -242,7 +286,7 @@ function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div><strong>ADPA Claims</strong><span>Private Working Workspace</span></div>
+        <div><strong>ADPA Claims</strong><span>Private Working Workspace · {syncState}</span></div>
         <div className="actions">
           <select value={selected.id} onChange={e => openClaim(e.target.value)}>
             {workspace.claims.map(c => <option key={c.id} value={c.id}>{c.insured || "Unnamed Claim"}</option>)}
