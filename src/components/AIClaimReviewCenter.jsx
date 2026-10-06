@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { nowIso, uid } from "../lib/storage.js";
 import { complianceStatus } from "../lib/stateCompliance.js";
 import { claimWorkflowIntelligence } from "../lib/workflowIntelligence.js";
+import { prepareClaimReview, claimPreparationSummary } from "../lib/claimPreparation.js";
 
 function money(v) {
   return Number(v || 0).toLocaleString(undefined, { style: "currency", currency: "USD" });
@@ -194,7 +195,8 @@ export default function AIClaimReviewCenter({ claim, onChange }) {
   }), [findings]);
 
   function runShadowReview() {
-    const newFindings = prepareFindings(claim);
+    const prepared = prepareClaimReview(claim);
+    const newFindings = prepared.findings.map(f => ({...f, id:uid("ai-finding"), createdAt:nowIso(), reviewStatus:"Needs human review", reviewer:"", reviewerNotes:""}));
     const run = {
       id: uid("ai-run"),
       runAt: nowIso(),
@@ -212,7 +214,7 @@ export default function AIClaimReviewCenter({ claim, onChange }) {
       runs: [...(aiPrep.runs || []), run]
     };
     onChange({ aiPrep: nextPrep, aiFindings: newFindings });
-    setSummaryDraft(buildDraftSummary(claim, newFindings));
+    setSummaryDraft(claimPreparationSummary(claim, prepared));
   }
 
   function patchFinding(id, changes) {
@@ -222,7 +224,7 @@ export default function AIClaimReviewCenter({ claim, onChange }) {
   }
 
   function prepareSummary() {
-    setSummaryDraft(buildDraftSummary(claim, findings));
+    setSummaryDraft(claimPreparationSummary(claim, prepareClaimReview(claim)));
   }
 
   function saveSummaryAsNote() {
@@ -273,7 +275,9 @@ export default function AIClaimReviewCenter({ claim, onChange }) {
             </div>
             <b>{f.title}</b>
             <p>{f.detail}</p>
-            {f.sourceRefs?.length>0 && <small><b>Source refs:</b> {f.sourceRefs.join(", ")}</small>}
+            {f.nextAction && <small><b>Next action:</b> {f.nextAction}</small>}
+            {f.requiresPA && <span className="pill alert">Licensed PA review</span>}
+            {f.sourceRefs?.length>0 && <small><b>Source refs:</b> {f.sourceRefs.map(r=>typeof r==="string"?r:(r.label||r.id)).join(", ")}</small>}
             <div className="grid compact">
               <label>Review status<select value={f.reviewStatus} onChange={e=>patchFinding(f.id,{reviewStatus:e.target.value,reviewer:reviewer||f.reviewer})}><option>Needs human review</option><option>Accepted</option><option>Rejected</option><option>Resolved</option></select></label>
               <label>Reviewer<input value={f.reviewer||""} onChange={e=>patchFinding(f.id,{reviewer:e.target.value})}/></label>
