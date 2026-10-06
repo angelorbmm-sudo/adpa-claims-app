@@ -3,6 +3,7 @@ import { z } from "zod";
 import { query } from "../db.js";
 import { requirePermission } from "../auth.js";
 import { writeAuditEvent } from "../audit.js";
+import { requireVerifiedPALicenseForClaim } from "../compliance.js";
 
 const router = Router();
 const ClaimPayload = z.object({
@@ -59,5 +60,31 @@ router.put("/:id", requirePermission("claims:write"), async (req,res,next)=>{
     res.json({claim:parsed,version:nextVersion});
   }catch(e){next(e);}
 });
+
+router.post("/:id/release-check", requirePermission("claims:release"), requireVerifiedPALicenseForClaim, async (req,res,next)=>{
+  try{
+    const r=await query("SELECT data_json FROM claims WHERE id=$1 AND organization_id=$2",[req.params.id,req.user.organization_id]);
+    if(!r.rowCount) return res.status(404).json({error:"Claim not found."});
+    const claim=r.rows[0].data_json||{};
+    const reasons=[];
+    const compliance=claim.compliance||{}, representation=claim.representation||{};
+    if(compliance.contractStatus!=="Executed") reasons.push("Representation contract not verified executed.");
+    if(claim.jurisdiction==="CA"&&compliance.disclosureStatus!=="Delivered before contract") reasons.push("California pre-contract disclosure sequence not verified.");
+    if(!representation.templateVerified||!representation.signedDate) reasons.push("Representation template/signing evidence incomplete.");
+    const pkg=(claim.packages||[]).at(-1);
+    if(!pkg) reasons.push("No claim package exists.");
+    if(pkg&&(pkg.status==="Superseded"||String(pkg.status||"").startsWith("Stale"))) reasons.push("Latest claim package is not current.");
+    const hash=pkg?.snapshotHash||"";
+    const approvals=claim.approvals||[];
+    for(const stage of ["Operational Review","Licensed PA Approval","Client Authorization"]){
+      const ok=approvals.some(a=>a.packageHash===hash&&a.stage===stage&&/approve|author/i.test(a.decision||"")&&!a.revokedAt);
+      if(!ok) reasons.push(stage+" missing for current package.");
+    }
+    const result={ready:reasons.length===0,reasons,packageHash:hash,jurisdiction:claim.jurisdiction,verifiedPALicense:req.verifiedPALicense};
+    await writeAuditEvent({actorUserId:req.user.id,claimId:req.params.id,action:"claim.release_check",entityType:"claim",entityId:req.params.id,before:null,after:result,metadata:{organizationId:req.user.organization_id}});
+    res.json(result);
+  }catch(e){next(e);}
+});
+
 
 export default router;
