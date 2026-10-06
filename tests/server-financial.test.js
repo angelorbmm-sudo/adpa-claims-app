@@ -1,0 +1,13 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {moneyToCents,financialInvariants} from "../server/financial.js";
+const base=()=>({payments:[],coverages:[],receipts:[],mortgage:{}});
+test("money uses exact cents",()=>{assert.equal(moneyToCents("0.10"),10);assert.equal(moneyToCents("1234.56"),123456);assert.throws(()=>moneyToCents("1.001"));});
+test("balanced received and issued ledgers pass",()=>{const c=base();c.coverages=[{issued:"100.10",received:"100.10"}];c.payments=[{id:"p1",amount:"100.10",status:"Received",allocation:"A",coverage:"A"}];assert.equal(financialInvariants(c).ready,true);});
+test("penny mismatch blocks",()=>{const c=base();c.coverages=[{issued:"100.00",received:"100.00"}];c.payments=[{id:"p1",amount:"99.99",status:"Received",allocation:"A",coverage:"A"}];assert.equal(financialInvariants(c).ready,false);});
+test("issued but unreceived blocks even if issued totals match",()=>{const c=base();c.coverages=[{issued:"50.00",received:"0"}];c.payments=[{id:"p1",amount:"50.00",status:"Issued",allocation:"A",coverage:"A"}];assert.ok(financialInvariants(c).reasons.some(x=>x.includes("unreceived")));});
+test("unallocated payment blocks",()=>{const c=base();c.coverages=[{issued:10,received:10}];c.payments=[{id:"p1",amount:10,status:"Received",coverage:"A"}];assert.ok(financialInvariants(c).reasons.some(x=>x.includes("unallocated")));});
+test("possible duplicate payment blocks without deleting records",()=>{const c=base();c.coverages=[{issued:20,received:20}];c.payments=[{id:"p1",amount:10,status:"Received",allocation:"x",coverage:"A",checkNumber:"7"},{id:"p2",amount:10,status:"Received",allocation:"x",coverage:"A",checkNumber:"7"}];assert.equal(financialInvariants(c).duplicatePairs.length,1);});
+test("waived depreciation is not outstanding",()=>{const c=base();c.receipts=[{recoverableDepreciation:"500.00",released:"0",disposition:"Documented unrecoverable/waived"}];assert.equal(financialInvariants(c).cents.depreciationOutstanding,0);});
+test("partial depreciation release remains outstanding",()=>{const c=base();c.receipts=[{recoverableDepreciation:"500.00",released:"300.00"}];assert.equal(financialInvariants(c).cents.depreciationOutstanding,20000);});
+test("mortgage draws reduce but do not hide held funds",()=>{const c=base();c.mortgage={heldBalance:"10000",initialRelease:"2000",draws:[{releasedAmount:"3000"}]};assert.equal(financialInvariants(c).cents.mortgageHeld,500000);});
