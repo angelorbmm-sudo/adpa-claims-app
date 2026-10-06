@@ -15,11 +15,17 @@ import ALEManagementCenter from "./components/ALEManagementCenter.jsx";
 import SupplementsDisputeCenter from "./components/SupplementsDisputeCenter.jsx";
 import MortgageLossDraftCenter from "./components/MortgageLossDraftCenter.jsx";
 import PolicyEndorsementCenter from "./components/PolicyEndorsementCenter.jsx";
+import ComplianceCenter from "./components/ComplianceCenter.jsx";
+import IssueNegotiationCenter from "./components/IssueNegotiationCenter.jsx";
+import DepreciationRecoveryCenter from "./components/DepreciationRecoveryCenter.jsx";
+import ClaimLifecycleChronology from "./components/ClaimLifecycleChronology.jsx";
+import { complianceStatus } from "./lib/stateCompliance.js";
 
 const modules = [
   ["overview", "Dashboard"],
   ["workqueue", "Work Queue"],
   ["intake", "Claim Intake"],
+  ["compliance", "State Compliance"],
   ["coverage", "Coverage & Valuation"],
   ["policy", "Policy & Endorsements"],
   ["evidence", "Documents & Evidence"],
@@ -29,6 +35,8 @@ const modules = [
   ["payments", "Payment Ledger"],
   ["communications", "Communications"],
   ["deadlines", "Carrier Deadline Clock"],
+  ["issues", "Issues & Negotiation"],
+  ["chronology", "Lifecycle & Chronology"],
   ["supplements", "Supplements"],
   ["mortgage", "Mortgage"],
   ["agreements", "Agreements"],
@@ -130,6 +138,15 @@ function App() {
       policyAnalysis: draft.policyAnalysis || {},
       jurisdiction: draft.jurisdiction || "CA",
       deadlineClocks: draft.deadlineClocks || [],
+      compliance: draft.compliance || {},
+      issues: draft.issues || [],
+      lifecycle: draft.lifecycle || {},
+      communications: draft.communications || [],
+      approvals: draft.approvals || [],
+      signatures: draft.signatures || [],
+      releaseRecords: draft.releaseRecords || [],
+      aiPrep: draft.aiPrep || {},
+      aiFindings: draft.aiFindings || [],
       documentManifest: draft.documents.map(({ id, name, category, size, createdAt }) => ({ id, name, category, size, createdAt })),
       assembledAt: nowIso()
     };
@@ -148,7 +165,6 @@ function App() {
     return (
       <div className="app">
         {isDemo && <div className="demo-banner">ADPA DEMO — TEST DATA ONLY — DO NOT ENTER REAL CLIENT INFORMATION</div>}
-      {isDemo && <div className="demo-banner">ADPA DEMO — TEST DATA ONLY — DO NOT ENTER REAL CLIENT INFORMATION</div>}
         <header className="topbar"><div><strong>ADPA Claims</strong><span>{isDemo ? "Demo Playground" : "Private Working Workspace"}</span></div></header>
         <main className="empty">
           <h1>ADPA Claims Workspace</h1>
@@ -167,6 +183,11 @@ function App() {
   const totalRequested = draft.coverages.reduce((s, c) => s + Number(c.requested || 0), 0);
   const totalReceived = draft.coverages.reduce((s, c) => s + Number(c.received || 0), 0);
   const ledgerPaid = (draft.payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
+  const complianceGate = complianceStatus(draft);
+  const openIssues = (draft.issues || []).filter(x => x.status !== "Resolved");
+  const issueVariance = openIssues.reduce((s,x)=>s + Number(x.adpaAmount||0) - Number(x.carrierAmount||0),0);
+  const deadlineLate = (draft.deadlineClocks || []).filter(x => x.status !== "Satisfied" && (x.verifiedDueDate || x.dueDate) && new Date((x.verifiedDueDate || x.dueDate)+"T23:59:59").getTime() < Date.now()).length;
+  const depreciationOutstanding = (draft.receipts || []).reduce((s,x)=>s+Number(x.recoverableDepreciation||0)-Number(x.released||0),0);
 
   return (
     <div className="app">
@@ -201,6 +222,10 @@ function App() {
                 <Stat label="Open follow-ups" value={(draft.recovery || []).filter(x => x.status !== "Closed").length} />
                 <Stat label="Evidence files" value={(draft.documents || []).length} />
                 <Stat label="Payment ledger total" value={money(ledgerPaid)} />
+                <Stat label="Compliance gate" value={complianceGate.cleared ? "CLEAR" : "HOLD"} />
+                <Stat label="Open issue variance" value={money(issueVariance)} />
+                <Stat label="Late carrier clocks" value={deadlineLate} />
+                <Stat label="Depreciation outstanding" value={money(depreciationOutstanding)} />
               </div>
               <Panel title="Next controls">
                 <ul>
@@ -255,6 +280,7 @@ function App() {
             </section>
           )}
 
+          {tab === "compliance" && <ComplianceCenter claim={draft} onChange={compliance => saveClaim({ ...draft, compliance })} />}
           {tab === "policy" && <PolicyEndorsementCenter claim={draft} onChange={policyAnalysis => saveClaim({ ...draft, policyAnalysis })} />}
           {tab === "evidence" && <EvidenceEngine claim={draft} onChange={documents => saveClaim({ ...draft, documents })} />}
           {tab === "estimates" && <EstimateComparison records={draft.estimateComparisons || []} onChange={records => saveClaim({ ...draft, estimateComparisons: records })} />}
@@ -263,10 +289,13 @@ function App() {
           {tab === "ale" && <ALEManagementCenter claim={draft} onChange={changes => saveClaim({ ...draft, ...changes })} />}
           {tab === "communications" && <CommunicationsHub claim={draft} onChange={communications => saveClaim({ ...draft, communications })} onDeadlineChange={deadlineClocks => updateClaimById(selected.id, claim => ({ ...claim, deadlineClocks }))} />}
           {tab === "deadlines" && <CarrierDeadlineCenter claim={draft} onChange={deadlineClocks => saveClaim({ ...draft, deadlineClocks })} />}
+          {tab === "issues" && <IssueNegotiationCenter claim={draft} onChange={issues => saveClaim({ ...draft, issues })} />}
+          {tab === "chronology" && <ClaimLifecycleChronology claim={draft} onChange={lifecycle => saveClaim({ ...draft, lifecycle })} />}
           {tab === "supplements" && <SupplementsDisputeCenter claim={draft} onChange={supplements => saveClaim({ ...draft, supplements })} />}
           {tab === "mortgage" && <MortgageLossDraftCenter claim={draft} onChange={mortgage => saveClaim({ ...draft, mortgage })} />}
           {tab === "agreements" && <SimpleRecords title="Agreement Library & Packets" records={draft.agreements} fields={[["name","Document"],["version","Version"],["signer","Signer"],["status","Status"]]} onAdd={r => addRecord("agreements", r)} />}
-          {tab === "receipts" && <SimpleRecords title="Receipts & Recoverable Depreciation" records={draft.receipts} fields={[["item","Item / invoice"],["replacementCost","Replacement cost"],["requested","Depreciation requested"],["approved","Approved"],["released","Released"]]} onAdd={r => addRecord("receipts", r)} />}
+          {tab === "receipts" && <DepreciationRecoveryCenter claim={draft} onChange={receipts => saveClaim({ ...draft, receipts })} />}
+          {false && <SimpleRecords title="Receipts & Recoverable Depreciation" records={draft.receipts} fields={[["item","Item / invoice"],["replacementCost","Replacement cost"],["requested","Depreciation requested"],["approved","Approved"],["released","Released"]]} onAdd={r => addRecord("receipts", r)} />}
 
           {tab === "package" && (
             <section>
