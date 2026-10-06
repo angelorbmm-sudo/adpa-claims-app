@@ -130,7 +130,7 @@ export default function CarrierDeadlineCenter({ claim, onChange }) {
         })}
       </div>
 
-      <p className="notice">California clocks use calendar days where the cited rule says calendar days. Nevada working-day calculations currently exclude weekends; state holidays and claim-specific exceptions require human verification before treating a date as a legal conclusion. This module preserves operational evidence and does not itself establish bad faith or a legal violation.</p>
+      <p className="notice">California clocks use calendar days where the cited rule says calendar days, but California also extends a last day that falls on a Saturday, Sunday, federal holiday, or California state holiday. Nevada working-day calculations currently exclude weekends. Holiday calendars, disaster orders, extraordinary-circumstance rules, and claim-specific exceptions require human verification before treating a calculated date as a legal conclusion. This module preserves operational evidence and does not itself establish bad faith or a legal violation.</p>
     </section>
   );
 }
