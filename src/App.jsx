@@ -372,7 +372,7 @@ function App() {
 
           {tab === "recovery" && <SimpleRecords title="Recovery Follow-up & Depreciation Tracking" records={draft.recovery} fields={[["coverage","Coverage"],["amount","Outstanding amount"],["condition","Recovery condition / proof needed"],["dueDate","Follow-up date"],["status","Status"]]} onAdd={r => addRecord("recovery", r)} />}
 
-          {tab === "closure" && <ClaimClosureAuditCenter claim={draft} onChange={closure => saveClaim({ ...draft, closure })} />}
+          {tab === "closure" && <ClaimClosureAuditCenter claim={draft} onChange={changes => saveClaim({ ...draft, ...changes })} />}
 
           {tab === "transition" && <DataTransitionCenter workspace={workspace} />}
 
