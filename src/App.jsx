@@ -58,6 +58,27 @@ function money(v) {
   return Number(v || 0).toLocaleString(undefined, { style: "currency", currency: "USD" });
 }
 
+function packageRelevantClaim(claim) {
+  const { packages, approvals, signatures, releaseRecords, updatedAt, ...substantive } = claim || {};
+  return JSON.stringify(substantive);
+}
+
+function markPackageStaleIfNeeded(prior, next) {
+  const priorPackages = prior?.packages || [];
+  const nextPackages = next?.packages || [];
+  if (!priorPackages.length || priorPackages.length !== nextPackages.length) return next;
+  if (packageRelevantClaim(prior) === packageRelevantClaim(next)) return next;
+  let marked = false;
+  const packages = nextPackages.map((p, i) => {
+    if (!marked && i === nextPackages.length - 1 && p.status !== "Superseded") {
+      marked = true;
+      return { ...p, status: "Stale — claim data changed", staleAt: nowIso() };
+    }
+    return p;
+  });
+  return { ...next, packages };
+}
+
 function App() {
   const isDemo = import.meta.env.VITE_DEMO_MODE === "true";
   const [workspace, setWorkspace] = useState(() => loadWorkspace() || (isDemo ? demoWorkspace() : { claims: [], selectedId: null }));
@@ -88,7 +109,8 @@ function App() {
   }
 
   function saveClaim(next = draft) {
-    const saved = { ...next, updatedAt: nowIso() };
+    const guarded = markPackageStaleIfNeeded(draft, next);
+    const saved = { ...guarded, updatedAt: nowIso() };
     setWorkspace(w => ({
       ...w,
       claims: w.claims.map(c => c.id === saved.id ? saved : c),
@@ -100,7 +122,7 @@ function App() {
   function updateClaimById(claimId, updater) {
     setWorkspace(w => ({
       ...w,
-      claims: w.claims.map(c => c.id === claimId ? { ...updater(c), updatedAt: nowIso() } : c)
+      claims: w.claims.map(c => { if (c.id !== claimId) return c; const next = updater(c); return { ...markPackageStaleIfNeeded(c, next), updatedAt: nowIso() }; })
     }));
   }
 
@@ -151,9 +173,6 @@ function App() {
       issues: draft.issues || [],
       lifecycle: draft.lifecycle || {},
       communications: draft.communications || [],
-      approvals: draft.approvals || [],
-      signatures: draft.signatures || [],
-      releaseRecords: draft.releaseRecords || [],
       aiPrep: draft.aiPrep || {},
       aiFindings: draft.aiFindings || [],
       documentManifest: draft.documents.map(({ id, name, category, size, createdAt }) => ({ id, name, category, size, createdAt })),
