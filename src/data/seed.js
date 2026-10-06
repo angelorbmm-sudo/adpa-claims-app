@@ -42,6 +42,7 @@ export const emptyClaim = () => ({
   approvals: [],
   signatures: [],
   recovery: [],
+  closure: { status: "Open", closedAt: "", closedPackageHash: "", events: [] },
   estimateComparisons: [],
   payments: [],
   ale: { startDate: "", expectedEndDate: "", policyEndDate: "", baselineMonthlyExpense: 0, carrierApprovedMonthly: 0, expenses: [], extensions: [], notes: "" },
