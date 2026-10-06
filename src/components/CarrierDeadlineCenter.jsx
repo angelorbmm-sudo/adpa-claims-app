@@ -15,13 +15,14 @@ function statusFor(clock) {
 
 function draftNotice(claim, clock) {
   const rule = ruleFor(clock.state, clock.ruleKey);
-  return `Subject: Time-Sensitive Follow-Up — ${claim.claimNumber || "Claim"} — ${clock.subject || rule?.label || "Claim communication"}
+  const late = clock.dueDate && daysFromToday(clock.dueDate) < 0;
+  return `Subject: ${late ? "Overdue Response" : "Time-Sensitive Follow-Up"} — ${claim.claimNumber || "Claim"} — ${clock.subject || rule?.label || "Claim communication"}
 
 Dear ${clock.carrierParty || "Adjuster"},
 
 I am following up regarding our communication dated ${clock.triggerDate || "[date]"} concerning ${clock.subject || "the above claim"}. Our records reflect a response deadline of ${clock.dueDate || "[deadline]"} under ${clock.authority || rule?.authority || "the applicable claim-handling rule"}.
 
-Please provide a complete response before the applicable deadline. We are maintaining a contemporaneous claim chronology and would appreciate your timely attention.
+${late ? `The recorded response deadline has passed without a complete response reflected in our file. Please provide the response promptly or identify the specific reason additional time is required.` : `Please provide a complete response before the applicable deadline.`} We are maintaining a contemporaneous claim chronology and would appreciate your timely attention.
 
 Thank you,
 ADPA Claims
@@ -70,7 +71,7 @@ export default function CarrierDeadlineCenter({ claim, onChange }) {
   }
 
   function markNotice(clock) {
-    patch(clock.id, { preDeadlineNoticeAt: nowIso(), preDeadlineNoticeDraft: draftNotice(claim, clock) }, "Pre-deadline notice prepared");
+    patch(clock.id, { preDeadlineNoticeAt: nowIso(), preDeadlineNoticeDraft: draftNotice(claim, clock) }, "Deadline follow-up notice prepared");
   }
 
   function markSatisfied(clock) {
@@ -121,7 +122,7 @@ export default function CarrierDeadlineCenter({ claim, onChange }) {
             {c.sourceRef && <small><b>Evidence:</b> {c.sourceRef}</small>}
             {c.preDeadlineNoticeDraft && <div className="draft-box"><b>Pre-deadline notice</b><p style={{whiteSpace:"pre-wrap"}}>{c.preDeadlineNoticeDraft}</p><small>Prepared {c.preDeadlineNoticeAt}. Sending remains separately controlled.</small></div>}
             <div className="comm-actions">
-              {state !== "Satisfied" && !c.preDeadlineNoticeAt && <button type="button" onClick={() => markNotice(c)}>Prepare pre-deadline notice</button>}
+              {state !== "Satisfied" && !c.preDeadlineNoticeAt && <button type="button" onClick={() => markNotice(c)}>{state === "LATE" ? "Prepare overdue notice" : "Prepare pre-deadline notice"}</button>}
               {state !== "Satisfied" && <button type="button" onClick={() => markSatisfied(c)}>Record carrier response</button>}
             </div>
             {(c.audit || []).length > 0 && <details><summary>Audit trail ({c.audit.length})</summary>{c.audit.map((a,i)=><small key={i}>{a.at} — {a.action}{a.detail ? " — "+a.detail : ""}</small>)}</details>}
