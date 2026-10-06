@@ -50,6 +50,14 @@ function systemExceptions(claim) {
     status: "Open"
   });
 
+  if (claim.closure?.status === "Closed") {
+    const closedPackage=(claim.packages||[]).at(-1);
+    if (closedPackage && String(closedPackage.status||"").startsWith("Stale")) {
+      add("Licensed PA / Client Approval","Critical","Closed claim changed — reopen required","Substantive claim data changed after closure. Reopen with a reason before further adjustment.","closure");
+    }
+    return out;
+  }
+
   if (!claim.carrier || !claim.claimNumber || !claim.dateOfLoss) {
     add("Intake / Evidence", "High", "Incomplete claim intake", "Carrier, claim number, or date of loss is missing.", "intake");
   }
