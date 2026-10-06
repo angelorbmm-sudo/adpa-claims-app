@@ -3,6 +3,7 @@ import { nowIso, uid } from "../lib/storage.js";
 import { complianceStatus } from "../lib/stateCompliance.js";
 import { claimWorkflowIntelligence } from "../lib/workflowIntelligence.js";
 import { prepareClaimReview, claimPreparationSummary } from "../lib/claimPreparation.js";
+import { draftCommunicationOptions } from "../lib/draftCommunications.js";
 
 function money(v) {
   return Number(v || 0).toLocaleString(undefined, { style: "currency", currency: "USD" });
@@ -186,6 +187,9 @@ export default function AIClaimReviewCenter({ claim, onChange }) {
   const findings = claim.aiFindings || [];
   const [reviewer, setReviewer] = useState("");
   const [summaryDraft, setSummaryDraft] = useState("");
+  const [communicationDraft, setCommunicationDraft] = useState("");
+  const [communicationType, setCommunicationType] = useState("");
+  const communicationOptions = useMemo(() => draftCommunicationOptions(claim).options, [claim]);
 
   const metrics = useMemo(() => ({
     high: findings.filter(f=>f.severity==="High" && f.reviewStatus!=="Resolved").length,
@@ -294,6 +298,15 @@ export default function AIClaimReviewCenter({ claim, onChange }) {
           <button type="button" onClick={saveSummaryAsNote} disabled={!summaryDraft.trim()}>Save draft for review</button>
         </div>
         <label className="wide">Draft<textarea value={summaryDraft} onChange={e=>setSummaryDraft(e.target.value)} placeholder="Generate a structured draft summary, then edit and review it here."/></label>
+      </div>
+
+      <div className="panel">
+        <h2>Controlled draft communications</h2>
+        <p>Susie may prepare a draft from the structured claim record. Nothing is sent from this screen. Review and edit every draft before external use.</p>
+        <label>Draft type<select value={communicationType} onChange={e=>{const type=e.target.value;setCommunicationType(type);const d=communicationOptions.find(x=>x.type===type);setCommunicationDraft(d?("Subject: "+d.subject+"\n\n"+d.body):"");}}><option value="">Select a draft</option>{communicationOptions.map(d=><option key={d.type} value={d.type}>{d.type}{d.requiresPAReview?" — PA review":""}</option>)}</select></label>
+        {communicationType && communicationOptions.find(x=>x.type===communicationType)?.requiresPAReview && <div className="release-banner blocked"><b>LICENSED PA REVIEW REQUIRED</b><span>This draft may organize the request but cannot be treated as an approved substantive position until reviewed.</span></div>}
+        <label className="wide">Draft<textarea value={communicationDraft} onChange={e=>setCommunicationDraft(e.target.value)} placeholder="Select a draft type."/></label>
+        <p className="notice">DRAFT / HUMAN REVIEW REQUIRED — automatic sending is disabled.</p>
       </div>
 
       <div className="panel">
