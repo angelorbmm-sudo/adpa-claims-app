@@ -3,6 +3,7 @@ import { emptyClaim } from "./data/seed.js";
 import { demoWorkspace } from "./data/demo.js";
 import { loadWorkspace, nowIso, saveWorkspace, uid } from "./lib/storage.js";
 import { apiEnabled, fetchClaims, saveClaimRemote } from "./lib/api.js";
+import Icon from "./components/Icon.jsx";
 import EstimateComparison from "./components/EstimateComparison.jsx";
 import PaymentLedger from "./components/PaymentLedger.jsx";
 import WorkQueue from "./components/WorkQueue.jsx";
@@ -118,7 +119,14 @@ function markPackageStaleIfNeeded(prior, next) {
 function App() {
   const isDemo = import.meta.env.VITE_DEMO_MODE === "true";
   const [workspace, setWorkspace] = useState(() => loadWorkspace() || (isDemo ? demoWorkspace() : { claims: [], selectedId: null }));
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("portfolio");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = key => { setTab(key); setMenuOpen(false); };
+  useEffect(() => {
+    const close = e => { if (e.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, []);
   const [draft, setDraft] = useState(() => emptyClaim());
   const [serverVersions, setServerVersions] = useState({});
   const [syncState, setSyncState] = useState(apiEnabled() ? "Loading authoritative server data…" : "Browser workspace mode");
@@ -181,7 +189,7 @@ function App() {
         return;
       }
     } else setWorkspace(w => ({ ...w, claims: [claim, ...w.claims], selectedId: claim.id }));
-    setTab("intake");
+    navigate("intake");
   }
 
   async function saveClaim(next = draft) {
@@ -208,7 +216,7 @@ function App() {
 
   function openClaim(claimId, targetTab = "overview") {
     setWorkspace(w => ({ ...w, selectedId: claimId }));
-    setTab(targetTab);
+    navigate(targetTab);
   }
 
   function patch(field, value) {
@@ -311,33 +319,36 @@ function App() {
 
   return (
     <div className="app">
+      <a className="skip-link" href="#workspace-main">Skip to workspace</a>
       <header className="topbar">
-        <div><strong>ADPA Claims</strong><span>Private Working Workspace · {syncState}</span></div>
+        <div className="brand"><span className="brand-mark" aria-hidden="true">A<span>↗</span></span><div><strong>ADPA<span className="brand-light"> Claims</span></strong><span>Angelo Daniel Public Adjusting</span></div></div>
         <div className="actions">
-          <select value={selected.id} onChange={e => openClaim(e.target.value)}>
+          <label className="claim-switcher"><span className="sr-only">Selected claim</span><select value={selected.id} onChange={e => { openClaim(e.target.value); setMenuOpen(false); }}>
             {workspace.claims.map(c => <option key={c.id} value={c.id}>{c.insured || "Unnamed Claim"}</option>)}
-          </select>
-          <button onClick={createClaim}>+ New claim</button>
-          <button className="primary" onClick={() => saveClaim()}>Save claim</button>
+          </select></label>
+          <button className="new-claim" onClick={createClaim}><Icon name="plus"/>New claim</button>
+          <button className="primary save-claim" onClick={() => saveClaim()}>Save claim</button>
+          <button className="menu-toggle" aria-label={menuOpen ? "Close modules" : "Open modules"} aria-expanded={menuOpen} aria-controls="module-navigation" onClick={() => setMenuOpen(!menuOpen)}><Icon name={menuOpen ? "close" : "menu"}/></button>
         </div>
       </header>
-
-      <div className="shell">
-        <aside>
-          <div className="claim-card">
-            <b>{draft.insured || "Unnamed Claim"}</b>
-            <small>{draft.carrier || "Carrier not entered"}</small>
-            <small>{draft.claimNumber || "Claim # not entered"}</small>
-            <small>{draft.jurisdiction || "State?"} · Compliance {complianceGate.cleared ? "CLEAR" : "HOLD"} · {openIssues.length} open issue(s) · {deadlineLate} late clock(s)</small>
-          </div>
-          <nav>{modules.map(([key, label]) => <button className={tab === key ? "active" : ""} key={key} onClick={() => setTab(key)}>{label}</button>)}</nav>
+      <div className={`shell ${menuOpen ? "menu-open" : ""}`}>
+        <aside id="module-navigation" aria-label="Claim modules">
+          <div className="sidebar-intro"><span className="eyebrow">Your workspace</span><b>From evidence<br/>to settlement.</b></div>
+          <nav aria-label="Modules">{[
+            ["Workspace", ["portfolio", "overview", "workqueue", "routing"]],
+            ["Build the claim", ["intake", "compliance", "representation", "coverage", "policy", "evidence", "proofplan", "contents", "ale", "estimates", "contractor"]],
+            ["Manage & recover", ["payments", "financial", "communications", "deadlines", "issues", "critical", "chronology", "supplements", "mortgage", "agreements", "receipts", "package", "approvals", "recovery", "closure"]],
+            ["Preparation", ["ai", "transition"]]
+          ].map(([group, keys]) => <div className="nav-group" key={group}><span className="nav-label">{group}</span>{keys.map(key => <button className={tab === key ? "active" : ""} aria-current={tab === key ? "page" : undefined} key={key} onClick={() => navigate(key)}><Icon name={key === "portfolio" || key === "overview" ? "dashboard" : key === "workqueue" || key === "deadlines" ? "tasks" : key === "payments" || key === "financial" || key === "recovery" ? "money" : key === "compliance" || key === "approvals" ? "shield" : key === "evidence" || key === "package" ? "folder" : "claim"}/><span>{modules.find(m => m[0] === key)[1]}</span></button>)}</div>)}</nav>
         </aside>
-
-        <main>
+        <main id="workspace-main">
+          <div className="workspace-context"><span>Workspace <span aria-hidden="true">/</span> <b>{modules.find(m => m[0] === tab)?.[1]}</b></span><span className="workspace-mode"><i/>{isDemo ? "Demo workspace · sample data" : syncState}</span></div>
+          {isDemo && <div className="demo-note"><Icon name="shield"/><span><b>Live test demo.</b> Sample claims only. Changes stay in this browser; sending and live integrations are disabled.</span></div>}
+          {tab !== "portfolio" && <div className="selected-claim"><div><span className="eyebrow">Selected claim</span><b>{draft.insured || "Unnamed Claim"}</b><small>{draft.carrier || "Carrier not entered"} · {draft.claimNumber || "Claim # not entered"}</small></div><span className={`status-badge ${complianceGate.cleared ? "clear" : "hold"}`}>{complianceGate.cleared ? "Compliance clear" : "Compliance hold"}</span></div>}
           {tab === "portfolio" && <PortfolioDashboard claims={workspace.claims} onOpenClaim={openClaim} />}
           {tab === "overview" && (
             <section>
-              <h1>Claim Dashboard</h1>
+              <div className="page-heading"><div><span className="eyebrow">Claim command center</span><h1>Claim dashboard</h1><p>Evidence, progress, and recovery in one place.</p></div><button onClick={() => navigate("evidence")}><Icon name="folder"/>View evidence</button></div>
               <div className="panel">
                 <h2>Claim Workflow</h2>
                 <p><b>Recommended next step:</b> {intelligence.next.label} — {intelligence.next.status}</p>
@@ -465,6 +476,13 @@ function App() {
           )}
         </main>
       </div>
+      <nav className="mobile-nav" aria-label="Quick navigation">
+        <button className={tab === "portfolio" ? "active" : ""} onClick={() => navigate("portfolio")}><Icon name="dashboard"/>Home</button>
+        <button className={tab === "overview" ? "active" : ""} onClick={() => navigate("overview")}><Icon name="claim"/>Claim</button>
+        <button className="mobile-create" onClick={createClaim}><Icon name="plus"/>New claim</button>
+        <button className={tab === "workqueue" ? "active" : ""} onClick={() => navigate("workqueue")}><Icon name="tasks"/>Tasks</button>
+        <button aria-expanded={menuOpen} aria-controls="module-navigation" onClick={() => setMenuOpen(!menuOpen)}><Icon name={menuOpen ? "close" : "menu"}/>Modules</button>
+      </nav>
     </div>
   );
 }
@@ -509,3 +527,4 @@ function SimpleRecords({ title, records, fields, onAdd, embedded = false }) {
 
 
 export default App;
+

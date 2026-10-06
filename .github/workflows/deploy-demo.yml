@@ -2,6 +2,14 @@ name: Deploy ADPA Demo
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "vite.config.js"
+      - ".github/workflows/deploy-demo.yml"
 
 permissions:
   contents: read
@@ -27,6 +35,9 @@ jobs:
       - name: Install dependencies
         run: npm install --no-fund
 
+      - name: Run regression tests
+        run: npm test
+
       - name: Build demo
         env:
           VITE_DEMO_MODE: "true"
@@ -51,3 +62,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
