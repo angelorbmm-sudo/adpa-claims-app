@@ -21,6 +21,7 @@ import DepreciationRecoveryCenter from "./components/DepreciationRecoveryCenter.
 import ClaimLifecycleChronology from "./components/ClaimLifecycleChronology.jsx";
 import { complianceStatus } from "./lib/stateCompliance.js";
 import PortfolioDashboard from "./components/PortfolioDashboard.jsx";
+import AgreementPacketCenter from "./components/AgreementPacketCenter.jsx";
 
 const modules = [
   ["portfolio", "Portfolio Command"],
@@ -304,7 +305,7 @@ function App() {
           {tab === "chronology" && <ClaimLifecycleChronology claim={draft} onChange={lifecycle => saveClaim({ ...draft, lifecycle })} />}
           {tab === "supplements" && <SupplementsDisputeCenter claim={draft} onChange={supplements => saveClaim({ ...draft, supplements })} />}
           {tab === "mortgage" && <MortgageLossDraftCenter claim={draft} onChange={mortgage => saveClaim({ ...draft, mortgage })} />}
-          {tab === "agreements" && <SimpleRecords title="Agreement Library & Packets" records={draft.agreements} fields={[["name","Document"],["version","Version"],["signer","Signer"],["status","Status"]]} onAdd={r => addRecord("agreements", r)} />}
+          {tab === "agreements" && <AgreementPacketCenter claim={draft} onChange={agreements => saveClaim({ ...draft, agreements })} />}
           {tab === "receipts" && <DepreciationRecoveryCenter claim={draft} onChange={receipts => saveClaim({ ...draft, receipts })} />}
 
           {tab === "package" && (
