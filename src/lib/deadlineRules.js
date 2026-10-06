@@ -1,20 +1,20 @@
 export const DEADLINE_RULES = {
   CA: [
-    { key: "claim_ack", label: "Acknowledge notice of claim", days: 15, unit: "calendar", authority: "10 CCR 2695.5(e)(1)", effectiveFrom: "2026-10-06", effectiveThrough: null },
-    { key: "claimant_communication", label: "Complete response to claimant communication", days: 15, unit: "calendar", authority: "10 CCR 2695.5(b)", effectiveFrom: "2026-10-06", effectiveThrough: null },
-    { key: "proof_decision", label: "Accept or deny after proof of claim", days: 40, unit: "calendar", authority: "10 CCR 2695.7(b)", effectiveFrom: "2026-10-06", effectiveThrough: null },
-    { key: "extension_notice", label: "Continuing investigation notice", days: 30, unit: "calendar", authority: "10 CCR 2695.7(c)(1)", effectiveFrom: "2026-10-06", effectiveThrough: null },
-    { key: "accepted_payment", label: "Payment after claim accepted", days: 30, unit: "calendar", authority: "10 CCR 2695.7(h)", effectiveFrom: "2026-10-06", effectiveThrough: null }
+    { key: "claim_ack", label: "Acknowledge notice of claim", days: 15, unit: "calendar", authority: "10 CCR 2695.5(e)(1)", verifiedOn: "2026-10-06", effectiveFrom: null, effectiveThrough: null },
+    { key: "claimant_communication", label: "Complete response to claimant communication", days: 15, unit: "calendar", authority: "10 CCR 2695.5(b)", verifiedOn: "2026-10-06", effectiveFrom: null, effectiveThrough: null },
+    { key: "proof_decision", label: "Accept or deny after proof of claim", days: 40, unit: "calendar", authority: "10 CCR 2695.7(b)", verifiedOn: "2026-10-06", effectiveFrom: null, effectiveThrough: null },
+    { key: "extension_notice", label: "Continuing investigation notice", days: 30, unit: "calendar", authority: "10 CCR 2695.7(c)(1)", verifiedOn: "2026-10-06", effectiveFrom: null, effectiveThrough: null },
+    { key: "accepted_payment", label: "Payment after claim accepted", days: 30, unit: "calendar", authority: "10 CCR 2695.7(h)", verifiedOn: "2026-10-06", effectiveFrom: null, effectiveThrough: null }
   ],
   NV: [
-    { key: "claim_ack", label: "Acknowledge notice of claim", days: 20, unit: "working", authority: "NAC 686A.665(1)", effectiveFrom: "2026-10-06", effectiveThrough: null },
-    { key: "claimant_communication", label: "Reply to pertinent claimant communication", days: 20, unit: "working", authority: "NAC 686A.665(3)", effectiveFrom: "2026-10-06", effectiveThrough: null },
-    { key: "investigation_begin", label: "Begin claim investigation", days: 20, unit: "working", authority: "NAC 686A.670(1)", effectiveFrom: "2026-10-06", effectiveThrough: null },
-    { key: "investigation_complete", label: "Complete investigation unless not reasonably possible", days: 30, unit: "calendar", authority: "NAC 686A.670(2)", effectiveFrom: "2026-10-06", effectiveThrough: null },
-    { key: "proof_decision", label: "Accept or deny after properly executed proof of loss", days: 30, unit: "working", authority: "NAC 686A.675(1)", effectiveFrom: "2026-10-06", effectiveThrough: null },
-    { key: "extension_notice", label: "Initial additional-time notice after proof of loss", days: 30, unit: "working", authority: "NAC 686A.675(3)", effectiveFrom: "2026-10-06", effectiveThrough: null },
-    { key: "accepted_payment", label: "Payment after claim accepted", days: 30, unit: "calendar", authority: "NAC 686A.675(1)", effectiveFrom: "2026-10-06", effectiveThrough: null },
-    { key: "undisputed_payment", label: "Undisputed portion payment", days: 0, unit: "prompt", authority: "NAC 686A.675(7)", effectiveFrom: "2026-10-06", effectiveThrough: null }
+    { key: "claim_ack", label: "Acknowledge notice of claim", days: 20, unit: "working", authority: "NAC 686A.665(1)", verifiedOn: "2026-10-06", effectiveFrom: null, effectiveThrough: null },
+    { key: "claimant_communication", label: "Reply to pertinent claimant communication", days: 20, unit: "working", authority: "NAC 686A.665(3)", verifiedOn: "2026-10-06", effectiveFrom: null, effectiveThrough: null },
+    { key: "investigation_begin", label: "Begin claim investigation", days: 20, unit: "working", authority: "NAC 686A.670(1)", verifiedOn: "2026-10-06", effectiveFrom: null, effectiveThrough: null },
+    { key: "investigation_complete", label: "Complete investigation unless not reasonably possible", days: 30, unit: "calendar", authority: "NAC 686A.670(2)", verifiedOn: "2026-10-06", effectiveFrom: null, effectiveThrough: null },
+    { key: "proof_decision", label: "Accept or deny after properly executed proof of loss", days: 30, unit: "working", authority: "NAC 686A.675(1)", verifiedOn: "2026-10-06", effectiveFrom: null, effectiveThrough: null },
+    { key: "extension_notice", label: "Initial additional-time notice after proof of loss", days: 30, unit: "working", authority: "NAC 686A.675(3)", verifiedOn: "2026-10-06", effectiveFrom: null, effectiveThrough: null },
+    { key: "accepted_payment", label: "Payment after claim accepted", days: 30, unit: "calendar", authority: "NAC 686A.675(1)", verifiedOn: "2026-10-06", effectiveFrom: null, effectiveThrough: null },
+    { key: "undisputed_payment", label: "Undisputed portion payment", days: 0, unit: "prompt", authority: "NAC 686A.675(7)", verifiedOn: "2026-10-06", effectiveFrom: null, effectiveThrough: null }
   ]
 };
 
