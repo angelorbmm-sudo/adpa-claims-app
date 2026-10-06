@@ -24,3 +24,4 @@ jobs:
           node --check server/routes/migration.js
           node --check server/routes/documents.js
           node --check server/compliance.js
+          node --check server/financial.js
