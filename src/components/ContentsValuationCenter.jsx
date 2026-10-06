@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { nowIso, uid } from "../lib/storage.js";
+import { contentsIntelligence } from "../lib/estimatingIntelligence.js";
 
 const blank = {
   room: "",
@@ -40,6 +41,7 @@ export default function ContentsValuationCenter({ items, onChange }){
   const [roomFilter,setRoomFilter]=useState("All");
   const [statusFilter,setStatusFilter]=useState("All");
 
+  const intelligence=useMemo(()=>contentsIntelligence(items),[items]);
   const totals=useMemo(()=>items.reduce((t,i)=>{
     const c=calc(i);
     t.rcv+=c.rcv; t.dep+=c.dep; t.acv+=c.acv;
@@ -69,7 +71,9 @@ export default function ContentsValuationCenter({ items, onChange }){
       <div className="stat"><small>ADPA RCV</small><b>{money(totals.rcv)}</b></div>
       <div className="stat"><small>ADPA depreciation</small><b>{money(totals.dep)}</b></div>
       <div className="stat"><small>ADPA ACV</small><b>{money(totals.acv)}</b></div>
-      <div className="stat"><small>RCV variance vs carrier</small><b>{money(totals.rcv-totals.carrierRcv)}</b></div>
+      <div className="stat"><small>RCV variance vs carrier</small><b>{money(intelligence.variance)}</b></div>
+      <div className="stat"><small>Needs LKQ / valuation review</small><b>{intelligence.needsReview}</b></div>
+      <div className="stat"><small>Missing replacement source</small><b>{intelligence.missingReplacementSource}</b></div>
     </div>
 
     <div className="panel">
@@ -129,6 +133,8 @@ export default function ContentsValuationCenter({ items, onChange }){
         })}</tbody>
       </table>
     </div>
+
+    <div className="panel"><h2>Contents intelligence</h2><p><b>{intelligence.count}</b> items · calculated RCV {money(intelligence.rcv)} · calculated ACV {money(intelligence.calculatedAcv)} · calculated depreciation {money(intelligence.calculatedDepreciation)}.</p><p>{intelligence.needsReview ? intelligence.needsReview+" item(s) still need LKQ/valuation review." : "No item is flagged for LKQ/valuation review."} {intelligence.missingReplacementSource ? intelligence.missingReplacementSource+" item(s) lack a replacement source." : ""}</p></div>
 
     <div className="panel">
       <h2>Carrier comparison</h2>
