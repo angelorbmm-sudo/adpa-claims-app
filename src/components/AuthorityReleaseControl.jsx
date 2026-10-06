@@ -80,7 +80,7 @@ export default function AuthorityReleaseControl({ claim, onChange }) {
       licensed,
       client,
       signature,
-      current: latestPackage.status !== "Superseded"
+      current: latestPackage.status !== "Superseded" && !String(latestPackage.status || "").startsWith("Stale")
     };
   }, [latestPackage, approvals, signatures, packageHash]);
 
