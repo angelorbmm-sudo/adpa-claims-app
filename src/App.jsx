@@ -71,7 +71,7 @@ function money(v) {
 }
 
 function packageRelevantClaim(claim) {
-  const { packages, approvals, signatures, releaseRecords, closure, updatedAt, ...substantive } = claim || {};
+  const { packages, approvals, signatures, releaseRecords, closure, routing, updatedAt, ...substantive } = claim || {};
   return JSON.stringify(substantive);
 }
 
