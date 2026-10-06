@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {reconciliationForClaim,closureBlockers,mortgageRemaining,receivedPayment} from "../src/lib/claimReconciliation.js";
 import {complianceStatus} from "../src/lib/stateCompliance.js";
 import {DEADLINE_RULES,addCalendarDays,addWorkingDays,calculateDueDate,ruleFor} from "../src/lib/deadlineRules.js";
+import {phase2CaliforniaFireClaim} from "../src/data/phase2FireClaim.js";
 
 const base=()=>({coverages:[],payments:[],receipts:[],issues:[],supplements:[],recovery:[],criticalEvents:[],deadlineClocks:[],packages:[],mortgage:{},compliance:{},representation:{}});
 
@@ -33,3 +34,7 @@ test("NV acknowledgment is 20 working days and skips weekends",()=>{const r=rule
 test("calendar helper crosses month boundary",()=>{assert.equal(addCalendarDays("2026-10-25",10),"2026-11-04")});
 
 test("NV and CA rule registries remain separate",()=>{assert.notEqual(DEADLINE_RULES.CA,DEADLINE_RULES.NV);assert.equal(ruleFor("CA","investigation_complete"),undefined);assert.ok(ruleFor("NV","investigation_complete"))});
+
+test("Phase 2 synthetic fire claim exercises major claim domains",()=>{const c=phase2CaliforniaFireClaim();assert.equal(c.jurisdiction,"CA");assert.ok(c.documents.length>=4);assert.ok(c.contents.length>=2);assert.ok(c.issues.length>=2);assert.ok(c.supplements.length>=1);assert.ok(c.payments.length>=4);assert.ok(c.receipts.length>=1);assert.ok(c.mortgage.draws.length>=1);assert.ok(c.recovery.length>=2);});
+test("Phase 2 fire claim payment ledger reconciles received coverage",()=>{const r=reconciliationForClaim(phase2CaliforniaFireClaim());assert.equal(r.ledgerDifference,0);assert.equal(r.ledgerReceived,329000);assert.equal(r.coverageReceived,329000);});
+test("Phase 2 fire claim correctly remains open with real workflow blockers",()=>{const c=phase2CaliforniaFireClaim();const b=closureBlockers(c,complianceStatus(c)).blockers;assert.ok(b.some(x=>x.includes("Final claim package")));assert.ok(b.some(x=>x.includes("depreciation")));assert.ok(b.some(x=>x.includes("Mortgage")));assert.ok(b.some(x=>x.includes("issue file")));assert.ok(b.some(x=>x.includes("supplement")));assert.ok(b.some(x=>x.includes("recovery")));});
