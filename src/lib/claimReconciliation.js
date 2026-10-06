@@ -17,7 +17,7 @@ export function reconciliationForClaim(claim){
   const depreciationOutstanding=receipts.reduce((s,x)=>s+(x.disposition==="Documented unrecoverable/waived"?0:Math.max(0,n(x.recoverableDepreciation)-n(x.released))),0);
   const lenderHeld=mortgageRemaining(claim.mortgage||{});
   const openIssues=(claim.issues||[]).filter(x=>x.status!=="Resolved");
-  const openSupplements=(claim.supplements||[]).filter(x=>!["Resolved","Closed","Paid"].includes(x.status));
+  const openSupplements=(claim.supplements||[]).filter(x=>!["Resolved","Closed","Approved","Paid"].includes(x.status));
   const openRecovery=(claim.recovery||[]).filter(x=>x.status!=="Closed");
   const openCritical=(claim.criticalEvents||[]).filter(x=>x.status!=="Resolved");
   const lateClocks=(claim.deadlineClocks||[]).filter(x=>x.status!=="Satisfied"&&(x.verifiedDueDate||x.dueDate)&&new Date((x.verifiedDueDate||x.dueDate)+"T23:59:59").getTime()<Date.now());
