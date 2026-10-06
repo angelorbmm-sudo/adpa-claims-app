@@ -31,6 +31,7 @@ import ContractorCommitmentCenter from "./components/ContractorCommitmentCenter.
 import ClaimClosureAuditCenter from "./components/ClaimClosureAuditCenter.jsx";
 import FinalFinancialReconciliation from "./components/FinalFinancialReconciliation.jsx";
 import DataTransitionCenter from "./components/DataTransitionCenter.jsx";
+import { reconciliationForClaim, closureBlockers } from "./lib/claimReconciliation.js";
 
 const modules = [
   ["portfolio", "Portfolio Command"],
@@ -66,6 +67,27 @@ const modules = [
   ["ai", "AI Preparation"],
   ["transition", "Production Data Readiness"]
 ];
+
+
+const workflowStages = [
+  {key:"intake",label:"1 Intake",test:c=>!!(c.insured&&c.property&&c.carrier&&c.claimNumber&&c.dateOfLoss&&c.causeOfLoss),help:"Complete insured, property, carrier, claim number, date and cause of loss."},
+  {key:"policy",label:"2 Policy",test:c=>(c.policyAnalysis?.declarations?.length||0)>0 || c.compliance?.policyStatus==="Collected",help:"Collect declarations/policy and begin coverage review."},
+  {key:"evidence",label:"3 Evidence",test:c=>(c.documents?.length||0)>0,help:"Add and classify claim evidence."},
+  {key:"estimates",label:"4 Damages & Estimates",test:c=>(c.estimateComparisons?.length||0)>0 || (c.contents?.length||0)>0,help:"Document damages and compare estimates/contents."},
+  {key:"payments",label:"5 Payments",test:c=>(c.payments?.length||0)>0 || (c.coverages||[]).some(x=>Number(x.issued||0)>0),help:"Reconcile carrier payments and coverage allocations."},
+  {key:"issues",label:"6 Issues & Supplements",test:c=>(c.issues?.length||0)>0 || (c.supplements?.length||0)>0,help:"Track disputed items, supplements and negotiation."},
+  {key:"package",label:"7 Claim Package",test:c=>{const p=(c.packages||[]).at(-1);return !!p&&!String(p.status||"").startsWith("Stale")&&p.status!=="Superseded";},help:"Assemble a current versioned claim package."},
+  {key:"approvals",label:"8 PA / Client Authority",test:c=>{const p=(c.packages||[]).at(-1),h=p?.snapshotHash||"";return !!h&&(c.approvals||[]).some(a=>a.packageHash===h&&a.stage==="Licensed PA Approval"&&!a.revokedAt)&&(c.approvals||[]).some(a=>a.packageHash===h&&a.stage==="Client Authorization"&&!a.revokedAt);},help:"Licensed PA review and client authorization are separate gates."},
+  {key:"recovery",label:"9 Recovery",test:c=>(c.recovery||[]).every(x=>x.status==="Closed"),help:"Finish depreciation, lender and other recovery follow-up."},
+  {key:"closure",label:"10 Close & Audit",test:c=>c.closure?.status==="Closed",help:"Reconcile and close only after all controls pass."}
+];
+function workflowForClaim(claim,complianceGate){
+ const r=reconciliationForClaim(claim), closure=closureBlockers(claim,complianceGate);
+ const stages=workflowStages.map(s=>({...s,done:s.test(claim)}));
+ let next=stages.find(s=>!s.done)||stages.at(-1);
+ if(stages.find(s=>s.key==="payments")?.done && (Math.abs(r.ledgerDifference)>0.01||r.depreciationOutstanding>0.01||r.lenderHeld>0.01)) next={key:"financial",label:"Financial Reconciliation",help:"Resolve payment, depreciation or mortgage reconciliation before closure.",done:false};
+ return {stages,next,reconciliation:r,closure};
+}
 
 function money(v) {
   return Number(v || 0).toLocaleString(undefined, { style: "currency", currency: "USD" });
@@ -283,6 +305,7 @@ function App() {
   const issueVariance = openIssues.reduce((s,x)=>s + Number(x.adpaAmount||0) - Number(x.carrierAmount||0),0);
   const deadlineLate = (draft.deadlineClocks || []).filter(x => x.status !== "Satisfied" && (x.verifiedDueDate || x.dueDate) && new Date((x.verifiedDueDate || x.dueDate)+"T23:59:59").getTime() < Date.now()).length;
   const depreciationOutstanding = (draft.receipts || []).reduce((s,x)=>s+Number(x.recoverableDepreciation||0)-Number(x.released||0),0);
+  const workflow = workflowForClaim(draft, complianceGate);
 
   return (
     <div className="app">
@@ -313,6 +336,16 @@ function App() {
           {tab === "overview" && (
             <section>
               <h1>Claim Dashboard</h1>
+              <div className="panel">
+                <h2>Claim Workflow</h2>
+                <p><b>Recommended next step:</b> {workflow.next.label}</p>
+                <p className="muted">{workflow.next.help}</p>
+                <button className="primary" onClick={() => setTab(workflow.next.key)}>Continue claim →</button>
+                <div className="workflow-strip">
+                  {workflow.stages.map(s => <button key={s.key} className={s.done ? "workflow-done" : ""} onClick={() => setTab(s.key)}>{s.done ? "✓ " : ""}{s.label}</button>)}
+                </div>
+                {workflow.closure.blockers.length > 0 && <details><summary>{workflow.closure.blockers.length} closure blocker(s)</summary><ul>{workflow.closure.blockers.map((b,i)=><li key={i}>{b}</li>)}</ul></details>}
+              </div>
               <div className="stats">
                 <Stat label="Requested" value={money(totalRequested)} />
                 <Stat label="Received" value={money(totalReceived)} />
