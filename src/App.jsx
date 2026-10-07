@@ -322,7 +322,7 @@ function App() {
     <div className="app">
       <a className="skip-link" href="#workspace-main">Skip to workspace</a>
       <header className="topbar">
-        <div className="brand"><span className="brand-mark" aria-hidden="true">A<span>↗</span></span><div><strong>ADPA<span className="brand-light"> Claims</span></strong><span>Angelo Daniel Public Adjusting</span></div></div>
+        <div className="brand"><span className="brand-mark" aria-hidden="true"><svg viewBox="0 0 100 54"><path d="M4 42 49 6 96 42M17 44 49 19 82 44" fill="none" stroke="currentColor" strokeWidth="6"/><path d="M45 35h10v10H45z" fill="currentColor"/></svg></span><div><strong>ADPA<span className="brand-light"> Claims</span></strong><span>Angelo Daniel Public Adjusting</span></div></div>
         <div className="actions">
           <label className="claim-switcher"><span className="sr-only">Selected claim</span><select value={selected.id} onChange={e => { openClaim(e.target.value); setMenuOpen(false); }}>
             {workspace.claims.map(c => <option key={c.id} value={c.id}>{c.insured || "Unnamed Claim"}</option>)}

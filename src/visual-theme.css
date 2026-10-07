@@ -173,3 +173,100 @@ tbody tr:hover { background:#f8fbff; }
   .mobile-nav .mobile-create { color:var(--teal); font-weight:700; }
 }
 @media(prefers-reduced-motion:reduce) { * { transition:none!important; scroll-behavior:auto!important; } }
+
+/* Reference skin: navy navigation, sunset property hero and vivid metric cards. */
+:root { --navy:#031c3b; --blue:#066dff; --line:#e5ebf4; color:#172234; background:#f4f7fc; }
+.shell > aside { background:linear-gradient(180deg,#031e40,#02172f); }
+.shell aside nav button { color:#e1ebf6; font-size:13px; border-radius:7px; }
+.shell aside nav button.active { background:#0758d7; border-color:#0758d7; box-shadow:none; }
+.shell aside nav button.active .icon { color:white; }
+.shell aside nav .icon { color:#e0eafa; }
+.brand-mark { border:0; border-radius:0; width:50px; }
+.brand-mark svg { width:50px; height:34px; }
+.topbar { background:#fff; color:#172234; border-bottom:1px solid var(--line); }
+.topbar strong,.topbar .brand-light { color:#032145; }
+.brand > div > span { color:#63728a; }
+.topbar .actions button:not(.primary) { background:#f5f8ff; border-color:#dce6f5; color:#1350a3; }
+.topbar .actions button:hover { background:#e8f1ff; }
+.claim-switcher select { color:#233a56; background:#f8faff; border-color:#dce5f1; }
+.recovery-hero { position:relative; isolation:isolate; min-height:205px; overflow:hidden; margin:0 0 22px; padding:30px 35px; border-radius:12px; background:#082644 url("/adpa-recovery-banner.jpg") center 54% / cover; color:white; display:flex; align-items:center; justify-content:space-between; gap:24px; }
+.recovery-hero:before { content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(90deg,rgba(0,20,49,.82),rgba(0,20,49,.16) 50%,rgba(0,20,49,.8)); }
+.hero-brand { display:flex; flex-direction:column; align-items:center; }
+.hero-brand svg { width:106px; height:58px; margin-bottom:6px; }
+.hero-brand b { font-size:39px; letter-spacing:-1.4px; line-height:1.1; display:block; white-space:nowrap; }
+.hero-brand b span { font-weight:400; }
+.hero-brand small { display:block; margin-top:8px; font-size:10px; letter-spacing:1.5px; }
+.recovery-hero h2 { font-size:25px; line-height:1.32; color:white; margin:0; max-width:285px; text-shadow:0 2px 10px #021c3b; }
+.portfolio-dashboard .page-heading { margin-bottom:18px; }
+.portfolio-dashboard .page-heading h1 { font-size:24px; }
+.dashboard-stat { display:flex; align-items:flex-start; gap:16px; padding:22px 18px; }
+.dashboard-stat:before { display:none; }
+.dashboard-stat > div { min-width:0; display:grid; gap:6px; }
+.dashboard-stat b { color:#101827; font-size:25px; letter-spacing:-.7px; }
+.dashboard-stat small { font-size:13px; }
+.dashboard-stat em { font-size:11px; font-style:normal; color:#597087; margin-top:3px; }
+.dashboard-stat:nth-child(2) em { color:#189949; }
+.dashboard-stat:nth-child(3) em { color:#0663de; }
+.dashboard-stat:nth-child(4) em { color:#d65f0b; }
+.metric-icon { display:flex; flex:none; width:49px; height:49px; border-radius:14px; align-items:center; justify-content:center; color:white; box-shadow:0 4px 12px #172f4a12; }
+.metric-icon .icon { width:27px; height:27px; }
+.metric-icon.blue { background:linear-gradient(135deg,#0681ff,#005bea); }
+.metric-icon.green { background:linear-gradient(135deg,#4dcc65,#22a844); }
+.metric-icon.purple { background:linear-gradient(135deg,#a044ff,#7521e9); }
+.metric-icon.orange { background:linear-gradient(135deg,#ffae23,#ff7900); }
+.portfolio-detail-grid { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(280px,1fr); gap:20px; align-items:start; }
+.portfolio-claims { min-width:0; }
+.portfolio-desktop table { min-width:850px; }
+.coverage-panel { margin:0; padding:24px; }
+.coverage-layout { display:flex; flex-direction:column; align-items:center; gap:26px; margin-top:24px; }
+.coverage-donut { width:205px; height:205px; border-radius:50%; padding:31px; display:grid; place-items:center; flex:none; }
+.coverage-donut > div { width:100%; height:100%; background:white; border-radius:50%; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:7px; }
+.coverage-donut b { font-size:18px; letter-spacing:-.6px; overflow-wrap:anywhere; max-width:100%; }
+.coverage-donut small { font-size:11px; margin-top:4px; color:#65728a; }
+.coverage-legend { list-style:none; padding:0; margin:0; width:100%; display:grid; gap:15px; }
+.coverage-legend li { display:flex; align-items:center; gap:8px; font-size:11px; }
+.coverage-legend i { width:10px; height:10px; border-radius:50%; flex:none; }
+.coverage-legend b { margin-left:auto; color:#101827; }
+.status-badge.clear { background:#ddf7ea; color:#12855c; }
+.status-badge.hold { background:#fff0cf; color:#a96908; }
+@media(min-width:801px) and (max-width:1200px) {
+ .dashboard-stat { gap:10px; padding:18px 14px; }
+ .portfolio-detail-grid { grid-template-columns:1fr; }
+ .coverage-layout { flex-direction:row; justify-content:space-around; }
+ .coverage-legend { max-width:350px; }
+}
+@media(max-width:800px) {
+ .topbar { background:#031c3b; color:white; }
+ .topbar strong,.topbar .brand-light { color:white; }
+ .brand-mark { color:white!important; }
+ .brand > div > span { color:#c5d5e8; }
+ .topbar .actions button:not(.primary) { background:#ffffff0a; border-color:#ffffff30; color:white; }
+ .claim-switcher select { color:white; background:#ffffff0a; border-color:#ffffff30; }
+ .claim-switcher option { color:#172234; }
+ .recovery-hero { min-height:190px; margin:-3px 0 18px; padding:22px; border-radius:10px; background-position:57% center; }
+ .hero-brand { display:none; }
+ .recovery-hero:before { background:linear-gradient(90deg,#021b3be6,#021b3b20); }
+ .recovery-hero h2 { font-size:25px; max-width:230px; }
+ .dashboard-stat { padding:17px 12px; gap:10px; }
+ .metric-icon { width:40px; height:43px; border-radius:11px; }
+ .metric-icon .icon { width:24px; height:24px; }
+ .dashboard-stat b { font-size:20px; }
+ .dashboard-stat small { font-size:11px; }
+ .dashboard-stat em { font-size:9px; }
+ .portfolio-detail-grid { grid-template-columns:1fr; gap:18px; }
+ .coverage-panel { padding:20px; }
+ .coverage-layout { flex-direction:row; gap:18px; align-items:center; }
+ .coverage-donut { width:155px; height:155px; padding:24px; }
+ .coverage-donut b { font-size:14px; }
+ .coverage-donut small { font-size:9px; }
+ .coverage-legend { gap:13px; }
+ .coverage-legend li { font-size:10px; gap:6px; }
+ .mobile-nav .mobile-create { color:#066dff; }
+ .mobile-nav .mobile-create .icon { background:#066dff; color:white; width:43px; height:43px; padding:10px; border-radius:50%; margin-top:-20px; box-shadow:0 3px 9px #066dff30; }
+ .claim-preview { padding:16px; }
+}
+@media(max-width:380px) {
+ .dashboard-stat { flex-direction:column; }
+ .coverage-layout { flex-direction:column; }
+ .coverage-legend { max-width:260px; }
+}
