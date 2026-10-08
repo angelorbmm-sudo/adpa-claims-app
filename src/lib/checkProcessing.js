@@ -33,8 +33,11 @@ export function validateCheck(check,checks=[],payments=[]) {
   if(cents(check.amount)===null || cents(check.amount)<=0)errors.push("Enter a positive amount with no more than two decimal places.");
   if(!["Unknown","No mortgage payee","Lender endorsement","Lender monitored"].includes(check.route))errors.push("Choose a valid lender route.");
   const payees=check.payees||[];
-  if(!payees.some(p=>p.type==="ADPA"&&p.name.trim()))errors.push("ADPA must be a named payee for this module.");
-  if(!payees.some(p=>p.type==="Client"&&p.name.trim()))errors.push("Enter at least one client payee.");
+  if(check.kind!=="Lender draw"&&!payees.some(p=>p.type==="ADPA"&&p.name.trim()))errors.push("ADPA must be a named payee on an original insurance check.");
+  if(check.kind!=="Lender draw"&&!payees.some(p=>p.type==="Client"&&p.name.trim()))errors.push("Enter at least one client payee.");
+  if(!payees.length)errors.push("Enter the exact named payees on this check.");
+  errors.push(...drawErrors(check,checks));
+  if(previous?.events?.length&&(check.kind!==previous.kind||check.parentCheckId!==previous.parentCheckId))errors.push("Keep the recorded check type and original-check link.");
   if(payees.some(p=>!p.name.trim()||!PAYEE_TYPES.includes(p.type)))errors.push("Complete every payee name and type.");
   if(new Set(payees.map(p=>p.name.trim().toLowerCase())).size!==payees.length)errors.push("Remove duplicate payee names.");
   if(payees.some(p=>!ENDORSEMENT_STATES.includes(p.status)))errors.push("Choose valid endorsement states.");
@@ -54,7 +57,13 @@ export function validateCheck(check,checks=[],payments=[]) {
   if(totals.planned>totals.amount)errors.push("Proposed distributions exceed the check amount.");
   if(totals.paid>totals.available)errors.push("Reported payouts exceed reported available funds.");
   if((check.payouts||[]).some(p=>!(check.allocations||[]).some(a=>a.id===p.allocationId&&a.payeeId===p.payeeId)))errors.push("A reported payout must retain its linked distribution.");
-  if((check.allocations||[]).some(a=>!payees.some(p=>p.id===a.payeeId)))errors.push("Keep payees referenced by proposed distributions.");
+  if((check.allocations||[]).some(a=>!checkRecipients(check).some(p=>p.id===a.payeeId)))errors.push("Keep recipients referenced by proposed distributions.");
+  const participants=check.participants||[];
+  if(new Set([...payees,...participants].map(p=>p.id)).size!==payees.length+participants.length)errors.push("Participant identifiers must be unique.");
+  if(participants.some(p=>!p.name?.trim()||!["Contractor","ADPA","Client","Other recipient"].includes(p.type)))errors.push("Complete recipient names and roles.");
+  if(new Set(checkRecipients(check).map(p=>p.name.trim().toLowerCase())).size!==checkRecipients(check).length)errors.push("Use a single participant record for each named party.");
+  if(Object.values(check.contacts||{}).some(p=>p.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)))errors.push("Enter valid participant email addresses.");
+  if((previous?.participants||[]).some(p=>(previous.allocations||[]).some(a=>a.payeeId===p.id)&&!participants.some(n=>n.id===p.id&&n.name===p.name&&n.type===p.type)))errors.push("Retain identities of recipients with recorded allocations.");
   if((check.allocations||[]).some(a=>totalCents((check.payouts||[]).filter(p=>p.allocationId===a.id))>(cents(a.amount)||0)))errors.push("A proposed distribution cannot be reduced below its reported payouts.");
   if(check.events?.length&&((check.route!==(check.recordedRoute||check.route)) || cents(check.amount)!==(check.recordedAmountCents ?? cents(check.amount))))errors.push("After bank/lender events, retain the recorded route and check amount. Create a new record for a reissued check.");
   return errors;
@@ -99,7 +108,7 @@ export function allocationErrors(check,row) {
   const errors=[];
   const amount=cents(row.amount);
   if(amount===null||amount<=0)errors.push("Enter a positive distribution amount with no more than two decimal places.");
-  if(!(check.payees||[]).some(p=>p.id===row.payeeId))errors.push("Select a named payee.");
+  if(!checkRecipients(check).some(p=>p.id===row.payeeId))errors.push("Select a distribution recipient.");
   if(amount!==null&&checkTotals(check).planned+amount>checkTotals(check).amount)errors.push("Proposed distributions exceed the check amount.");
   return errors;
 }
@@ -114,16 +123,51 @@ export function payoutErrors(check,row) {
   const prior=totalCents((check.payouts||[]).filter(p=>p.allocationId===row.allocationId));
   if(allocation&&amount!==null&&prior+amount>(cents(allocation.amount)||0))errors.push("Reported payout exceeds this payee's proposed distribution.");
   if(!check.clientAuthorizationRef?.trim()||!check.paReviewRef?.trim())errors.push("Record client authorization and licensed-PA review references.");
-  const payee=check.payees?.find(p=>p.id===allocation?.payeeId);
+  const payee=checkRecipients(check).find(p=>p.id===allocation?.payeeId);
   if(payee?.type==="ADPA"&&!check.feeAgreementRef?.trim())errors.push("ADPA fee distributions require the fee-agreement reference.");
   if(!row.reference?.trim()||!validDate(row.date))errors.push("Enter a valid payout date and bank transfer reference.");
   if(row.date<check.events?.at(-1)?.date || row.date<(check.funding||[]).map(f=>f.date).sort().at(-1))errors.push("Payout cannot precede reported clearance or funding.");
   if((check.payouts||[]).some(p=>(p.reference||"").trim().toLowerCase()===row.reference?.trim().toLowerCase()))errors.push("This payout confirmation is already recorded.");
   return errors;
 }
-export function reconciliationChecks(check,claimsPayments=[]) {
+export function reconciliationChecks(check,claimsPayments=[],checks=[]) {
   const p=claimsPayments.find(p=>p.id===check.ledgerPaymentId), t=checkTotals(check);
+  const drawAvailable=checks.filter(c=>c.kind==="Lender draw"&&c.parentCheckId===check.id).reduce((sum,c)=>sum+checkTotals(c).available,0);
   return {linked:!!p,amountMatches:!!p&&cents(p.amount)===t.amount,unplanned:t.amount-t.planned,remainingAvailable:t.remaining,
-    lenderUnreleased:check.route==="Lender monitored"?t.amount-t.available:0,
+    lenderUnreleased:check.route==="Lender monitored"?Math.max(0,t.amount-t.available-drawAvailable):0,
     returnExposure:t.blocked?t.paid:0};
+}
+
+// Recipients can receive an approved distribution without being printed payees.
+export function checkRecipients(check){return [...(check.payees||[]).map(p=>({...p,namedPayee:true})),...(check.participants||[]).map(p=>({...p,namedPayee:false}))].map(p=>({...p,email:check.contacts?.[p.id]?.email||"",phone:check.contacts?.[p.id]?.phone||""}));}
+export function percentageAmount(amount,percentage){
+  const face=cents(amount),bp=cents(percentage);
+  if(face===null||bp===null||bp<=0||bp>10000)return null;
+  return dollars(Number((BigInt(face)*BigInt(bp)+5000n)/10000n));
+}
+export function distributionFingerprint(check){return JSON.stringify({id:check.id,checkNumber:check.checkNumber,amount:check.amount,kind:check.kind||"Insurance check",parentCheckId:check.parentCheckId||"",route:check.route,parties:checkRecipients(check).map(p=>({id:p.id,name:p.name,type:p.type,namedPayee:p.namedPayee,email:p.email||"",phone:p.phone||""})),allocations:(check.allocations||[]).map(a=>({id:a.id,payeeId:a.payeeId,amount:a.amount,purpose:a.purpose||""}))});}
+export function reviewErrors(check){
+  const errors=[];
+  if(checkTotals(check).planned!==checkTotals(check).amount)errors.push("Allocate the full check amount before preparing client review.");
+  const required=checkRecipients(check).filter(p=>p.namedPayee||(check.allocations||[]).some(a=>a.payeeId===p.id));
+  if(required.some(p=>!p.email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)))errors.push("Add a valid email for every named payee and distribution recipient.");
+  return errors;
+}
+export function drawErrors(check,checks){
+  const errors=[];
+  if(check.kind==="Lender draw"){
+    const parent=checks.find(c=>c.id===check.parentCheckId);
+    if(!parent||parent.id===check.id||parent.kind==="Lender draw"||parent.route!=="Lender monitored")errors.push("Link a lender draw to an original lender-monitored check in this claim.");
+    else{
+      const draws=checks.filter(c=>c.kind==="Lender draw"&&c.parentCheckId===parent.id&&c.id!==check.id);
+      if(totalCents(draws)+(cents(check.amount)||0)+checkTotals(parent).available>checkTotals(parent).amount)errors.push("Linked draw amounts and original availability reports exceed the original check amount.");
+      if(checkStatus(parent)==="Void"||checkStatus(parent)==="Returned")errors.push("Resolve the blocked original check before recording a lender draw.");
+    }
+    if(check.ledgerPaymentId)errors.push("Lender draws do not link to carrier-payment ledger rows; use the original check link.");
+  }else{
+    const draws=checks.filter(c=>c.kind==="Lender draw"&&c.parentCheckId===check.id);
+    if(draws.length&&check.route!=="Lender monitored")errors.push("Retain the monitored route for an original with linked draws.");
+    if(totalCents(draws)+checkTotals(check).available>checkTotals(check).amount)errors.push("Original availability reports overlap linked draw amounts.");
+  }
+  return errors;
 }
