@@ -1,3 +1,4 @@
+import { mitigationBlockers } from "./mitigationReview.js";
 function n(v){return Number(v||0);}
 export function receivedPayment(p){return !!(p.receivedDate||p.depositedDate||p.status==="Received"||p.status==="Deposited");}
 export function mortgageRemaining(m={}){
@@ -27,7 +28,7 @@ export function reconciliationForClaim(claim){
   return {requested,carrier,coverageIssued,coverageReceived,ledgerIssued,ledgerReceived,ledgerDifference,depreciationRecoverable,depreciationReleased,depreciationOutstanding,lenderHeld,openIssues,openSupplements,openRecovery,openCritical,lateClocks,latestPackage,packageCurrent};
 }
 export function closureBlockers(claim,complianceGate){
-  const r=reconciliationForClaim(claim), blockers=[];
+  const r=reconciliationForClaim(claim), blockers=mitigationBlockers(claim);
   if(complianceGate&&!complianceGate.cleared) blockers.push("Compliance gate is HOLD");
   if(!r.packageCurrent) blockers.push("Final claim package is missing or stale");
   if(Math.abs(r.ledgerDifference)>0.01) blockers.push("Payment ledger does not reconcile to coverage received totals");
@@ -40,3 +41,4 @@ export function closureBlockers(claim,complianceGate){
   if(r.lateClocks.length) blockers.push(r.lateClocks.length+" overdue carrier clock(s) remain unresolved");
   return {reconciliation:r,blockers};
 }
+
