@@ -1,3 +1,4 @@
+import { mitigationBlockers } from "./mitigationReview.js";
 import { claimWorkflowIntelligence } from "./workflowIntelligence.js";
 import { reconciliationForClaim } from "./claimReconciliation.js";
 import { complianceStatus } from "./stateCompliance.js";
@@ -10,6 +11,8 @@ export function prepareClaimReview(claim){
  const out=[], workflow=claimWorkflowIntelligence(claim), r=reconciliationForClaim(claim), gate=complianceStatus(claim);
  if(workflow.next?.status!=="Complete") out.push(item("Workflow",workflow.next.status==="Needs PA Review"||workflow.next.status.includes("Blocked")?"High":"Normal","Recommended next step — "+workflow.next.label,workflow.next.detail,workflow.next.nextAction,[],"General",workflow.next.status==="Needs PA Review"));
  if(!gate.cleared) out.push(item("Compliance","High","ABSTAIN — compliance gate is on HOLD","Substantive external claim action remains withheld: "+gate.blockers.join("; ")+".","Resolve and verify compliance blockers before substantive external use.",[],"General",true));
+ const mitigationGaps=mitigationBlockers(claim);
+ if(mitigationGaps.length) out.push(item("Mitigation Evidence","High","Mitigation / cleaning evidence needs review",mitigationGaps.join("; "),"Open Mitigation & Cleaning, reconcile source records and complete human review.",[],"General",true));
  const docs=claim.documents||[], issues=claim.issues||[], estimates=claim.estimateComparisons||[], contents=claim.contents||[], supplements=claim.supplements||[];
  const unsupported=issues.filter(x=>x.status!=="Resolved"&&(!x.evidenceRefs||!x.policyRef));
  if(unsupported.length) out.push(item("Evidence Gap","High",unsupported.length+" open issue position(s) lack source support","Issue positions should be linked to policy language and evidence.","Link supporting policy/evidence before negotiation.",unsupported.map(x=>ref("issue",x.id,x.title)),"General",true));
@@ -36,3 +39,4 @@ export function claimPreparationSummary(claim,prepared){
  const p=prepared||prepareClaimReview(claim), requested=(claim.coverages||[]).reduce((s,x)=>s+Number(x.requested||0),0), received=(claim.coverages||[]).reduce((s,x)=>s+Number(x.received||0),0);
  return ["Claim preparation summary — DRAFT / HUMAN REVIEW REQUIRED","","Insured: "+(claim.insured||"Not entered"),"Carrier: "+(claim.carrier||"Not entered"),"Claim #: "+(claim.claimNumber||"Not entered"),"Jurisdiction: "+(claim.jurisdiction||"Not entered"),"Date of loss: "+(claim.dateOfLoss||"Not entered"),"Cause of loss: "+(claim.causeOfLoss||"Not entered"),"","Recorded requested total: "+money(requested),"Recorded received total: "+money(received),"Evidence records: "+(claim.documents||[]).length,"Prepared findings: "+p.metrics.total+" ("+p.metrics.high+" high priority; "+p.metrics.pa+" PA review)","Recommended next step: "+p.workflow.next.label+" — "+p.workflow.next.status,"Next action: "+p.workflow.next.nextAction,"","This draft is generated from structured claim records only. It is not a coverage opinion, settlement authority, legal advice, or an autonomous public-adjuster decision."].join("\n");
 }
+

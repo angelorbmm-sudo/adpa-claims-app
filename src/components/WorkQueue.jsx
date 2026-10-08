@@ -1,3 +1,4 @@
+import { mitigationBlockers } from "../lib/mitigationReview.js";
 import React, { useMemo, useState } from "react";
 import { nowIso, uid } from "../lib/storage.js";
 
@@ -5,6 +6,7 @@ const buckets = [
   "Intake / Evidence",
   "Coverage Review",
   "Estimating",
+  "Mitigation / Cleaning",
   "Contents",
   "ALE / Loss of Use",
   "Mortgage Loss Draft",
@@ -50,6 +52,8 @@ function systemExceptions(claim) {
     status: "Open"
   });
 
+  const mitigationGaps=mitigationBlockers(claim);
+  if(mitigationGaps.length) add("Mitigation / Cleaning","High","Mitigation / cleaning evidence incomplete",mitigationGaps.join(" · "),"mitigation");
   if (claim.closure?.status === "Closed") {
     const closedPackage=(claim.packages||[]).at(-1);
     if (closedPackage && String(closedPackage.status||"").startsWith("Stale")) {
@@ -497,3 +501,4 @@ export default function WorkQueue({ claims, selectedId, onOpenClaim, onUpdateCla
     </section>
   );
 }
+

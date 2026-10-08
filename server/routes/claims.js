@@ -1,3 +1,4 @@
+import { mitigationBlockers } from "../../src/lib/mitigationReview.js";
 import { Router } from "express";
 import { z } from "zod";
 import { query } from "../db.js";
@@ -73,7 +74,7 @@ router.post("/:id/release-check", requirePermission("claims:release"), requireVe
     const r=await query("SELECT data_json FROM claims WHERE id=$1 AND organization_id=$2",[req.params.id,req.user.organization_id]);
     if(!r.rowCount) return res.status(404).json({error:"Claim not found."});
     const claim=r.rows[0].data_json||{};
-    const reasons=[];
+    const reasons=mitigationBlockers(claim);
     const compliance=claim.compliance||{}, representation=claim.representation||{};
     if(compliance.contractStatus!=="Executed") reasons.push("Representation contract not verified executed.");
     if(claim.jurisdiction==="CA"&&compliance.disclosureStatus!=="Delivered before contract") reasons.push("California pre-contract disclosure sequence not verified.");
@@ -99,7 +100,7 @@ router.post("/:id/closure-check", requirePermission("claims:approve"), requireVe
     if(!db.rowCount) return res.status(404).json({error:"Claim not found."});
     const claim=db.rows[0].data_json||{}, reasons=[];
     const financial=financialInvariants(claim);
-    reasons.push(...financial.reasons);
+    reasons.push(...financial.reasons, ...mitigationBlockers(claim));
     if((claim.issues||[]).some(x=>x.status!=="Resolved")) reasons.push("Open issue files remain.");
     if((claim.criticalEvents||[]).some(x=>x.status!=="Resolved")) reasons.push("Open critical events remain.");
     if((claim.supplements||[]).some(x=>!["Resolved","Closed","Approved","Paid"].includes(x.status))) reasons.push("Open supplement/dispute records remain.");
@@ -123,3 +124,4 @@ router.post("/:id/closure-check", requirePermission("claims:approve"), requireVe
 
 
 export default router;
+

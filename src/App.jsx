@@ -1,3 +1,4 @@
+const MitigationCleaningCenter = lazy(() => import("./components/MitigationCleaningCenter.jsx"));
 import React, { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { emptyClaim } from "./data/seed.js";
 import { demoWorkspace } from "./data/demo.js";
@@ -49,6 +50,7 @@ const modules = [
   ["policy", "Policy & Endorsements"],
   ["evidence", "Documents & Evidence"],
   ["proofplan", "Evidence Standards"],
+  ["mitigation", "Mitigation & Cleaning"],
   ["contents", "Contents"],
   ["ale", "ALE / Loss of Use"],
   ["estimates", "Estimate Comparison"],
@@ -267,6 +269,7 @@ function App() {
       evidencePlan: draft.evidencePlan || {},
       issues: draft.issues || [],
       lifecycle: draft.lifecycle || {},
+      mitigation: draft.mitigation || {},
       routing: draft.routing || {},
       criticalEvents: draft.criticalEvents || [],
       contractorCommitments: draft.contractorCommitments || [],
@@ -345,7 +348,7 @@ function App() {
           <div className="sidebar-intro"><span className="eyebrow">Your workspace</span><b>From evidence<br/>to settlement.</b></div>
           <nav aria-label="Modules">{[
             ["Workspace", ["portfolio", "overview", "workqueue", "routing"]],
-            ["Build the claim", ["intake", "compliance", "representation", "coverage", "policy", "evidence", "proofplan", "contents", "ale", "estimates", "contractor"]],
+            ["Build the claim", ["intake", "compliance", "representation", "coverage", "policy", "evidence", "proofplan", "mitigation", "contents", "ale", "estimates", "contractor"]],
             ["Manage & recover", ["checks", "payments", "financial", "communications", "deadlines", "issues", "critical", "chronology", "supplements", "mortgage", "agreements", "receipts", "package", "approvals", "recovery", "closure"]],
             ["Preparation", ["ai", "transition", "access"]]
           ].map(([group, keys]) => <div className="nav-group" key={group}><span className="nav-label">{group}</span>{keys.map(key => <button className={tab === key ? "active" : ""} aria-current={tab === key ? "page" : undefined} key={key} onClick={() => navigate(key)}><Icon name={key === "portfolio" || key === "overview" ? "dashboard" : key === "workqueue" || key === "deadlines" ? "tasks" : key === "payments" || key === "financial" || key === "recovery" ? "money" : key === "compliance" || key === "approvals" ? "shield" : key === "evidence" || key === "package" ? "folder" : "claim"}/><span>{modules.find(m => m[0] === key)[1]}</span></button>)}</div>)}</nav>
@@ -451,6 +454,7 @@ function App() {
           {tab === "deadlines" && <CarrierDeadlineCenter claim={draft} onChange={deadlineClocks => saveClaim({ ...draft, deadlineClocks })} />}
           {tab === "issues" && <IssueNegotiationCenter claim={draft} onChange={issues => saveClaim({ ...draft, issues })} />}
           {tab === "critical" && <CriticalEventCenter claim={draft} onChange={criticalEvents => saveClaim({ ...draft, criticalEvents })} />}
+          {tab === "mitigation" && <MitigationCleaningCenter key={draft.id} claim={draft} onChange={mitigation => saveClaim({ ...draft, mitigation })} onNavigate={setTab} />}
           {tab === "chronology" && <ClaimLifecycleChronology claim={draft} onChange={lifecycle => saveClaim({ ...draft, lifecycle })} />}
           {tab === "supplements" && <SupplementsDisputeCenter claim={draft} onChange={supplements => saveClaim({ ...draft, supplements })} />}
           {tab === "mortgage" && <MortgageLossDraftCenter claim={draft} onChange={mortgage => saveClaim({ ...draft, mortgage })} />}
@@ -538,4 +542,5 @@ function SimpleRecords({ title, records, fields, onAdd, embedded = false }) {
 
 
 export default App;
+
 
