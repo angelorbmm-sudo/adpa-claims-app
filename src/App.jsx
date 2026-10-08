@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { emptyClaim } from "./data/seed.js";
 import { demoWorkspace } from "./data/demo.js";
 import { loadWorkspace, nowIso, saveWorkspace, uid } from "./lib/storage.js";
 import { apiEnabled, fetchClaims, saveClaimRemote } from "./lib/api.js";
+const UserAccessCenter = lazy(() => import("./components/UserAccessCenter.jsx"));
 import Icon from "./components/Icon.jsx";
 import EstimateComparison from "./components/EstimateComparison.jsx";
 import PaymentLedger from "./components/PaymentLedger.jsx";
@@ -67,7 +68,8 @@ const modules = [
   ["recovery", "Recovery Follow-up"],
   ["closure", "Closure & Final Audit"],
   ["ai", "AI Preparation"],
-  ["transition", "Production Data Readiness"]
+  ["transition", "Production Data Readiness"],
+  ["access", "User Access"]
 ];
 
 
@@ -297,6 +299,8 @@ function App() {
           <h1>ADPA Claims Workspace</h1>
           <p>This recovered build keeps regulated decisions behind human and licensed approval gates.</p>
           <button onClick={createClaim}>Create first claim</button>
+          <button onClick={() => navigate("access")}>User Access</button>
+          {tab === "access" && <Suspense fallback={<p role="status">Loading user access…</p>}><UserAccessCenter claims={workspace.claims} isDemo={isDemo} /></Suspense>}
           {workspace.claims.length > 0 && (
             <div className="claim-list">
               {workspace.claims.map(c => <button key={c.id} onClick={() => openClaim(c.id)}>{c.insured || "Unnamed Claim"}</button>)}
@@ -339,13 +343,14 @@ function App() {
             ["Workspace", ["portfolio", "overview", "workqueue", "routing"]],
             ["Build the claim", ["intake", "compliance", "representation", "coverage", "policy", "evidence", "proofplan", "contents", "ale", "estimates", "contractor"]],
             ["Manage & recover", ["payments", "financial", "communications", "deadlines", "issues", "critical", "chronology", "supplements", "mortgage", "agreements", "receipts", "package", "approvals", "recovery", "closure"]],
-            ["Preparation", ["ai", "transition"]]
+            ["Preparation", ["ai", "transition", "access"]]
           ].map(([group, keys]) => <div className="nav-group" key={group}><span className="nav-label">{group}</span>{keys.map(key => <button className={tab === key ? "active" : ""} aria-current={tab === key ? "page" : undefined} key={key} onClick={() => navigate(key)}><Icon name={key === "portfolio" || key === "overview" ? "dashboard" : key === "workqueue" || key === "deadlines" ? "tasks" : key === "payments" || key === "financial" || key === "recovery" ? "money" : key === "compliance" || key === "approvals" ? "shield" : key === "evidence" || key === "package" ? "folder" : "claim"}/><span>{modules.find(m => m[0] === key)[1]}</span></button>)}</div>)}</nav>
         </aside>
         <main id="workspace-main">
           <div className="workspace-context"><span>Workspace <span aria-hidden="true">/</span> <b>{modules.find(m => m[0] === tab)?.[1]}</b></span><span className="workspace-mode"><i/>{isDemo ? "Demo workspace · sample data" : syncState}</span></div>
           {isDemo && <div className="demo-note"><Icon name="shield"/><span><b>Live test demo.</b> Sample claims only. Changes stay in this browser; sending and live integrations are disabled.</span></div>}
-          {tab !== "portfolio" && <div className="selected-claim"><div><span className="eyebrow">Selected claim</span><b>{draft.insured || "Unnamed Claim"}</b><small>{draft.carrier || "Carrier not entered"} · {draft.claimNumber || "Claim # not entered"}</small></div><span className={`status-badge ${complianceGate.cleared ? "clear" : "hold"}`}>{complianceGate.cleared ? "Compliance clear" : "Compliance hold"}</span></div>}
+          {tab !== "portfolio" && tab !== "access" && <div className="selected-claim"><div><span className="eyebrow">Selected claim</span><b>{draft.insured || "Unnamed Claim"}</b><small>{draft.carrier || "Carrier not entered"} · {draft.claimNumber || "Claim # not entered"}</small></div><span className={`status-badge ${complianceGate.cleared ? "clear" : "hold"}`}>{complianceGate.cleared ? "Compliance clear" : "Compliance hold"}</span></div>}
+          {tab === "access" && <Suspense fallback={<p role="status">Loading user access…</p>}><UserAccessCenter claims={workspace.claims} isDemo={isDemo} /></Suspense>}
           {tab === "portfolio" && <PortfolioDashboard claims={workspace.claims} onOpenClaim={openClaim} />}
           {tab === "overview" && (
             <section>

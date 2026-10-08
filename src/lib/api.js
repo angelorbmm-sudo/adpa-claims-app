@@ -15,6 +15,8 @@ async function request(path, options={}){
   return res.json();
 }
 
+export const apiRequest = request;
+
 export async function fetchClaims(){ return request("/api/claims"); }
 export async function fetchClaim(id){ return request("/api/claims/"+encodeURIComponent(id)); }
 export async function saveClaimRemote(claim,expectedVersion){ return request("/api/claims/"+encodeURIComponent(claim.id),{method:"PUT",body:JSON.stringify({...claim,...(expectedVersion===undefined?{}:{_expectedVersion:expectedVersion})})}); }

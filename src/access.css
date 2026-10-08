@@ -1,0 +1,14 @@
+.access-tabs { display:flex; gap:8px; flex-wrap:wrap; margin:22px 0 8px; }
+.access-message { color:#326356; min-height:20px; margin:10px 0; }
+.access-team { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.access-person { margin:0; min-width:0; }
+.access-person-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+.access-person-head h2 { margin-bottom:4px; }
+.access-person-head p { margin:0 0 15px; color:#62758a; overflow-wrap:anywhere; }
+.access-capabilities { display:flex; flex-wrap:wrap; gap:6px; }
+.access-assignments { margin:20px 0; padding:16px; border:1px solid #d9e3ee; border-radius:10px; }
+.access-assignments legend { font-size:12px; font-weight:600; color:#526a80; }
+.access-assignments label { padding:7px 0; }
+.access-center form > .actions { margin-top:20px; }
+button:disabled { cursor:not-allowed; opacity:.6; }
+@media(max-width:800px) { .access-team { grid-template-columns:1fr; } .access-center .page-heading { flex-wrap:wrap; } .access-assignments { padding:12px; } .access-tabs button { flex:1; font-size:11px; } }

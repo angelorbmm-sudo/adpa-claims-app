@@ -118,3 +118,16 @@ CREATE TABLE IF NOT EXISTS migration_imports (
 
 ALTER TABLE claims ADD COLUMN IF NOT EXISTS jurisdiction text;
 CREATE INDEX IF NOT EXISTS idx_claims_jurisdiction ON claims(organization_id, jurisdiction);
+
+-- Inactive account planning; does not grant membership or authentication.
+CREATE TABLE IF NOT EXISTS access_account_plans (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  plan_json jsonb NOT NULL,
+  created_by text REFERENCES users(id),
+  updated_by text REFERENCES users(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CHECK (plan_json->>'status' IN ('draft','archived'))
+);
+CREATE INDEX IF NOT EXISTS idx_access_plans_org ON access_account_plans(organization_id);
