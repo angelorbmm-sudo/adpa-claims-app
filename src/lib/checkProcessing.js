@@ -24,7 +24,7 @@ export function validateCheck(check,checks=[],payments=[]) {
   const errors=[];
   const previous=checks.find(c=>c.id===check.id);
   if(previous?.events?.length){
-    for(const key of ["checkNumber","issuer","amount","issuedDate","coverage","ledgerPaymentId","route"]){if(check[key]!==previous[key])errors.push("Recorded check identity and ledger linkage cannot change after bank/lender events.");}
+    for(const key of ["checkNumber","issuer","amount","issuedDate","coverage","route"]){if(check[key]!==previous[key])errors.push("Recorded check identity cannot change after bank/lender events.");}
     const identity=payees=>JSON.stringify((payees||[]).map(p=>[p.id,p.type,p.name]));
     if(identity(check.payees)!==identity(previous.payees))errors.push("Retain the recorded named payees after bank/lender events.");
   }
