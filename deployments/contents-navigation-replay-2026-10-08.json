@@ -1,0 +1,10 @@
+[
+  {
+    "before": "<button class=\"cursor-interaction\" id=\"adpa-open-mitigation\">Mitigation &amp; cleaning</button>",
+    "after": "<button class=\"cursor-interaction\" id=\"adpa-open-mitigation\">Mitigation &amp; cleaning</button><button class=\"cursor-interaction\" id=\"adpa-open-contents-care\">Contents inventory &amp; care</button>"
+  },
+  {
+    "before": "q('#adpa-open-mitigation').addEventListener('click',()=>{if(dirty){q('#adpa-feedback').textContent='Save claim changes before opening Mitigation & Cleaning.';return;}location.href='/mitigation?id='+encodeURIComponent(claimId);});",
+    "after": "q('#adpa-open-mitigation').addEventListener('click',()=>{if(dirty){q('#adpa-feedback').textContent='Save claim changes before opening Mitigation & Cleaning.';return;}location.href='/mitigation?id='+encodeURIComponent(claimId);});\nq('#adpa-open-contents-care').addEventListener('click',()=>{if(dirty){q('#adpa-feedback').textContent='Save claim changes before opening Contents Inventory & Care.';return;}location.href='/contents-care?id='+encodeURIComponent(claimId);});"
+  }
+]
