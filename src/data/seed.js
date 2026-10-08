@@ -17,6 +17,7 @@ export const emptyClaim = () => ({
   jurisdiction: "CA",
   representationStatus: "Pending",
   representation: {},
+  mitigation: { applicable: false, lossType: "Water", zones: [], readings: [], equipment: [], scope: [], cleaning: [], contents: [], custody: [], hazards: [], invoices: [], review: null },
   compliance: { licenseStatus: "Unverified", contractStatus: "Pending", disclosureStatus: "Pending", cancellationStatus: "Needs review", policyStatus: "Missing", licensedReviewer: "", authorityEvidenceRef: "", notes: "", lastReviewedAt: "" },
   mortgageServicer: "",
   valuation: "Unreviewed",
@@ -54,4 +55,5 @@ export const emptyClaim = () => ({
   notes: "",
   updatedAt: ""
 });
+
 
