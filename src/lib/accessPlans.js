@@ -3,12 +3,12 @@ export const ACCESS_ROLES = [
   { key: "admin", label: "Administrator", description: "Manage team accounts and settings. Licensed authority is separate.", capabilities: ["claims:read", "claims:write", "documents:read", "documents:write", "users:manage"] },
   { key: "licensed_pa", label: "Licensed PA", description: "Claim editing, PA review and release, subject to active jurisdictional license checks.", capabilities: ["claims:read", "claims:write", "documents:read", "documents:write", "claims:approve", "claims:release"] },
   { key: "claims_staff", label: "Claims Staff", description: "Operational claim and evidence editing; no PA approval or settlement release.", capabilities: ["claims:read", "claims:write", "documents:read", "documents:write"] },
-  { key: "estimator", label: "Scope / Estimate Specialist", description: "Assigned scope and estimate work. Requires a dedicated limited-write endpoint before activation.", capabilities: ["claims:read", "documents:read", "estimates:write"] },
+  { key: "estimator", label: "Scope / Estimate Specialist", description: "Scope and estimate work on assigned claims; permission connection pending.", capabilities: ["claims:read", "documents:read", "estimates:write"] },
   { key: "reviewer", label: "Reviewer", description: "Review claim materials and record review notes. No general claim editing or PA authority.", capabilities: ["claims:read", "documents:read", "reviews:write"] },
   { key: "read_only", label: "Viewer", description: "View assigned claims and evidence without changing records.", capabilities: ["claims:read", "documents:read"] }
 ];
 export const CAPABILITIES = [
-  ["claims:read", "View claims"], ["claims:write", "Edit claims"], ["documents:write", "Edit evidence"],
+  ["claims:read", "View claims"], ["claims:write", "Edit claims"], ["documents:read", "View evidence"], ["documents:write", "Edit evidence"],
   ["estimates:write", "Edit scopes / estimates"], ["reviews:write", "Review notes"],
   ["users:manage", "Manage accounts"], ["claims:approve", "Licensed PA approval"], ["claims:release", "Settlement release"]
 ];
