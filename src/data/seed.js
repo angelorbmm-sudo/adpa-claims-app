@@ -45,6 +45,7 @@ export const emptyClaim = () => ({
   closure: { status: "Open", closedAt: "", closedPackageHash: "", events: [] },
   estimateComparisons: [],
   payments: [],
+  checkProcessing: { checks: [] },
   ale: { startDate: "", expectedEndDate: "", policyEndDate: "", baselineMonthlyExpense: 0, carrierApprovedMonthly: 0, expenses: [], extensions: [], notes: "" },
   workItems: [],
   releaseRecords: [],
@@ -53,3 +54,4 @@ export const emptyClaim = () => ({
   notes: "",
   updatedAt: ""
 });
+

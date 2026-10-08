@@ -4,6 +4,7 @@ import { demoWorkspace } from "./data/demo.js";
 import { loadWorkspace, nowIso, saveWorkspace, uid } from "./lib/storage.js";
 import { apiEnabled, fetchClaims, saveClaimRemote } from "./lib/api.js";
 const UserAccessCenter = lazy(() => import("./components/UserAccessCenter.jsx"));
+const CheckProcessingCenter = lazy(() => import("./components/CheckProcessingCenter.jsx"));
 import Icon from "./components/Icon.jsx";
 import EstimateComparison from "./components/EstimateComparison.jsx";
 import PaymentLedger from "./components/PaymentLedger.jsx";
@@ -53,6 +54,7 @@ const modules = [
   ["estimates", "Estimate Comparison"],
   ["contractor", "Contractor Commitment"],
   ["payments", "Payment Ledger"],
+  ["checks", "Check Processing"],
   ["financial", "Final Financial Reconciliation"],
   ["communications", "Communications"],
   ["deadlines", "Carrier Deadline Clock"],
@@ -200,7 +202,7 @@ function App() {
     let saved = { ...guarded, updatedAt: nowIso() };
     if (apiEnabled()) {
       try { saved = await persistAuthoritative(saved); }
-      catch (error) { setSyncState("SAVE FAILED — server remains authoritative"); return; }
+      catch (error) { setSyncState("SAVE FAILED — server remains authoritative"); return false; }
     }
     setWorkspace(w => ({
       ...w,
@@ -208,6 +210,7 @@ function App() {
       selectedId: saved.id
     }));
     setDraft(saved);
+    return true;
   }
 
   function updateClaimById(claimId, updater) {
@@ -253,6 +256,7 @@ function App() {
       recovery: draft.recovery,
       estimateComparisons: draft.estimateComparisons || [],
       payments: draft.payments || [],
+      checkProcessing: draft.checkProcessing || {checks: []},
       ale: draft.ale || {},
       mortgage: draft.mortgage || {},
       policyAnalysis: draft.policyAnalysis || {},
@@ -342,7 +346,7 @@ function App() {
           <nav aria-label="Modules">{[
             ["Workspace", ["portfolio", "overview", "workqueue", "routing"]],
             ["Build the claim", ["intake", "compliance", "representation", "coverage", "policy", "evidence", "proofplan", "contents", "ale", "estimates", "contractor"]],
-            ["Manage & recover", ["payments", "financial", "communications", "deadlines", "issues", "critical", "chronology", "supplements", "mortgage", "agreements", "receipts", "package", "approvals", "recovery", "closure"]],
+            ["Manage & recover", ["checks", "payments", "financial", "communications", "deadlines", "issues", "critical", "chronology", "supplements", "mortgage", "agreements", "receipts", "package", "approvals", "recovery", "closure"]],
             ["Preparation", ["ai", "transition", "access"]]
           ].map(([group, keys]) => <div className="nav-group" key={group}><span className="nav-label">{group}</span>{keys.map(key => <button className={tab === key ? "active" : ""} aria-current={tab === key ? "page" : undefined} key={key} onClick={() => navigate(key)}><Icon name={key === "portfolio" || key === "overview" ? "dashboard" : key === "workqueue" || key === "deadlines" ? "tasks" : key === "payments" || key === "financial" || key === "recovery" ? "money" : key === "compliance" || key === "approvals" ? "shield" : key === "evidence" || key === "package" ? "folder" : "claim"}/><span>{modules.find(m => m[0] === key)[1]}</span></button>)}</div>)}</nav>
         </aside>
@@ -439,6 +443,7 @@ function App() {
           {tab === "estimates" && <EstimateComparison records={draft.estimateComparisons || []} onChange={records => saveClaim({ ...draft, estimateComparisons: records })} />}
           {tab === "contractor" && <ContractorCommitmentCenter claim={draft} onChange={contractorCommitments => saveClaim({ ...draft, contractorCommitments })} />}
           {tab === "payments" && <PaymentLedger payments={draft.payments || []} coverages={draft.coverages} onChange={payments => saveClaim({ ...draft, payments })} />}
+          {tab === "checks" && <Suspense fallback={<p role="status">Loading check processing…</p>}><CheckProcessingCenter claim={draft} isDemo={isDemo} onNavigate={navigate} onChange={checkProcessing => saveClaim({ ...draft, checkProcessing })} /></Suspense>}
           {tab === "financial" && <FinalFinancialReconciliation claim={draft} />}
           {tab === "contents" && <ContentsValuationCenter items={draft.contents || []} onChange={contents => saveClaim({ ...draft, contents })} />}
           {tab === "ale" && <ALEManagementCenter claim={draft} onChange={changes => saveClaim({ ...draft, ...changes })} />}
