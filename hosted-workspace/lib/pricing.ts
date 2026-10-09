@@ -1,0 +1,45 @@
+import {z} from 'zod';
+const text=z.string().trim().max(2000),short=z.string().trim().max(200),id=z.string().min(1).max(200);
+export const kinds=['Contents','Reconstruction','Mitigation / cleaning','ALE / other'] as const;
+const cents=z.string().max(20).refine(v=>v===''||/^\d{1,9}(\.\d{1,2})?$/.test(v),'Use nonnegative dollars and cents');
+export function safeURL(value:string){try{const u=new URL(value);return ['https:','http:'].includes(u.protocol)&&!u.username&&!u.password&&!/^(localhost|127\.|0\.|10\.|192\.168\.|169\.254\.|\[|.*\.local$)/i.test(u.hostname);}catch{return false;}}
+const source=z.object({fileId:id,locator:short.refine(v=>!!v),observation:text.refine(v=>!!v)}).strict();
+const price=z.object({id,provider:short,url:z.string().max(2000).refine(v=>v===''||safeURL(v),'Use a public http(s) source'),fileId:z.string().max(200),locator:short,observedAt:z.string().max(40),unit:short,amount:cents,currency:z.literal('USD'),availability:z.enum(['Available','Quote only','Unavailable','Unknown']),match:z.enum(['Exact','LKQ alternative','Needs identification']),matchBasis:text,tax:cents,shipping:cents,exclusions:text}).strict();
+export const candidate=z.object({id,kind:z.enum(kinds),description:short.refine(v=>!!v),identity:text,room:short,physicalKey:short,quantity:z.string().max(30),unit:short,countBasis:text,scopeBasis:text,targetRef:short,sources:z.array(source).min(1).max(30),prices:z.array(price).max(20),status:z.enum(['Draft','Ready for review','Dismissed']),dismissReason:text}).strict();
+export const pricingInput=z.discriminatedUnion('action',[
+ z.object({action:z.literal('save'),version:z.number().int().positive(),candidates:z.array(candidate).max(500)}).strict(),
+ z.object({action:z.literal('triage'),version:z.number().int().positive(),fileId:id,disposition:z.enum(['Reviewed for pricing','No price-bearing information','Needs transcription / conversion','Needs specialist review']),note:text.refine(v=>!!v)}).strict(),
+ z.object({action:z.literal('review'),version:z.number().int().positive(),candidateId:id,note:text.refine(v=>!!v),sourceChecked:z.literal(true)}).strict(),
+ z.object({action:z.literal('extract'),version:z.number().int().positive(),fileIds:z.array(id).min(1).max(3)}).strict(),
+ z.object({action:z.literal('lookup'),version:z.number().int().positive(),candidateId:id,query:z.string().trim().min(3).max(400),publicQueryConfirmed:z.literal(true)}).strict()
+]);
+export const stable=(v:any):string=>Array.isArray(v)?'['+v.map(stable).join(',')+']':v&&typeof v==='object'?'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}':JSON.stringify(v)??'null';
+export const pricingState=(s:any)=>({candidates:[],triage:{},reviews:{},research:[],audit:[],...(s?.pricing||{})});
+export function candidateSnapshot(c:any,files:any[],state:any){return stable({candidate:c,sources:c.sources.map((s:any)=>({source:s,file:(()=>{const f=files.find(f=>f.id===s.fileId);return f?{id:f.id,created:f.created}:null;})(),triage:pricingState(state).triage[s.fileId]})),priceFiles:c.prices.filter((p:any)=>p.fileId).map((p:any)=>{const f=files.find(f=>f.id===p.fileId);return f?{id:f.id,created:f.created}:null;}),target:c.targetRef?targetRecords(state).find(t=>t.ref===c.targetRef):null});}
+export function targetRecords(s:any){return [...(s.items||[]).map((r:any,n:number)=>({ref:'item:'+n,label:r.name||'Unnamed contents',kind:'Contents',record:r})),...(s.contentsCare?.items||[]).map((r:any)=>({ref:'care:'+r.id,label:r.description,kind:'Contents',record:r})),...(s.mitigation?.scope||[]).map((r:any)=>({ref:'mitigation:'+r.id,label:r.description||r.id,kind:'Mitigation / cleaning',record:r})),...(s.scopeVersions||[]).flatMap((v:any)=>(v.rows||[]).map((r:any,n:number)=>({ref:'scope:'+v.id+':'+(r.id||n),label:r.description||'Scope line',kind:'Reconstruction',record:r})))];}
+const money=(v:string)=>v!==''&&/^\d{1,9}(\.\d{1,2})?$/.test(v)?Math.round(Number(v)*100):null;
+export function candidateGaps(c:any,files:any[],s:any,now=new Date()){
+ const gaps:string[]=[],ps=pricingState(s);const add=(x:string)=>gaps.push(x);
+ if(c.status==='Dismissed'){if(!c.dismissReason?.trim())add('Explain why this candidate was dismissed.');return gaps;}
+ if(c.status!=='Ready for review')add('Set this candidate to Ready for review after completing its facts.');
+ if(!c.identity?.trim())add('Confirm the item/model or measured work identity.');
+ const q=Number(c.quantity);if(!/^\d+(\.\d{1,4})?$/.test(c.quantity)||!Number.isFinite(q)||q<=0||q>1000000)add('Enter a supported positive quantity.');
+ if(!c.unit?.trim()||!c.countBasis?.trim())add('Record the unit and quantity/count basis, including sets or packs.');
+ if(!c.physicalKey?.trim())add('Record the physical item/group or work-line key for duplicate review.');
+ if(c.kind!=='Contents'&&!c.scopeBasis?.trim())add('Record scope necessity and measured basis; photos alone do not prove quantities.');
+ for(const src of c.sources){const file=files.find(f=>f.id===src.fileId),triage=ps.triage[src.fileId];if(!file||!triage||triage.sourceCreated!==file.created||triage.disposition!=='Reviewed for pricing')add('Review the linked original for pricing: '+src.fileId);}
+ if(c.targetRef&&!targetRecords(s).some(t=>t.ref===c.targetRef&&t.kind===c.kind))add('The linked destination record changed or does not match this cost type.');
+ if(ps.candidates.some((other:any)=>other.id!==c.id&&other.status!=='Dismissed'&&other.physicalKey&&other.physicalKey===c.physicalKey))add('Another active candidate has the same physical/work key. Reconcile duplicate pricing.');
+ if(!c.prices.length)add('Add a replacement listing or documented contractor/service quote.');
+ const ids=new Set();for(const p of c.prices){if(ids.has(p.id))add('Duplicate price record ID.');ids.add(p.id);const file=files.find(f=>f.id===p.fileId);if(!p.provider.trim()||!p.url&&!file||p.fileId&&(!file||!p.locator.trim()))add('Each price needs provider and public source URL or claim quote file with locator.');
+ if(p.fileId&&(!ps.triage[p.fileId]||ps.triage[p.fileId].sourceCreated!==file?.created||ps.triage[p.fileId].disposition!=='Reviewed for pricing'))add('Review the original contractor/quote file for pricing.');
+ const t=Date.parse(p.observedAt);if(!/(Z|[+-]\d{2}:\d{2})$/.test(p.observedAt)||!Number.isFinite(t)||t>now.getTime()+60000||now.getTime()-t>30*86400000)add('Price date is missing, invalid, future, or over 30 days old. Refresh the source.');
+ if(money(p.amount)===null||money(p.tax)===null||money(p.shipping)===null)add('Enter whole-cent price, tax and shipping; document exclusions for zero/unknown charges.');
+ if(p.unit!==c.unit)add('Price unit must match candidate unit; document and enter any pack conversion.');
+ if(p.match==='Needs identification'||!p.matchBasis.trim()||p.availability!=='Available'&&p.availability!=='Quote only')add('Confirm availability and exact/LKQ match with a factual comparison.');
+ if(!p.exclusions.trim())add('Record included/excluded labor, tax, shipping and quote conditions.');
+ if(Number.isFinite(q)&&money(p.amount)!==null&&money(p.tax)!==null&&money(p.shipping)!==null&&!Number.isSafeInteger(Math.round(q*money(p.amount)!)+money(p.tax)!+money(p.shipping)!))add('Extended amount exceeds supported arithmetic.');
+ }return [...new Set(gaps)];
+}
+export function pricingView(state:any,files:any[]){const ps=pricingState(state);const queue=files.map(f=>{const t=ps.triage[f.id],current=t&&t.sourceCreated===f.created;return {...f,triage:current?t:null,status:current?t.disposition:'Not reviewed',candidateCount:ps.candidates.filter((c:any)=>c.sources.some((s:any)=>s.fileId===f.id)).length};});const candidates=ps.candidates.map((c:any)=>{const gaps=candidateGaps(c,files,state),review=ps.reviews[c.id],reviewed=!!review&&review.snapshot===candidateSnapshot(c,files,state)&&!gaps.length;return {...c,gaps,reviewed,stale:!!review&&!reviewed,review:review?{actor:review.actor,at:review.at,note:review.note}:null,alternatives:c.prices.map((p:any)=>{const a=money(p.amount),tax=money(p.tax),shipping=money(p.shipping),q=Number(c.quantity);return {id:p.id,total:a!==null&&tax!==null&&shipping!==null&&q>0?Math.round(q*a)+tax+shipping:null};})};});return {queue,candidates,research:ps.research,targets:targetRecords(state).map(({record,...t})=>t),pending:queue.filter(f=>f.status==='Not reviewed'||f.status.startsWith('Needs')).length,needsReview:candidates.filter((c:any)=>c.status==='Dismissed'?c.gaps.length>0:!c.reviewed).length};}
+export function pricingFindings(state:any,files:any[]){if(!state.pricing)return [];const v=pricingView(state,files),b:string[]=[];if(v.pending)b.push(v.pending+' evidence files need pricing triage, transcription or specialist review.');if(v.needsReview)b.push(v.needsReview+' pricing candidates need current source and human review.');return b;}

@@ -1,0 +1,108 @@
+import {pricingFindings} from '../lib/pricing';
+import {mitigationFindings} from '../lib/mitigation-adapter';
+import {contentsCareFindings} from '../lib/contents-care-adapter';
+import { z } from 'zod';
+export const PILOT_OWNER='57a641c7-7f54-4f15-8121-e53a65a2f33b';
+const text=z.string().trim().min(1).max(4000),short=z.string().trim().min(1).max(200);
+const date=z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(v=>!Number.isNaN(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v,'Invalid date');
+const evidenceId=z.string().min(1).max(150);
+export const authorityInput=z.discriminatedUnion('action',[
+ z.object({action:z.literal('controls'),version:z.number().int().positive(),jurisdiction:z.string().regex(/^[A-Z]{2}$/),entity:short,policyReference:text,policyFileId:evidenceId,policyReviewedThrough:date,engagementFileId:evidenceId,engagementFrom:date,engagementThrough:date,authorityScope:text}),
+ z.object({action:z.literal('participant'),version:z.number().int().positive(),name:short,email:z.string().email().max(254),role:z.enum(['Operations reviewer','Licensed public adjuster','Policyholder']),jurisdiction:z.string().regex(/^[A-Z]{2}$/),through:date,licenseNumber:z.string().trim().max(100).default(''),licenseFileId:z.string().max(150).default(''),entity:short}),
+ z.object({action:z.literal('deactivate'),version:z.number().int().positive(),participantId:short,reason:text}),
+ z.object({action:z.literal('hold'),version:z.number().int().positive(),reason:text,evidenceId}),
+ z.object({action:z.literal('clearHold'),version:z.number().int().positive(),holdId:short,reason:text,evidenceId}),
+ z.object({action:z.literal('package'),version:z.number().int().positive(),kind:z.enum(['Supplement','Claim submission','Material carrier communication','Settlement']),targetId:z.string().max(200).default(''),title:short,fileId:evidenceId,terms:text,amounts:text,priorPayments:text,deductible:text,depreciation:text,netEffect:text,fees:text,openRights:text,releaseConsequences:text,offerReference:text}),
+ z.object({action:z.literal('review'),version:z.number().int().positive(),packageId:short,stage:z.enum(['OPERATIONS_COMPLETE','LICENSED_RECOMMENDATION_EVIDENCE','CLIENT_AUTHORIZATION_EVIDENCE']),participantId:z.string().max(200).default(''),decision:z.enum(['Record','Reject']),reason:text,evidenceId:z.string().max(150).default(''),checklist:z.array(z.enum(['facts','sources','tasks','versions','noProfessionalConclusion','terms','amounts','rights','fees','releases'])).max(10),sourceDate:date,signingMode:z.enum(['external_evidence','in_person']).default('external_evidence'),clientSignature:z.string().trim().max(200).default(''),clientConsent:z.boolean().default(false),witnessConfirmed:z.boolean().default(false)}),
+ z.object({action:z.literal('withdraw'),version:z.number().int().positive(),packageId:short,reason:text}),
+ z.object({action:z.literal('release'),version:z.number().int().positive(),packageId:short})
+]);
+export type AuthorityInput=z.infer<typeof authorityInput>;
+type Actor={userId:string;email:string;displayName:string};
+type Entry=Record<string,any>;
+export type Authority={schema:1;controls:Entry|null;participants:Entry[];holds:Entry[];packages:Entry[];reviews:Entry[];events:Entry[]};
+export function emptyAuthority():Authority{return {schema:1,controls:null,participants:[],holds:[],packages:[],reviews:[],events:[]};}
+export function canonical(value:unknown):string{if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+canonical((value as Entry)[k])).join(',')+'}';return JSON.stringify(value)??'null';}
+async function hash(value:unknown){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical(value))))).map(n=>n.toString(16).padStart(2,'0')).join('');}
+export function authorityFrom(state:Entry):Authority{return state.authority||emptyAuthority();}
+export function ordinaryWriteError(previous:Entry|null,next:Entry):string|null{
+ if(canonical(previous?.pricing??null)!==canonical(next.pricing??null))return 'Pricing records can only be changed through Evidence & Pricing.';
+ if(canonical(previous?.coverageRouting??null)!==canonical(next.coverageRouting??null))return 'Routing reviews can only be changed through Coverage routing & exceptions.';
+ if(canonical(previous?.policyReview??null)!==canonical(next.policyReview??null))return 'Policy review records can only be changed through Policy coverage & depreciation.';
+ if(canonical(previous?.contentsCare??null)!==canonical(next.contentsCare??null)||canonical(previous?.contentsCareAudit??null)!==canonical(next.contentsCareAudit??null))return 'Contents care records can only be changed through Contents Inventory & Care.';
+ if(canonical(previous?.mitigation??null)!==canonical(next.mitigation??null)||canonical(previous?.mitigationAudit??null)!==canonical(next.mitigationAudit??null))return 'Mitigation records can only be changed through Mitigation & Cleaning.';
+ if(canonical(previous?.authority??null)!==canonical(next.authority??null))return 'Approval records can only be changed through Approvals & release.';
+ // Manually logged external statuses are history, not app release authorization.
+ for(const row of next.supplements||[]){const old=(previous?.supplements||[]).find((r:Entry)=>r.id===row.id);if(row.status==='Ready to submit'&&canonical(old)!==canonical(row))return 'Use Approvals & release to review this supplement. A manual status cannot authorize release.';}
+ return null;
+}
+function active(a:Authority,p:Entry){return !a.events.some(e=>e.action==='participant.deactivated'&&e.target===p.id);}
+function withdrawn(a:Authority,p:Entry){return a.events.some(e=>e.action==='package.withdrawn'&&e.target===p.id);}
+export function actorPermissions(actor:Actor){return {canRecord:actor.userId===PILOT_OWNER,canOperationalReview:actor.userId===PILOT_OWNER,canLicensedApprove:false,canClientAuthorize:false,canRelease:false};}
+function append(a:Authority,actor:Actor,action:string,target:string,reason:string,result='recorded'){a.events.push({id:crypto.randomUUID(),sequence:a.events.length+1,at:new Date().toISOString(),actorId:actor.userId,actorEmail:actor.email,actorName:actor.displayName,action,target,reason,result});}
+export async function contextHash(state:Entry,files:Entry[],name:string,address:string){const {authority,...material}=state;const a=authorityFrom(state);return hash({name,address,material,controls:a.controls,participants:a.participants.filter(p=>active(a,p)),evidence:files.map(f=>({id:f.id,filename:f.filename,mime:f.mime,size:f.size,note:f.note,sources:f.sources,created:f.created})).sort((a,b)=>String(a.id).localeCompare(String(b.id)))});}
+function controlBlockers(a:Authority,today:string){const c=a.controls,b:string[]=[];if(!c){b.push('Claim jurisdiction, entity, representation and state-policy review have not been recorded.');return b;}
+ if(c.policyReviewedThrough<today)b.push('State-policy review has expired.');if(c.engagementFrom>today||c.engagementThrough<today)b.push('Representation is outside its recorded effective period.');
+ b.push('Recorded state-policy and representation evidence still require independent verification.');
+ return b;
+}
+export async function authorityView(state:Entry,files:Entry[],name:string,address:string,actor:Actor){const a=authorityFrom(state),currentHash=await contextHash(state,files,name,address),today=new Date().toISOString().slice(0,10);const openHolds=a.holds.filter(h=>!a.events.some(e=>e.action==='hold.cleared'&&e.target===h.id));
+ const packages=a.packages.map((p):Entry=>{const source=files.find(f=>f.id===p.fileId),stale=p.contextHash!==currentHash||!!p.assembledPackageId&&(!source||source.sourceStale||source.snapshotHash!==p.assemblySnapshotHash),withdrawnNow=withdrawn(a,p),superseded=a.packages.some(x=>x.supersedes===p.id),reviews=a.reviews.filter(r=>r.packageId===p.id),latest=(stage:string)=>reviews.filter(r=>r.stage===stage).at(-1),ops=latest('OPERATIONS_COMPLETE'),licenseCandidate=latest('LICENSED_RECOMMENDATION_EVIDENCE'),licensed=ops&&licenseCandidate&&reviews.indexOf(licenseCandidate)>reviews.indexOf(ops)?licenseCandidate:undefined,clientCandidate=latest('CLIENT_AUTHORIZATION_EVIDENCE'),client=licensed&&clientCandidate&&reviews.indexOf(clientCandidate)>reviews.indexOf(licensed)?clientCandidate:undefined;const blockers=[...controlBlockers(a,today),...mitigationFindings(state,files),...contentsCareFindings(state,files),...pricingFindings(state,files)];if(stale)blockers.unshift('Saved claim facts, sources, participants or authority context changed. Create a superseding package and repeat review.');if(withdrawnNow)blockers.unshift('This package was withdrawn.');if(superseded)blockers.unshift('A newer package supersedes this version.');if(openHolds.length)blockers.push(openHolds.length+' active compliance hold(s).');if(!ops||ops.decision!=='Record')blockers.push('Operational review is incomplete or rejected.');if(!licensed||licensed.decision!=='Record')blockers.push('Licensed recommendation evidence is missing or rejected.');else{const pa=a.participants.find(x=>x.id===licensed.participantId);if(!pa||!active(a,pa)||pa.through<today||pa.jurisdiction!==a.controls?.jurisdiction)blockers.push('Assigned PA authority is no longer current.');}
+ if(!client||client.decision!=='Record')blockers.push('Policyholder authorization evidence is missing or rejected.');else{const ph=a.participants.find(x=>x.id===client.participantId);if(!ph||!active(a,ph)||ph.through<today||ph.jurisdiction!==a.controls?.jurisdiction)blockers.push('Policyholder assignment is no longer current.');}
+ blockers.push(client?.signing?.mode==='in_person'?'Client signature was witnessed in person; separate client online identity check was skipped. Licensed approval, independent authority verification and secure release are still required.':'Licensed and policyholder approval require verified signer identity, e-signature and step-up authentication. These connections are not active.');
+ return {...p,stale,superseded,withdrawn:withdrawnNow,reviewState:{operations:ops?.decision==='Record'?'Complete':'Pending / rejected',licensed:licensed?.decision==='Record'?'Evidence recorded — authentication pending':'Pending / rejected',client:client?.decision==='Record'?(client.signing?.mode==='in_person'?'In-person signature recorded — representative witnessed':'Evidence recorded — authentication pending'):'Pending / rejected'},blockers,canRelease:false,canReview:!stale&&!withdrawnNow&&!superseded&&!openHolds.length};});return {authority:a,hasAuthority:!!state.authority,packages,currentHash,openHolds,permissions:actorPermissions(actor),actor:{id:actor.userId,email:actor.email,name:actor.displayName},integration:{staffSignIn:false,clientSignIn:false,stepUp:false,eSignature:false},activeParticipantIds:a.participants.filter(p=>active(a,p)).map(p=>p.id)};}
+export async function applyAuthority(state:Entry,files:Entry[],name:string,address:string,actor:Actor,input:AuthorityInput){const a=JSON.parse(JSON.stringify(authorityFrom(state))) as Authority,next={...state,authority:a},now=new Date().toISOString(),today=now.slice(0,10);let failure:string|null=null;
+ const deny=(message:string)=>{failure=message;append(a,actor,input.action+'.denied','packageId' in input?input.packageId:'',message,'denied');};
+ const hasFile=(id:string)=>files.some(f=>f.id===id);
+ const needFile=(id:string)=>{if(!hasFile(id))throw Error('Select evidence stored in this claim.');if(id.startsWith('assembled:')&&input.action!=='package'&&!(input.action==='review'&&input.signingMode==='in_person'))throw Error('Choose an uploaded original for representation, license or external authorization evidence.');};
+ try{
+ if(!actorPermissions(actor).canRecord)throw Error('Your account has no approval-recording grant for this private pilot.');
+ if(input.action==='controls'){
+  needFile(input.policyFileId);needFile(input.engagementFileId);if(input.engagementFrom>input.engagementThrough||input.policyReviewedThrough<today)throw Error('Check representation dates and state-policy review expiry.');
+  a.controls={...input,id:crypto.randomUUID(),recordedAt:now,recordedBy:actor.userId,verification:'Evidence recorded — independent verification pending'};delete a.controls.action;delete a.controls.version;append(a,actor,'controls.recorded',a.controls.id,'Recorded authority context; not a verified rule or license grant.');a.events.at(-1)!.contextSnapshot={...a.controls};
+ }else if(input.action==='participant'){
+  if(!a.controls||input.jurisdiction!==a.controls.jurisdiction)throw Error('Participant jurisdiction must match the recorded claim state.');if(input.through<today)throw Error('Participant assignment has expired.');if(input.role==='Licensed public adjuster'){if(!input.licenseNumber||!input.licenseFileId)throw Error('A PA license number and license verification source are required.');needFile(input.licenseFileId);if(input.entity!==a.controls.entity)throw Error('PA entity must match the recorded representation entity.');}
+  const p={...input,id:crypto.randomUUID(),recordedAt:now,recordedBy:actor.userId,verification:'Recorded participant — sign-in and authority verification pending'} as Entry;delete p.action;delete p.version;a.participants.push(p);append(a,actor,'participant.recorded',p.id,input.name+' · '+input.role+' · no access grant created.');
+ }else if(input.action==='deactivate'){if(!a.participants.some(p=>p.id===input.participantId&&active(a,p)))throw Error('Select a current participant.');append(a,actor,'participant.deactivated',input.participantId,input.reason);
+ }else if(input.action==='hold'){needFile(input.evidenceId);const h={id:crypto.randomUUID(),reason:input.reason,evidenceId:input.evidenceId,recordedAt:now,recordedBy:actor.userId};a.holds.push(h);append(a,actor,'hold.opened',h.id,input.reason);
+ }else if(input.action==='clearHold'){needFile(input.evidenceId);if(!a.holds.some(h=>h.id===input.holdId)||a.events.some(e=>e.action==='hold.cleared'&&e.target===input.holdId))throw Error('Select an active hold.');append(a,actor,'hold.cleared',input.holdId,input.reason+' · Evidence '+input.evidenceId);
+ }else if(input.action==='package'){
+  if(!a.controls)throw Error('Record claim authority context first.');needFile(input.fileId);const assembled=files.find(f=>f.id===input.fileId&&f.assembledPackageId);if(input.fileId.startsWith('assembled:')&&!assembled)throw Error('Assembled package source not found.');if(assembled){if(assembled.sourceStale)throw Error('The assembled package is outdated. Reassemble current claim facts first.');if(input.kind!=='Claim submission'||input.targetId!==assembled.assembledPackageId)throw Error('Use the exact assembled package as the claim-submission target.');}if(input.kind==='Supplement'&&!(state.supplements||[]).some((s:Entry)=>s.id===input.targetId))throw Error('Select a saved supplement.');
+  const p={...input,id:crypto.randomUUID(),revision:a.packages.length+1,supersedes:a.packages.filter(p=>p.kind===input.kind&&(assembled?!!p.assembledPackageId:p.targetId===input.targetId)).at(-1)?.id||null,contextHash:await contextHash(next,files,name,address),fileHash:assembled?.snapshotHash||input.fileId.slice(input.fileId.lastIndexOf('-')+1),created:now,createdBy:actor.userId} as Entry;if(assembled){p.assembledPackageId=assembled.assembledPackageId;p.assemblySnapshotHash=assembled.snapshotHash;p.assemblyClaimVersion=assembled.sourceClaimVersion;}delete p.action;delete p.version;p.sourceReferences=files.filter(f=>!f.assembledPackageId||f.id===input.fileId).map(f=>({id:f.id,filename:f.filename,created:f.created}));p.targetSnapshot=input.kind==='Supplement'?(state.supplements||[]).find((s:Entry)=>s.id===input.targetId):null;p.scopeVersionReferences=(state.scopeVersions||[]).map((s:Entry)=>({id:s.id,side:s.side,revision:s.revision,fileId:s.fileId,filename:s.filename}));p.termsHash=await hash(p);a.packages.push(p);append(a,actor,'package.created',p.id,'Created immutable review package '+p.title);
+ }else{
+  const id='packageId' in input?input.packageId:'';const p=a.packages.find(p=>p.id===id);if(!p)throw Error('Review package not found.');
+  if(input.action==='withdraw'){if(withdrawn(a,p))throw Error('Package was already withdrawn.');append(a,actor,'package.withdrawn',p.id,input.reason);
+  }else{
+   const v=await authorityView(next,files,name,address,actor),current=v.packages.find(x=>x.id===id)!;
+   if(input.action==='release'){deny('Release blocked: '+current.blockers.join(' '));}
+   else if(input.action==='review'){
+    if(!current.canReview)throw Error('Package is stale, withdrawn or on hold. Create a current package or resolve the hold.');if(input.sourceDate>today)throw Error('Review source date cannot be in the future.');
+    const recorded=(stage:string)=>stage==='OPERATIONS_COMPLETE'?current.reviewState.operations==='Complete':current.reviewState.licensed==='Evidence recorded — authentication pending';
+    if(input.stage==='OPERATIONS_COMPLETE'){if(!['facts','sources','tasks','versions','noProfessionalConclusion'].every(x=>input.checklist.includes(x as any))&&input.decision==='Record')throw Error('Complete every operational checklist item.');}
+    else{
+     if(!recorded('OPERATIONS_COMPLETE'))throw Error('Complete operational review first.');if(input.signingMode!=='in_person')needFile(input.evidenceId);const role=input.stage==='LICENSED_RECOMMENDATION_EVIDENCE'?'Licensed public adjuster':'Policyholder',participant=a.participants.find(p=>p.id===input.participantId&&p.role===role&&active(a,p));if(!participant||participant.jurisdiction!==a.controls?.jurisdiction||participant.through<today)throw Error('Choose a current, state-matched '+role+' participant.');
+     if(input.stage==='CLIENT_AUTHORIZATION_EVIDENCE'){if(!recorded('LICENSED_RECOMMENDATION_EVIDENCE'))throw Error('Record licensed recommendation evidence first.');if(input.decision==='Record'&&!['terms','amounts','rights','fees','releases'].every(x=>input.checklist.includes(x as any)))throw Error('Confirm the client evidence addresses terms, amounts, rights, fees and release consequences.');}
+    }
+    if(input.signingMode==='in_person'){
+     if(input.stage!=='CLIENT_AUTHORIZATION_EVIDENCE'||input.decision!=='Record')throw Error('In-person signing is only available for client authorization.');
+     const client=a.participants.find(x=>x.id===input.participantId)!;
+     if(!input.clientConsent||!input.witnessConfirmed)throw Error('The client must consent to electronic signing and the signed-in representative must confirm witnessing and identity.');
+     const normalize=(v:string)=>v.trim().replace(/\s+/g,' ').toLocaleLowerCase('en-US');
+     if(!input.clientSignature||normalize(input.clientSignature)!==normalize(client.name))throw Error('The client must type their full name as recorded for this policyholder.');
+     needFile(p.fileId);
+    }else if(input.clientSignature||input.clientConsent||input.witnessConfirmed)throw Error('Choose in-person signing to record a witnessed signature.');
+    // External evidence is never promoted to an authenticated regulated approval.
+    const r={...input,participantId:input.stage==='OPERATIONS_COMPLETE'?'':input.participantId,id:crypto.randomUUID(),packageHash:p.termsHash,contextHash:p.contextHash,recordedAt:now,recordedBy:actor.userId,recordedByEmail:actor.email,authenticatedSignerId:input.stage==='OPERATIONS_COMPLETE'?actor.userId:null,stepUpVerified:false,eSignatureVerified:false,status:input.decision==='Reject'?'Rejected':input.stage==='OPERATIONS_COMPLETE'?'Operational review complete':'External evidence recorded — authentication pending'} as Entry;delete r.action;delete r.version;
+    if(input.signingMode==='in_person'){
+     r.evidenceId=p.fileId;
+     r.signing={mode:'in_person',clientName:a.participants.find(x=>x.id===input.participantId)!.name,signature:input.clientSignature,consentText:'I reviewed this exact document and its terms, amounts, fees, rights and release consequences. I agree to use an electronic signature and intend my typed name to sign this document.',witnessText:'I witnessed this client sign in person and confirmed their identity.',witnessId:actor.userId,witnessName:actor.displayName,witnessEmail:actor.email,signedAt:now,documentId:p.fileId,packageId:p.id,packageHash:p.termsHash,contextHash:p.contextHash,documentSnapshot:{...p},identityMethod:'Representative attestation — separate client online identity check skipped'};
+     r.signing.recordHash=await hash(r.signing);
+     r.status='In-person signature recorded — representative witnessed';
+    }
+    a.reviews.push(r);append(a,actor,'review.recorded',p.id,input.stage+' · '+input.decision+' · '+input.reason);
+   }
+  }
+ }
+ }catch(error){deny(error instanceof Error?error.message:'Approval action rejected.');}
+ return {state:next,error:failure};
+}
