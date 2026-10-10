@@ -40,3 +40,6 @@ Open `/marketing` from a company dashboard, Clients & contracts, Shared Recovery
 7. **Later content workflows:** add separately authorized customer projects, before/after layouts, testimonials, more flyer/infographic designs and campaign scheduling only after the permission model is implemented and tested. Maintain the distinction between requested service contact, SMS consent, marketing consent and ADPA representation.
 
 No posts, ads, email campaigns or SMS messages were sent. No new public site was created. Runtime configuration and live integration activation remain pending.
+
+### Template selection and incomplete profiles
+All three templates are alternative designs of one company page. Selecting a design changes its preview; explicit reviewed publication replaces the previous published snapshot. Draft profiles can be saved without a description or hours, but publication requires them. The Templates & page tab now lists missing details beside publication and offers an inline Save details and continue action, preserving the selected design. Changing templates resets publication review confirmations.
