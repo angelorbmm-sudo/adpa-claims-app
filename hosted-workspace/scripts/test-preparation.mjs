@@ -5,8 +5,9 @@ import {spawnSync} from 'node:child_process';
 const dir=mkdtempSync(resolve('.sites-runtime/preparation-test-'));
 const transpile=(file,replacements={},destination=null)=>{let js=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;for(const [a,b] of Object.entries(replacements))js=js.replaceAll(a,b);writeFileSync(join(dir,destination||file.split('/').at(-1).replace('.ts','.mjs')),js);};
 try{
- transpile('lib/company.ts', {"'./water'":"'./water.mjs'"});
- transpile('app/api/company/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'"},'company-route.mjs');
+ transpile('lib/contents-company.ts', {"'./contents-care-schema'":"'./contents-care-schema.mjs'","'./contents-care-adapter'":"'./contents-care-adapter.mjs'"});
+ transpile('lib/company.ts', {"'./water'":"'./water.mjs'","'./contents-company'":"'./contents-company.mjs'"});
+ transpile('app/api/company/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/contents-company'":"'./contents-company.mjs'"},'company-route.mjs');
  transpile('app/api/company-evidence/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/app/api/company/route'":"'./company-route.mjs'"},'company-evidence-route.mjs');
  transpile('lib/policyholder.ts');
  transpile('app/api/policyholder/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/policyholder'":"'./policyholder.mjs'"},'policyholder-route.mjs');
