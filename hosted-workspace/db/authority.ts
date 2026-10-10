@@ -26,6 +26,7 @@ export function canonical(value:unknown):string{if(Array.isArray(value))return '
 async function hash(value:unknown){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical(value))))).map(n=>n.toString(16).padStart(2,'0')).join('');}
 export function authorityFrom(state:Entry):Authority{return state.authority||emptyAuthority();}
 export function ordinaryWriteError(previous:Entry|null,next:Entry):string|null{
+ if(canonical(previous?.water??null)!==canonical(next.water??null))return 'Water-job records can only be changed through Water Scope Studio.';
  if(canonical(previous?.morning??null)!==canonical(next.morning??null))return 'Morning dashboard records can only be changed through Morning records.';
  if(canonical(previous?.pricing??null)!==canonical(next.pricing??null))return 'Pricing records can only be changed through Evidence & Pricing.';
  if(canonical(previous?.coverageRouting??null)!==canonical(next.coverageRouting??null))return 'Routing reviews can only be changed through Coverage routing & exceptions.';

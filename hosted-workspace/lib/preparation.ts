@@ -1,3 +1,4 @@
+import {waterFindings} from './water';
 import {pricingFindings} from './pricing';
 import {mitigationFindings} from './mitigation-adapter';
 import {contentsCareFindings} from './contents-care-adapter';
@@ -17,6 +18,7 @@ export function recordContext(claim:ClaimInput){return {name:claim.name,address:
 export async function fingerprint(claim:ClaimInput,evidence:EvidenceFile[]){const value=JSON.stringify([claim.id,claim.version,evidence.map(f=>[f.id,f.filename,f.size,f.category,f.created]).sort((a,b)=>String(a[0]).localeCompare(String(b[0])))]);return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value)))).map(b=>b.toString(16).padStart(2,'0')).join('');}
 export function recordChecks(claim:ClaimInput,evidence:EvidenceFile[]):PreparationResult{
  const proposals:Proposal[]=[];const add=(kind:Proposal['kind'],title:string,detail:string,recordRefs:string[]=[])=>proposals.push({kind,title,detail,recordRefs,citations:[],itemRef:null,uncertainty:'This check uses saved records and file categories only. Inspect the original documents; it does not establish coverage or entitlement.'});
+ const waterGaps=waterFindings(claim.state,evidence);if(waterGaps.length)add('missing_document','Water Scope Studio needs review',waterGaps.join(' ').slice(0,2900));
  const pricingGaps=pricingFindings(claim.state,evidence);if(pricingGaps.length)add('missing_document','Evidence-to-pricing needs review',pricingGaps.join(' ').slice(0,2900));
  const contentsGaps=contentsCareFindings(claim.state,evidence);if(contentsGaps.length)add('missing_document','Contents inventory / care needs evidence review',contentsGaps.slice(0,8).join(' ').slice(0,2900));
  const gaps=mitigationFindings(claim.state,evidence);if(gaps.length)add('missing_document','Mitigation / cleaning needs evidence review',gaps.slice(0,8).join(' ').slice(0,2900));
