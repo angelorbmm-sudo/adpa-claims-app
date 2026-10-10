@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1790958719862,
+      "tag": "0000_acoustic_daredevil",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1790960029665,
+      "tag": "0001_wooden_meggan",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790962852936,
+      "tag": "0002_chief_xavin",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1790963318875,
+      "tag": "0003_cultured_true_believers",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1791038288003,
+      "tag": "0004_noisy_dracula",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1791045589126,
+      "tag": "0005_outstanding_carlie_cooper",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1791638880641,
+      "tag": "0006_plain_jetstream",
+      "breakpoints": true
+    }
+  ]
+}
