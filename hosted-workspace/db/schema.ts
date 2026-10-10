@@ -32,3 +32,9 @@ export const sharedJobs=sqliteTable('shared_jobs',{
 export const sharedJobCompanies=sqliteTable('shared_job_companies',{
  id:text('id').primaryKey(),jobId:text('job_id').notNull().references(()=>sharedJobs.id),companyId:text('company_id').notNull().references(()=>companies.id),
 },t=>[index('shared_job_companies_company_job').on(t.companyId,t.jobId)]);
+export const companyMarketing=sqliteTable('company_marketing',{
+ companyId:text('company_id').primaryKey().references(()=>companies.id),state:text('state').notNull(),version:integer('version').notNull().default(1),updated:text('updated').notNull(),
+});
+export const marketingInquiries=sqliteTable('marketing_inquiries',{
+ id:text('id').primaryKey(),companyId:text('company_id').notNull().references(()=>companies.id),actorId:text('actor_id').notNull(),state:text('state').notNull(),version:integer('version').notNull().default(1),created:text('created').notNull(),updated:text('updated').notNull(),
+},t=>[index('marketing_inquiries_company_created').on(t.companyId,t.created),index('marketing_inquiries_actor_created').on(t.actorId,t.created)]);
