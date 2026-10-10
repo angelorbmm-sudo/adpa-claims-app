@@ -20,3 +20,9 @@ export const claimPackages=sqliteTable('claim_packages',{
 export const companies=sqliteTable('companies',{
  id:text('id').primaryKey(),owner:text('owner').notNull(),name:text('name').notNull(),state:text('state').notNull(),version:integer('version').notNull().default(1),created:text('created').notNull(),updated:text('updated').notNull(),
 },t=>[index('companies_owner_updated').on(t.owner,t.updated)]);
+export const companyClients=sqliteTable('company_clients',{
+ id:text('id').primaryKey(),companyId:text('company_id').notNull().references(()=>companies.id),state:text('state').notNull(),version:integer('version').notNull().default(1),created:text('created').notNull(),updated:text('updated').notNull(),
+},t=>[index('company_clients_company_updated').on(t.companyId,t.updated)]);
+export const companyAssets=sqliteTable('company_assets',{
+ id:text('id').primaryKey(),companyId:text('company_id').notNull().references(()=>companies.id),clientId:text('client_id'),kind:text('kind').notNull(),title:text('title').notNull(),revision:text('revision').notNull(),filename:text('filename').notNull(),mime:text('mime').notNull(),size:integer('size').notNull(),objectKey:text('object_key').notNull(),digest:text('digest').notNull(),created:text('created').notNull(),
+},t=>[index('company_assets_company_created').on(t.companyId,t.created)]);
