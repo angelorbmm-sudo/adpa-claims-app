@@ -1,7 +1,7 @@
 // Intentionally empty by default.
 // Add Drizzle tables here when the site actually needs a database.
 // See examples/d1/db/schema.ts for an opt-in example.
-import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 export const claims = sqliteTable('claims', {
  id:text('id').primaryKey(),owner:text('owner').notNull(),name:text('name').notNull(),address:text('address').notNull(),state:text('state').notNull(),version:integer('version').notNull().default(1),created:text('created').notNull(),updated:text('updated').notNull(),
 }, t=>[index('claims_owner_updated').on(t.owner,t.updated)]);
@@ -26,3 +26,9 @@ export const companyClients=sqliteTable('company_clients',{
 export const companyAssets=sqliteTable('company_assets',{
  id:text('id').primaryKey(),companyId:text('company_id').notNull().references(()=>companies.id),clientId:text('client_id'),kind:text('kind').notNull(),title:text('title').notNull(),revision:text('revision').notNull(),filename:text('filename').notNull(),mime:text('mime').notNull(),size:integer('size').notNull(),objectKey:text('object_key').notNull(),digest:text('digest').notNull(),created:text('created').notNull(),
 },t=>[index('company_assets_company_created').on(t.companyId,t.created)]);
+export const sharedJobs=sqliteTable('shared_jobs',{
+ id:text('id').primaryKey(),creatorCompanyId:text('creator_company_id').notNull().references(()=>companies.id),originClientId:text('origin_client_id').notNull().references(()=>companyClients.id),homeownerEmail:text('homeowner_email').notNull(),name:text('name').notNull(),address:text('address').notNull(),state:text('state').notNull(),version:integer('version').notNull().default(1),created:text('created').notNull(),updated:text('updated').notNull(),
+},t=>[index('shared_jobs_homeowner_updated').on(t.homeownerEmail,t.updated),uniqueIndex('shared_jobs_origin_client').on(t.creatorCompanyId,t.originClientId)]);
+export const sharedJobCompanies=sqliteTable('shared_job_companies',{
+ id:text('id').primaryKey(),jobId:text('job_id').notNull().references(()=>sharedJobs.id),companyId:text('company_id').notNull().references(()=>companies.id),
+},t=>[index('shared_job_companies_company_job').on(t.companyId,t.jobId)]);

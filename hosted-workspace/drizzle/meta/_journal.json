@@ -57,6 +57,13 @@
       "when": 1791641153192,
       "tag": "0007_tricky_lizard",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1791643658446,
+      "tag": "0008_public_mongu",
+      "breakpoints": true
     }
   ]
 }
