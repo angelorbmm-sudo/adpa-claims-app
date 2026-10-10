@@ -7,7 +7,9 @@ const transpile=(file,replacements={},destination=null)=>{let js=ts.transpileMod
 try{
  transpile('lib/company-onboarding.ts');
  transpile('app/api/company-setup/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/company/route'":"'./company-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/lib/company-onboarding'":"'./company-onboarding.mjs'"},'company-setup-route.mjs');
- transpile('lib/company-marketing.ts', {"'./company-onboarding'":"'./company-onboarding.mjs'","'./shared-jobs'":"'./shared-jobs.mjs'"});
+ transpile('lib/company-marketing-connections.ts');
+ transpile('app/api/marketing-brief/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/app/api/company/route'":"'./company-route.mjs'","'@/app/api/marketing/route'":"'./marketing-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/lib/company-marketing-connections'":"'./company-marketing-connections.mjs'"},'marketing-brief-route.mjs');
+ transpile('lib/company-marketing.ts', {"'./company-marketing-connections'":"'./company-marketing-connections.mjs'","'./company-onboarding'":"'./company-onboarding.mjs'","'./shared-jobs'":"'./shared-jobs.mjs'"});
  transpile('app/api/marketing/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/company/route'":"'./company-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/lib/company-marketing'":"'./company-marketing.mjs'"},'marketing-route.mjs');
  transpile('app/api/marketing-logo/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/company/route'":"'./company-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/app/api/marketing/route'":"'./marketing-route.mjs'"},'marketing-logo-route.mjs');
  transpile('app/api/marketing-page/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/company/route'":"'./company-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/app/api/marketing/route'":"'./marketing-route.mjs'","'@/lib/company-marketing'":"'./company-marketing.mjs'"},'marketing-page-route.mjs');
