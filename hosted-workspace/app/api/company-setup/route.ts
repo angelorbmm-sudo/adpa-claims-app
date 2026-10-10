@@ -1,0 +1,11 @@
+import {getChatGPTUser} from '@/app/chatgpt-auth';
+import {database} from '@/db/store';
+import {loadCompany} from '@/app/api/company/route';
+import {manager} from '@/lib/shared-jobs';
+import {classificationSchema,classification,selectedServices,recommendedTools,saveClassification} from '@/lib/company-onboarding';
+import {z} from 'zod';
+export const dynamic='force-dynamic';
+const json=(d:any,s=200)=>Response.json(d,{status:s,headers:{'Cache-Control':'private, no-store'}});
+export async function GET(request:Request){const a=await getChatGPTUser();if(!a)return json({error:'Please sign in.'},401);try{const c=await loadCompany(new URL(request.url).searchParams.get('companyId')||'',a);if(!c||!manager(c,a))return json({error:'Company setup not found.'},404);const p=classification(c.state);return json({companyId:c.id,name:c.name,version:c.version,profile:p,services:selectedServices(p),tools:recommendedTools(c.state)});}catch{return json({error:'Company setup could not load.'},503);}}
+const input=z.object({version:z.number().int().positive(),profile:classificationSchema}).strict();
+export async function POST(request:Request){const a=await getChatGPTUser();if(!a)return json({error:'Please sign in.'},401);if(request.headers.get('origin')&&request.headers.get('origin')!==new URL(request.url).origin)return json({error:'Request origin rejected.'},403);try{const body=await request.text();if(body.length>10000)return json({error:'Request too large.'},413);const i=input.parse(JSON.parse(body)),c=await loadCompany(new URL(request.url).searchParams.get('companyId')||'',a);if(!c||!manager(c,a))return json({error:'Company setup not found.'},404);if(c.version!==i.version)return json({error:'Company changed. Refresh before saving.'},409);const s=saveClassification(c.state,i.profile,a,new Date().toISOString()),r=await database().prepare('UPDATE companies SET state=?,updated=?,version=version+1 WHERE id=? AND owner=? AND version=?').bind(JSON.stringify(s),new Date().toISOString(),c.id,c.owner,c.version).run();return r.meta.changes?json({saved:true}):json({error:'Company access changed. Refresh.'},409);}catch(e){return json({error:e instanceof z.ZodError?'Choose an industry and at least one service, then confirm accuracy.':e instanceof Error?e.message:'Could not save.'},400);}}

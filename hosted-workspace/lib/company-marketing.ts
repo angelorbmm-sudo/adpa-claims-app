@@ -1,3 +1,4 @@
+import {classification,selectedServices,marketingTrade} from './company-onboarding';
 import {z} from 'zod';
 import {jobTrades} from './shared-jobs';
 const short=z.string().trim().max(200),text=z.string().trim().max(2000),version=z.number().int().positive(),id=z.string().min(1).max(180);
@@ -14,7 +15,7 @@ export const marketingInput=z.discriminatedUnion('action',[
  z.object({action:z.literal('editPost'),version,companyVersion:version,postId:id,body:z.string().trim().min(1).max(3000),reviewed:z.literal(true),noClientData:z.literal(true)}).strict(),
  z.object({action:z.literal('removePost'),version,companyVersion:version,postId:id}).strict()
 ]);
-export function newMarketing(c:any){return {profile:{businessName:c.name,trade:c.state.serviceType||'Water mitigation',tagline:'',about:'',services:[],serviceAreas:[],phone:'',email:'',website:'',hours:'',licenseReference:'',licenseBasis:'',social:[]},logo:null,published:null,posts:[],audit:[]};}
+export function newMarketing(c:any){return {profile:{businessName:c.name,trade:marketingTrade(classification(c.state).primaryIndustry),tagline:'',about:'',services:selectedServices(classification(c.state)).slice(0,12),serviceAreas:[],phone:'',email:'',website:'',hours:'',licenseReference:'',licenseBasis:'',social:[]},logo:null,published:null,posts:[],audit:[]};}
 export function publicationMissing(p:any):string[]{const missing:string[]=[];if(!p.phone?.trim()&&!p.email?.trim())missing.push('Business phone or email');if(!p.about?.trim())missing.push('Company description');if(!p.hours?.trim())missing.push('Business hours');if(!p.services?.some((s:string)=>s.trim()))missing.push('Services');if(!p.serviceAreas?.some((s:string)=>s.trim()))missing.push('Service areas');if(p.licenseReference?.trim()&&!p.licenseBasis?.trim())missing.push('Basis for license information');return missing;}
 export function profileReady(p:any){const missing=publicationMissing(p);if(missing.length)throw Error('Complete your company profile before publishing: '+missing.join(', ')+'.');}
 export const tradeContent:Record<string,{title:string;steps:string[];tip:string}>= {
