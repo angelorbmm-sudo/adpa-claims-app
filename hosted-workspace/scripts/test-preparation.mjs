@@ -5,13 +5,16 @@ import {spawnSync} from 'node:child_process';
 const dir=mkdtempSync(resolve('.sites-runtime/preparation-test-'));
 const transpile=(file,replacements={},destination=null)=>{let js=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;for(const [a,b] of Object.entries(replacements))js=js.replaceAll(a,b);writeFileSync(join(dir,destination||file.split('/').at(-1).replace('.ts','.mjs')),js);};
 try{
+ transpile('lib/policyholder.ts');
+ transpile('app/api/policyholder/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/policyholder'":"'./policyholder.mjs'"},'policyholder-route.mjs');
+ transpile('app/api/policyholder-evidence/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/policyholder'":"'./policyholder.mjs'","'@/app/api/policyholder/route'":"'./policyholder-route.mjs'"},'policyholder-evidence-route.mjs');
  transpile('lib/contents-care-schema.ts');
  transpile('lib/water.ts');
  transpile('lib/water-ai.ts', {"'./water'":"'./water.mjs'","'./preparation'":"'./preparation.mjs'"});
  transpile('app/api/water/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/water'":"'./water.mjs'","'@/lib/water-ai'":"'./water-ai.mjs'"}, 'water-route.mjs');
  transpile('app/api/water-evidence/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/water/route'":"'./water-route.mjs'","'@/lib/water'":"'./water.mjs'"}, 'water-evidence-route.mjs');
  transpile('lib/pricing.ts');
- transpile('lib/morning.ts', {"'./contents-care-adapter'":"'./contents-care-adapter.mjs'","'./water'":"'./water.mjs'","'./pricing'":"'./pricing.mjs'"});
+ transpile('lib/morning.ts', {"'./policyholder'":"'./policyholder.mjs'","'./contents-care-adapter'":"'./contents-care-adapter.mjs'","'./water'":"'./water.mjs'","'./pricing'":"'./pricing.mjs'"});
  transpile('app/api/morning/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/morning'":"'./morning.mjs'","'@/lib/claim-package'":"'./claim-package.mjs'","'@/lib/preparation'":"'./preparation.mjs'"}, 'morning-route.mjs');
  transpile('lib/pricing-search.ts', {"'./pricing'":"'./pricing.mjs'"});
  transpile('lib/pricing-extract.ts', {"'./pricing'":"'./pricing.mjs'"});
@@ -37,5 +40,5 @@ try{
  export const sqlite=new DatabaseSync(':memory:');export const env={};export let user={userId:'owner',email:'owner@example.test'};export function setUser(value){user=value;}export async function getChatGPTUser(){return user;}export const storage=new Map();
  export function database(){return {async batch(statements){sqlite.exec('BEGIN');try{const results=[];for(const s of statements)results.push(await s.run());sqlite.exec('COMMIT');return results;}catch(e){sqlite.exec('ROLLBACK');throw e;}},prepare(sql){const stmt=sqlite.prepare(sql);let args=[];return {bind(...values){args=values;return this;},async first(){return stmt.get(...args)||null;},async all(){return {results:stmt.all(...args)};},async run(){return {meta:{changes:stmt.run(...args).changes}};}};}};}
  export function files(){return {async get(key){return storage.get(key)||null;},async put(key,bytes){storage.set(key,{size:bytes.byteLength,body:new Uint8Array(bytes),async arrayBuffer(){return bytes;}});}};}export function json(data,status=200){return Response.json(data,{status,headers:{'Cache-Control':'no-store'}});}`);
- const result=spawnSync(process.execPath,['--test','tests/preparation.test.mjs','tests/policy.test.mjs','tests/routing.test.mjs','tests/packages.test.mjs','tests/mitigation.test.mjs','tests/contents-care.test.mjs','tests/pricing.test.mjs','tests/morning.test.mjs','tests/water.test.mjs'],{stdio:'inherit',env:{...process.env,ADPA_TEST_MODULE_DIR:dir}});if(result.status!==0)process.exitCode=result.status||1;
+ const result=spawnSync(process.execPath,['--test','tests/preparation.test.mjs','tests/policy.test.mjs','tests/routing.test.mjs','tests/packages.test.mjs','tests/mitigation.test.mjs','tests/contents-care.test.mjs','tests/pricing.test.mjs','tests/morning.test.mjs','tests/water.test.mjs','tests/policyholder.test.mjs'],{stdio:'inherit',env:{...process.env,ADPA_TEST_MODULE_DIR:dir}});if(result.status!==0)process.exitCode=result.status||1;
 }finally{rmSync(dir,{recursive:true,force:true});}
