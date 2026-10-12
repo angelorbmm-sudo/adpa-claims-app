@@ -66,3 +66,21 @@ test('ADPA sees team and ADPA conversations only after separate connection; comp
  m.setUser(arman);v=await (await get(jobId)).json();assert.deepEqual(v.messages.map(x=>x.body),['Private contractor topic','Team topic']);
  m.setUser(home);await post({action:'removeADPA',reason:'Remove connection'});m.setUser(owner);assert.equal((await get(jobId)).status,404);
 });
+
+test('mitigation link opens only the explicit matching assignment and never creates another job',async()=>{
+ await begin();await accept();m.setUser(arman);
+ let v=await (await get(jobId)).json();assert.equal(v.mitigationWork[0].status,'Awaiting ADPA work assignment');assert.equal(v.mitigationWork[0].href,'');
+ await connect();m.setUser(arman);v=await (await get(jobId)).json();assert.equal(v.mitigationWork[0].href,'');
+ m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.companyJobs',json(?)) WHERE id='claim'").run(JSON.stringify([{id:'assignment',companyId:'water',revoked:false,memberIds:[]}])) ;
+ v=await (await get(jobId)).json();assert.equal(v.mitigationWork[0].href,'/company?companyId=water&id=claim');assert.equal(v.mitigationWork[0].status,'Assigned');
+ m.setUser(home);assert.deepEqual((await (await get(jobId)).json()).mitigationWork,[]);
+ m.setUser(arman);m.sqlite.prepare("UPDATE claims SET address='Different property' WHERE id='claim'").run();assert.equal((await (await get(jobId)).json()).mitigationWork[0].href,'');
+ m.sqlite.prepare("UPDATE claims SET address=?,state=json_set(state,'$.companyJobs[0].revoked',1) WHERE id='claim'").run(contact.address);assert.equal((await (await get(jobId)).json()).mitigationWork[0].href,'');
+ assert.equal(m.sqlite.prepare('SELECT COUNT(*) n FROM claims').get().n,1);
+});
+test('mitigation link stays unavailable before approval and after representation or company access is removed',async()=>{
+ await begin();m.setUser(arman);assert.equal((await (await get(jobId)).json()).mitigationWork[0].status,'Awaiting homeowner approval');
+ await accept();await connect();m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.companyJobs',json(?)) WHERE id='claim'").run(JSON.stringify([{id:'assignment',companyId:'water',revoked:false,memberIds:[]}])) ;
+ m.setUser(home);await post({action:'removeADPA',reason:'Synthetic removal'});m.setUser(arman);assert.equal((await (await get(jobId)).json()).mitigationWork[0].href,'');
+ m.sqlite.prepare("UPDATE companies SET state=json_set(state,'$.members[0].revoked',1) WHERE id='water'").run();assert.equal((await get(jobId)).status,404);
+});
