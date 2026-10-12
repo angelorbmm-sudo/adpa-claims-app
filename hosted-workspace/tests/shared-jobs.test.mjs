@@ -154,3 +154,26 @@ test('company job pagination is bounded and returns each authorized shared job o
  await begin();await accept();const j=row();for(let i=0;i<55;i++){const id='paged-'+String(i).padStart(3,'0');client(id+'-client','water');m.sqlite.prepare('INSERT INTO shared_jobs VALUES (?,?,?,?,?,?,?,1,?,?)').run(id,j.creator_company_id,id+'-client',j.homeowner_email,j.name,j.address,j.state,now,now);m.sqlite.prepare('INSERT INTO shared_job_companies VALUES (?,?,?)').run(id+':water',id,'water');}
  m.setUser(arman);let d=await (await landing()).json();assert.equal(d.jobs.length,50);assert.equal(d.hasMore,true);const ids=d.jobs.map(j=>j.id);d=await (await landing('companyId=water&cursor='+encodeURIComponent(d.nextCursor))).json();assert.equal(d.jobs.length,6);assert.equal(d.hasMore,false);assert.equal(new Set([...ids,...d.jobs.map(j=>j.id)]).size,56);
 });
+function inspection(e,id='inspection-one'){return {action:'inspection',companyId:'water',companyVersion:1,noSensitiveData:true,record:{id,area:'Kitchen',areaType:'Room',observedAt:'2026-10-10T12:00:00Z',inspector:'Synthetic Contractor',measurementStatus:'Measured',length:'12',width:'10',height:'',unit:'ft',basis:'Laser measurement from recorded floor surfaces',condition:'Wet lower drywall observed',missing:'Confirm concealed cavity condition',question:'Should additional inspection evidence be obtained?',sources:[{evidenceId:e,locator:'Kitchen photo 1'}],correctionOf:'',correctionReason:''}};}
+test('inspection preserves measured facts, source provenance and corrections without granting evidence access',async()=>{
+ await begin();await accept();await joinAna();const e=await contribute();m.setUser(arman);assert.equal((await post(inspection(e))).status,200);const recorded=state().inspections[0];assert.equal(recorded.sources[0].digest,state().evidence[0].digest);
+ let v=await (await get(jobId)).json();assert.equal(v.inspections[0].length,'12');assert.ok(!JSON.stringify(v.inspections).includes('actorId'));m.setUser(ana);assert.deepEqual((await (await get(jobId)).json()).inspections,[]);
+ m.setUser(home);await post({action:'share',evidenceId:e,companyIds:['contents'],includeADPA:false,consent:true});m.setUser(ana);assert.equal((await (await get(jobId)).json()).inspections.length,1);
+ const forged=inspection(e,'foreign-correction');forged.companyId='contents';forged.record.correctionOf='inspection-one';forged.record.correctionReason='Overwrite other company';assert.equal((await post(forged)).status,400);
+ m.setUser(arman);const fix=inspection(e,'inspection-two');fix.record.width='11';fix.record.correctionOf='inspection-one';fix.record.correctionReason='Corrected laser reading';assert.equal((await post(fix)).status,200);assert.equal(state().inspections[0].width,'10');assert.equal(state().inspections[1].width,'11');assert.equal((await (await get(jobId)).json()).inspections[0].corrected,true);
+ m.setUser(home);await post({action:'share',evidenceId:e,companyIds:[],includeADPA:false,consent:true});m.setUser(ana);assert.deepEqual((await (await get(jobId)).json()).inspections,[]);
+});
+test('inspection rejects pending access, hidden or changed originals, bad measurements and stale versions',async()=>{
+ await begin();m.setUser(arman);assert.equal((await post(inspection('hidden'))).status,409);await accept();const e=await contribute();m.setUser(arman);
+ for(const patch of [{length:'-1'},{length:'0'},{length:'NaN'},{basis:''},{measurementStatus:'Not measured'},{correctionOf:'unknown',correctionReason:'Reason'},{observedAt:'2099-01-01T12:00:00Z'}]){const input=inspection(e);Object.assign(input.record,patch);assert.equal((await post(input)).status,400);}
+ assert.equal((await post({...inspection(e),version:1})).status,409);m.setUser(home);assert.equal((await post(inspection(e))).status,404);
+ m.setUser(arman);assert.equal((await post(inspection(e))).status,200);m.sqlite.prepare("UPDATE company_assets SET digest='changed' WHERE id='damage'").run();assert.equal((await post(inspection(e,'new-inspection'))).status,409);
+ const v=await (await get(jobId)).json();assert.equal(v.inspections[0].unavailableSources,1);assert.equal(v.inspections[0].sources.length,0);
+});
+test('ADPA only sees inspections while all originals are shared and representation remains current',async()=>{
+ await begin();await accept();const e=await contribute();m.setUser(arman);await post(inspection(e));await connect();m.setUser(owner);assert.deepEqual((await (await get(jobId)).json()).inspections,[]);
+ m.setUser(home);await post({action:'share',evidenceId:e,companyIds:[],includeADPA:true,consent:true});m.setUser(owner);assert.equal((await (await get(jobId)).json()).inspections.length,1);
+ m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.authority.controls.engagementFileId','changed') WHERE id='claim'").run();assert.deepEqual((await (await get(jobId)).json()).inspections,[]);
+ m.setUser(home);await post({action:'withdrawEvidence',evidenceId:e,reason:'Synthetic withdrawal'});let v=await (await get(jobId)).json();assert.equal(v.inspections[0].unavailableSources,1);
+ m.setUser(arman);assert.equal((await post(inspection(e,'after-withdrawal'))).status,409);
+});
