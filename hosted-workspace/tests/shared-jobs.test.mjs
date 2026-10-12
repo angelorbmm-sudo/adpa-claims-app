@@ -109,3 +109,25 @@ test('contents link waits for consent and disappears after assignment or company
  m.setUser(home);await post({action:'removeADPA',reason:'Synthetic removal'});m.setUser(ana);assert.equal((await (await get(jobId)).json()).contentsWork[0].href,'');
  m.sqlite.prepare("UPDATE companies SET state=json_set(state,'$.members[0].revoked',1) WHERE id='contents'").run();assert.equal((await get(jobId)).status,404);
 });
+test('homeowner report statuses track current mitigation and contents handoffs without private notes or records',async()=>{
+ await begin();await accept();await joinAna();await connect();
+ const water={id:'water-work',companyId:'water',serviceType:'Water mitigation',revoked:false,fileIds:[],roomIds:[],observationIds:[],lineIds:[],handoffs:[]};
+ const care={...water,id:'care-work',companyId:'contents',serviceType:'Contents care',handoffs:[],careIds:{},careProject:{}};
+ const update=()=>m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.companyJobs',json(?)) WHERE id='claim'").run(JSON.stringify([water,care]));update();m.setUser(home);
+ let v=await (await get(jobId)).json();assert.equal(v.companyReports.length,2);assert.equal(v.companyReports[0].status,'Preparing documentation');
+ const claimRow=m.sqlite.prepare("SELECT * FROM claims WHERE id='claim'").get(),cl={...claimRow,state:JSON.parse(claimRow.state)};
+ water.handoffs=[{stage:'Send to ADPA',at:now,note:'PRIVATE INSURER STRATEGY',actorId:'PRIVATE ACTOR',materialKey:coLib.jobMaterialKey(cl,water,[])}];
+ care.handoffs=[{stage:'Needs revision',at:now,note:'PRIVATE TREATMENT NOTES',materialKey:'PRIVATE HASH'}];update();
+ v=await (await get(jobId)).json();assert.equal(v.companyReports[0].status,'Submitted to ADPA');assert.equal(v.companyReports[1].status,'Corrections requested');
+ for(const secret of ['PRIVATE INSURER STRATEGY','PRIVATE ACTOR','PRIVATE TREATMENT NOTES','PRIVATE HASH','materialKey','handoffs','fileIds'])assert.ok(!JSON.stringify(v.companyReports).includes(secret));
+ water.handoffs.push({...water.handoffs[0],stage:'ADPA review recorded'});update();assert.equal((await (await get(jobId)).json()).companyReports[0].status,'ADPA review recorded');
+ water.handoffs.at(-1).materialKey='old report';update();v=await (await get(jobId)).json();assert.equal(v.companyReports[0].status,'Preparing documentation');assert.equal(v.companyReports[0].changedSinceReview,true);
+ m.setUser(arman);assert.deepEqual((await (await get(jobId)).json()).companyReports,[]);m.setUser(ana);assert.deepEqual((await (await get(jobId)).json()).companyReports,[]);
+});
+test('report projection disappears with lost consent, representation or engagement and hides revoked assignment history',async()=>{
+ await begin();m.setUser(home);assert.deepEqual((await (await get(jobId)).json()).companyReports,[]);await accept();await joinAna();await connect();
+ const water={companyId:'water',serviceType:'Water mitigation',revoked:true,fileIds:[],roomIds:[],observationIds:[],lineIds:[],handoffs:[{stage:'Needs revision',note:'PRIVATE OLD HISTORY',at:now}]};
+ m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.companyJobs',json(?)) WHERE id='claim'").run(JSON.stringify([water]));m.setUser(home);let v=await (await get(jobId)).json();assert.equal(v.companyReports[0].status,'Preparing documentation');assert.equal(v.companyReports[0].updatedAt,'');
+ await post({action:'removeCompany',companyId:'contents',reason:'Synthetic removal'});v=await (await get(jobId)).json();assert.equal(v.companyReports.length,1);
+ m.sqlite.prepare("DELETE FROM evidence WHERE id='engagement'").run();assert.deepEqual((await (await get(jobId)).json()).companyReports,[]);
+});
