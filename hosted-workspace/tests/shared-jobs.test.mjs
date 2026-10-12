@@ -84,3 +84,28 @@ test('mitigation link stays unavailable before approval and after representation
  m.setUser(home);await post({action:'removeADPA',reason:'Synthetic removal'});m.setUser(arman);assert.equal((await (await get(jobId)).json()).mitigationWork[0].href,'');
  m.sqlite.prepare("UPDATE companies SET state=json_set(state,'$.members[0].revoked',1) WHERE id='water'").run();assert.equal((await get(jobId)).status,404);
 });
+test('contents link uses its own explicit assignment without exposing mitigation work or creating records',async()=>{
+ await begin();await accept();await joinAna();m.setUser(ana);
+ let v=await (await get(jobId)).json();assert.equal(v.contentsWork[0].status,'Awaiting ADPA work assignment');assert.equal(v.contentsWork[0].href,'');assert.deepEqual(v.mitigationWork,[]);
+ await connect();m.setUser(ana);v=await (await get(jobId)).json();assert.equal(v.contentsWork[0].href,'');
+ m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.companyJobs',json(?)) WHERE id='claim'").run(JSON.stringify([{id:'water-assignment',companyId:'water',serviceType:'Water mitigation',revoked:false,memberIds:[]}])) ;
+ assert.equal((await (await get(jobId)).json()).contentsWork[0].href,'');
+ m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.companyJobs',json(?)) WHERE id='claim'").run(JSON.stringify([{id:'contents-assignment',companyId:'contents',serviceType:'Contents care',revoked:false,memberIds:[]}])) ;
+ v=await (await get(jobId)).json();assert.equal(v.contentsWork[0].href,'/contents-company?companyId=contents&id=claim');assert.equal(v.contentsWork[0].status,'Assigned');
+ m.setUser(home);assert.deepEqual((await (await get(jobId)).json()).contentsWork,[]);
+ m.setUser(arman);assert.deepEqual((await (await get(jobId)).json()).contentsWork,[]);
+ m.setUser(ana);m.sqlite.prepare("UPDATE claims SET address='Different property' WHERE id='claim'").run();assert.equal((await (await get(jobId)).json()).contentsWork[0].href,'');
+ m.sqlite.prepare("UPDATE claims SET address=?,state=json_set(state,'$.authority.controls.engagementFileId','changed') WHERE id='claim'").run(contact.address);assert.equal((await (await get(jobId)).json()).contentsWork[0].href,'');
+ assert.equal(m.sqlite.prepare('SELECT COUNT(*) n FROM claims').get().n,1);assert.equal(m.sqlite.prepare('SELECT COUNT(*) n FROM shared_jobs').get().n,1);
+});
+test('contents link waits for consent and disappears after assignment or company revocation',async()=>{
+ await begin();await accept();m.setUser(arman);await post({action:'inviteCompany',companyId:'contents'});m.setUser(ana);
+ assert.equal((await (await get(jobId)).json()).contentsWork[0].status,'Accept your company invitation first');
+ await post({action:'acceptCompany',companyId:'contents',companyVersion:1,clientId:'contents-client',clientVersion:1,termsConfirmed:true});assert.equal((await (await get(jobId)).json()).contentsWork[0].status,'Awaiting homeowner approval');
+ m.setUser(home);await post({action:'approveCompany',companyId:'contents',consent:true});await connect();
+ m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.companyJobs',json(?)) WHERE id='claim'").run(JSON.stringify([{id:'contents-assignment',companyId:'contents',serviceType:'Contents care',revoked:true,memberIds:[]}])) ;
+ m.setUser(ana);assert.equal((await (await get(jobId)).json()).contentsWork[0].href,'');
+ m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.companyJobs[0].revoked',0) WHERE id='claim'").run();assert.ok((await (await get(jobId)).json()).contentsWork[0].href);
+ m.setUser(home);await post({action:'removeADPA',reason:'Synthetic removal'});m.setUser(ana);assert.equal((await (await get(jobId)).json()).contentsWork[0].href,'');
+ m.sqlite.prepare("UPDATE companies SET state=json_set(state,'$.members[0].revoked',1) WHERE id='contents'").run();assert.equal((await get(jobId)).status,404);
+});
