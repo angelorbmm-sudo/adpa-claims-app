@@ -6,6 +6,7 @@ const dir=mkdtempSync(resolve('.sites-runtime/preparation-test-'));
 const transpile=(file,replacements={},destination=null)=>{let js=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;js=js.replaceAll("'./invitations'","'./invitations.mjs'");for(const [a,b] of Object.entries(replacements))js=js.replaceAll(a,b);writeFileSync(join(dir,destination||file.split('/').at(-1).replace('.ts','.mjs')),js);};
 try{
  transpile('lib/company-onboarding.ts');
+ transpile('app/api/company-jobs/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/app/api/shared-jobs/route'":"'./shared-jobs-route.mjs'"},'company-jobs-route.mjs');
  transpile('lib/invitations.ts');
  transpile('app/api/invitations/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/policyholder'":"'./policyholder.mjs'","'@/lib/invitations'":"'./invitations.mjs'"},'invitations-route.mjs');
  transpile('lib/onboarding-review.ts', {"'./company-onboarding'":"'./company-onboarding.mjs'","'./first-job'":"'./first-job.mjs'"});

@@ -131,3 +131,26 @@ test('report projection disappears with lost consent, representation or engageme
  await post({action:'removeCompany',companyId:'contents',reason:'Synthetic removal'});v=await (await get(jobId)).json();assert.equal(v.companyReports.length,1);
  m.sqlite.prepare("DELETE FROM evidence WHERE id='engagement'").run();assert.deepEqual((await (await get(jobId)).json()).companyReports,[]);
 });
+const companyJobsApi=await import(new URL('company-jobs-route.mjs',base));
+const landing=(query='companyId=water')=>companyJobsApi.GET(new Request('https://claims.test/api/company-jobs?'+query));
+test('all-industry jobs page isolates companies and withholds work details before homeowner approval',async()=>{
+ await begin();m.sqlite.prepare("UPDATE companies SET state=json_set(state,'$.serviceType','Roofing') WHERE id='water'").run();
+ m.sqlite.prepare("UPDATE shared_jobs SET state=json_set(state,'$.tasks',json(?),'$.appointments',json(?)) WHERE id=?").run(JSON.stringify([{companyId:'water',title:'PRIVATE BEFORE APPROVAL',status:'Open'}]),JSON.stringify([{companyId:'water',title:'PRIVATE VISIT',startsAt:'2099-01-01T12:00:00Z',status:'Scheduled'}]),jobId);
+ m.setUser(arman);let d=await (await landing()).json();assert.equal(d.jobs[0].action,'Open shared job');assert.equal(d.jobs[0].nextTask,null);assert.equal(d.jobs[0].nextVisit,null);assert.ok(!JSON.stringify(d).includes('PRIVATE BEFORE APPROVAL'));assert.equal((await landing('companyId=contents')).status,404);
+ await accept();m.setUser(arman);d=await (await landing()).json();assert.equal(d.jobs[0].nextTask.title,'PRIVATE BEFORE APPROVAL');assert.equal(d.jobs[0].nextVisit.title,'PRIVATE VISIT');assert.equal(d.jobs[0].address,contact.address);
+ m.setUser(home);assert.equal((await landing()).status,404);m.setUser(null);assert.equal((await landing()).status,401);
+});
+test('landing routes exact specialist work, includes older assignments and avoids duplicate active shared claim cards',async()=>{
+ await begin();await accept();await connect();
+ const assignment={id:'water-work',companyId:'water',serviceType:'Water mitigation',revoked:false,memberIds:['tech'],tasks:[{id:'need',kind:'ADPA request',status:'Open',title:'Provide logs',instruction:'Missing logs',due:'',memberId:''}],responses:[]};
+ m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.companyJobs',json(?)) WHERE id='claim'").run(JSON.stringify([assignment]));m.setUser(arman);
+ let d=await (await landing()).json();assert.equal(d.jobs[0].href,'/company?companyId=water&id=claim');assert.equal(d.jobs[0].adpaRequests,1);assert.equal(d.specialistJobs.length,0);
+ m.setUser(tech);d=await (await landing()).json();assert.equal(d.jobs.length,0);assert.equal(d.specialistJobs.length,1);assert.equal(d.specialistJobs[0].href,'/company?companyId=water&id=claim');
+ m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.companyJobs[0].memberIds',json('[]')) WHERE id='claim'").run();d=await (await landing()).json();assert.equal(d.specialistJobs.length,0);
+ m.setUser(home);await post({action:'removeADPA',reason:'Synthetic removal'});m.setUser(arman);d=await (await landing()).json();assert.equal(d.jobs[0].action,'Open shared job');assert.equal(d.specialistJobs.length,1);
+ m.sqlite.prepare("UPDATE companies SET state=json_set(state,'$.members[0].revoked',1) WHERE id='water'").run();assert.equal((await landing()).status,404);
+});
+test('company job pagination is bounded and returns each authorized shared job once',async()=>{
+ await begin();await accept();const j=row();for(let i=0;i<55;i++){const id='paged-'+String(i).padStart(3,'0');client(id+'-client','water');m.sqlite.prepare('INSERT INTO shared_jobs VALUES (?,?,?,?,?,?,?,1,?,?)').run(id,j.creator_company_id,id+'-client',j.homeowner_email,j.name,j.address,j.state,now,now);m.sqlite.prepare('INSERT INTO shared_job_companies VALUES (?,?,?)').run(id+':water',id,'water');}
+ m.setUser(arman);let d=await (await landing()).json();assert.equal(d.jobs.length,50);assert.equal(d.hasMore,true);const ids=d.jobs.map(j=>j.id);d=await (await landing('companyId=water&cursor='+encodeURIComponent(d.nextCursor))).json();assert.equal(d.jobs.length,6);assert.equal(d.hasMore,false);assert.equal(new Set([...ids,...d.jobs.map(j=>j.id)]).size,56);
+});
