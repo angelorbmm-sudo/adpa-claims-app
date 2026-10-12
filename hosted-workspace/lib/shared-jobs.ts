@@ -18,7 +18,7 @@ export const sharedInput=z.discriminatedUnion('action',[
  z.object({action:z.literal('removeADPA'),version,reason:text}).strict(),
  z.object({action:z.literal('importEvidence'),version,evidenceId:id}).strict(),
  z.object({action:z.literal('jobMessage'),version,companyId:id.optional(),companyVersion:version.optional(),audience:z.string().min(1).max(200),body:text}).strict(),
- z.object({action:z.literal('appointment'),version,companyId:id.optional(),companyVersion:version.optional(),title:short,startsAt:z.string().datetime({offset:true}),note:text}).strict(),
+ z.object({action:z.literal('appointment'),version,companyId:id.optional(),companyVersion:version.optional(),title:short,startsAt:z.string().datetime({offset:true}),note:text,assignedTo:z.string().trim().min(1).max(200).optional()}).strict(),
  z.object({action:z.literal('cancelAppointment'),version,companyId:id.optional(),companyVersion:version.optional(),appointmentId:id,reason:text}).strict(),
  z.object({action:z.literal('task'),version,companyId:id,companyVersion:version,title:short,due:z.string().refine(v=>!v||/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v),note:text}).strict(),
  z.object({action:z.literal('completeTask'),version,companyId:id,companyVersion:version,taskId:id,note:text}).strict()
@@ -60,7 +60,7 @@ export function applyShared(j:any,companies:any[],actor:any,input:any,context:an
    if(input.action==='appointment'){
     if((s.appointments||[]).length>=100)throw Error('Appointment record limit reached.');
     if(Date.parse(input.startsAt)<Date.parse(now))throw Error('Choose a future appointment time.');
-    s.appointments=[...(s.appointments||[]),{id:crypto.randomUUID(),companyId:cid,from,title:input.title,startsAt:input.startsAt,note:input.note,status:'Scheduled',at:now,actorId:actor.userId}];
+    s.appointments=[...(s.appointments||[]),{id:crypto.randomUUID(),companyId:cid,from,title:input.title,startsAt:input.startsAt,note:input.note,status:'Scheduled',assignedTo:input.assignedTo||'',at:now,actorId:actor.userId}];
    }else{const visit=(s.appointments||[]).find((v:any)=>v.id===input.appointmentId&&v.companyId===cid&&v.status==='Scheduled');if(!visit)throw Error('Choose your own scheduled visit.');visit.status='Cancelled';visit.cancelledAt=now;visit.reason=input.reason;}
   }
  }

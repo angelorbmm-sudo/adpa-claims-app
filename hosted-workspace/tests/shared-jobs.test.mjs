@@ -49,8 +49,8 @@ test('pending invitations cannot read or post recovery messages or appointments'
 });
 test('assigned companies schedule their own visits; homeowner and another company cannot forge or cancel them',async()=>{
  await begin();await accept();await joinAna();m.setUser(arman);
- const payload={action:'appointment',companyId:'water',companyVersion:1,title:'Moisture check',startsAt:'2099-10-12T15:00:00Z',note:'Please provide access to the kitchen'};
- assert.equal((await post(payload)).status,200);const visit=state().appointments[0];
+ const payload={action:'appointment',companyId:'water',companyVersion:1,title:'Moisture check',assignedTo:'Synthetic drying crew',startsAt:'2099-10-12T15:00:00Z',note:'Please provide access to the kitchen'};
+ assert.equal((await post(payload)).status,200);const visit=state().appointments[0];assert.equal(visit.assignedTo,'Synthetic drying crew');
  m.setUser(home);let v=await (await get(jobId)).json();assert.equal(v.appointments[0].id,visit.id);assert.equal(v.canSchedule,false);
  assert.equal((await post({...payload,companyId:undefined,companyVersion:undefined})).status,400);
  m.setUser(ana);assert.equal((await post({action:'cancelAppointment',companyId:'contents',companyVersion:1,appointmentId:visit.id,reason:'Forged'})).status,400);
