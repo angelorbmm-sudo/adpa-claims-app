@@ -1,0 +1,7 @@
+# Company correction clarity — October 12, 2026
+
+Mitigation and contents job overview now use one correction summary built from existing ADPA requests and authorized company responses. Each open request shows what is needed, responsible company, due date and Needs company response or Awaiting ADPA review. ADPA comments do not masquerade as company responses. Existing task visibility still limits technicians to their available tasks. Closed/cancelled requests show their recorded resolution.
+
+The current Needs revision handoff note is shown separately and does not manufacture or resolve tasks. Buttons take users to existing request controls or the job's Evidence section. Both company response forms now attach up to 12 existing authorized originals through the existing API. Contents response history now links these originals. Server checks continue rejecting hidden files, stale versions and unauthorized request closure. Only ADPA can close an ADPA request, with a resolution.
+
+This introduces no approval gate, invitation, notification, provider activation, claim funding or coverage decision. No private request notes are exposed to the policyholder. Existing human review and source/assignment permissions remain unchanged. Ana's answers remain pending. Browser visual QA is unavailable; live walkthrough deferred. Domain/API tests, TypeScript and production build are used for validation.
