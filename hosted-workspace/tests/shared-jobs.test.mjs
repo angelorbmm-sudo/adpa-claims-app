@@ -213,3 +213,23 @@ test('ADPA morning dashboard includes authorized inspection tasks and removes wi
  let response=await morningApi.GET(new Request('https://claims.test/api/morning'));assert.equal(response.status,200,await response.clone().text());let d=await response.json();assert.ok(d.reviews.some(r=>r.id.startsWith('inspection-question:')&&r.href.includes('tab=Inspection')));
  m.setUser(home);await post({action:'withdrawEvidence',evidenceId:e,reason:'Synthetic withdrawal'});m.setUser(owner);d=await (await morningApi.GET(new Request('https://claims.test/api/morning'))).json();assert.ok(!d.reviews.some(r=>r.id.startsWith('inspection-question:')));
 });
+test('focused dashboard returns the selected company services and exact task destination',async()=>{
+ await begin();await accept();await connect();
+ m.sqlite.prepare("UPDATE companies SET state=json_set(state,'$.onboarding',json(?)) WHERE id='water'").run(JSON.stringify({primaryIndustry:'Water mitigation',industries:['Water mitigation','General contractor'],serviceIds:['structural-drying','repair-scoping'],otherServices:[],confirmedAt:now}));
+ const task={id:'logs',kind:'ADPA request',status:'Open',title:'Provide daily logs',instruction:'Provide current originals',due:'',memberId:''};
+ m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.companyJobs',json(?)) WHERE id='claim'").run(JSON.stringify([{id:'water-work',companyId:'water',serviceType:'Water mitigation',revoked:false,memberIds:['tech'],tasks:[task],responses:[]}]));
+ m.setUser(arman);let d=await (await landing()).json();assert.equal(d.owner,false);assert.equal(d.company.manager,true);assert.equal(d.company.primaryIndustry,'Water mitigation');assert.deepEqual(d.company.industries,['Water mitigation','General contractor']);assert.ok(d.company.services.includes('Structural drying'));assert.equal(d.jobs[0].needsAction,true);assert.equal(d.jobs[0].nextTaskHref,'/company?companyId=water&id=claim&tab=Tasks%20%26%20requests');
+ m.setUser(tech);d=await (await landing()).json();assert.equal(d.company.manager,false);assert.equal(d.jobs.length,0);assert.equal(d.specialistJobs[0].nextTaskHref,'/company?companyId=water&id=claim&tab=Tasks%20%26%20requests');
+});
+test('waiting on ADPA does not appear as an actionable company task',async()=>{
+ await begin();await accept();await connect();
+ const task={id:'logs',kind:'ADPA request',status:'Open',title:'Logs submitted',instruction:'Provide originals',due:'',memberId:''};
+ m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.companyJobs',json(?)) WHERE id='claim'").run(JSON.stringify([{id:'water-work',companyId:'water',serviceType:'Water mitigation',revoked:false,memberIds:[],tasks:[task],responses:[{taskId:'logs',actorId:arman.userId,note:'Submitted',fileIds:[]}]}]));
+ m.setUser(arman);let d=await (await landing()).json();assert.equal(d.jobs[0].needsAction,false);assert.equal(d.jobs[0].awaitingReview,1);
+ await post({action:'task',companyId:'water',companyVersion:1,title:'Reinspect kitchen',due:'',note:'Record new observations'});d=await (await landing()).json();assert.equal(d.jobs[0].needsAction,true);assert.equal(d.jobs[0].nextTask.title,'Reinspect kitchen');assert.equal(d.jobs[0].nextTaskHref,'/shared-jobs?companyId=water&job='+jobId+'&tab=Tasks');
+});
+test('company dashboard routes answered inspection questions and respects revoked source sharing',async()=>{
+ const e=await questionSetup();await post(sendQuestion());m.setUser(arman);let d=await (await landing()).json();assert.equal(d.jobs[0].needsAction,false);assert.equal(d.jobs[0].nextTask,null);assert.equal(d.jobs[0].awaitingReview,1);
+ m.setUser(owner);await post({action:'answerInspectionQuestion',taskId:state().tasks[0].id,answer:'Obtain the missing readings.'});m.setUser(arman);d=await (await landing()).json();assert.equal(d.jobs[0].needsAction,true);assert.equal(d.jobs[0].nextTask.detail,'Review ADPA answer');assert.ok(d.jobs[0].nextTaskHref.endsWith('&tab=Inspection'));
+ m.setUser(home);await post({action:'share',evidenceId:e,companyIds:[],includeADPA:false,consent:true});m.setUser(arman);d=await (await landing()).json();assert.equal(d.jobs[0].needsAction,false);assert.equal(d.jobs[0].nextTask,null);
+});
