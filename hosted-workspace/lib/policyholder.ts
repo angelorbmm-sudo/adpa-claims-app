@@ -1,3 +1,4 @@
+import {invitationLive,invitationExpiry} from './invitations';
 import {z} from 'zod';
 export const PORTAL_OWNER='57a641c7-7f54-4f15-8121-e53a65a2f33b';
 const text=z.string().trim().max(3000),short=z.string().trim().max(200),id=z.string().min(1).max(180);
@@ -21,7 +22,7 @@ export const portalInput=z.discriminatedUnion('action',[
 ]);
 export const emptyPortal=()=>({schema:1,invitations:[] as any[],published:null as any,history:[] as any[],messages:[] as any[],responses:[] as any[],audit:[] as any[]});
 export const portalState=(s:any):ReturnType<typeof emptyPortal>=>({...emptyPortal(),...(s.clientPortal||{})});
-export function portalAccess(claim:any,actor:any){if(claim.owner===actor.userId&&actor.userId===PORTAL_OWNER)return {owner:true,invitation:null as any};const p=portalState(claim.state).invitations.find(p=>!p.revoked&&p.email===actor.email.trim().toLowerCase()&&(!p.userId||p.userId===actor.userId));return p?{owner:false,invitation:p}:null;}
+export function portalAccess(claim:any,actor:any){if(claim.owner===actor.userId&&actor.userId===PORTAL_OWNER)return {owner:true,invitation:null as any};const p=portalState(claim.state).invitations.find(p=>invitationLive(p)&&p.email===actor.email.trim().toLowerCase()&&(!p.userId||p.userId===actor.userId));return p?{owner:false,invitation:p}:null;}
 export function uploaderInvitation(file:any){try{return JSON.parse(file.sources||'[]').find((s:any)=>s.portalInvitationId)?.portalInvitationId;}catch{return null;}}
 export function portalVisibleFiles(claim:any,actor:any,files:any[]){const a=portalAccess(claim,actor);if(!a||!a.owner&&!a.invitation.acceptedAt)return [];if(a.owner)return files;const p=portalState(claim.state).published;return files.filter(f=>(p?.fileIds||[]).includes(f.id)||uploaderInvitation(f)===a.invitation.id);}
 export const safeFile=(f:any)=>({id:f.id,filename:f.filename,mime:f.mime,size:f.size,category:f.category,created:f.created});
@@ -47,7 +48,7 @@ export function applyPortal(claim:any,files:any[],actor:any,input:z.infer<typeof
   const snapshot={...d,id:crypto.randomUUID(),publishedAt:now,actorId:actor.userId,claim:{name:claim.name,address:claim.address,carrier:String(claim.state.profile?.carrier||''),claimNumber:String(claim.state.profile?.claimNumber||'')},sourceFiles:files.filter(f=>d.fileIds.includes(f.id)).map(safeFile)};
   if(p.published)p.history=[...p.history,p.published].slice(-10);p.published=snapshot;
  }else if(input.action==='invite'){
-  owner();const email=input.email.trim().toLowerCase();if(email===actor.email.trim().toLowerCase())throw Error('Invite the policyholder’s email, not your own account.');if(p.invitations.some(i=>!i.revoked&&i.email===email))throw Error('This client already has an active invitation.');if(p.invitations.length>=30)throw Error('Invitation record limit reached.');p.invitations.push({id:crypto.randomUUID(),name:input.name,email,userId:null,acceptedAt:null,revoked:false,...stamp});
+  owner();const email=input.email.trim().toLowerCase();if(email===actor.email.trim().toLowerCase())throw Error('Invite the policyholder’s email, not your own account.');if(p.invitations.some(i=>!i.revoked&&i.email===email))throw Error('This client already has an active invitation.');if(p.invitations.length>=30)throw Error('Invitation record limit reached.');p.invitations.push({id:crypto.randomUUID(),name:input.name,email,userId:null,acceptedAt:null,revoked:false,expiresAt:invitationExpiry(now),...stamp});
  }else if(input.action==='revoke'){
   owner();const i=p.invitations.find(i=>i.id===input.invitationId&&!i.revoked);if(!i)throw Error('Active invitation not found.');i.revoked=true;i.revokedAt=now;i.reason=input.reason;
  }else if(input.action==='accept'){

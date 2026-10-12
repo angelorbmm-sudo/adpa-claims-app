@@ -1,0 +1,28 @@
+import { database,files } from '@/db/store';
+import { evidenceOwner,json } from '@/db/import-auth';
+export const dynamic='force-dynamic';
+const categories=['Policy and representation','Construction and mitigation','Contents','Property photos','Videos','Ownership and appraisal','Financial and supporting records','EUO and correspondence'];
+const types=new Set(['application/pdf','image/jpeg','image/png','image/webp','video/mp4','video/quicktime','audio/mpeg','audio/mp4','text/plain','message/rfc822','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/zip']);
+const uuid=(s:string|null)=>!!s&&/^[a-f0-9-]{36}$/i.test(s);
+async function claimFor(id:string,owner:string){return database().prepare('SELECT id FROM claims WHERE id=? AND owner=?').bind(id,owner).first();}
+export async function POST(request:Request){
+ const owner=await evidenceOwner(request,true);if(!owner)return json({error:'Please sign in.'},401);
+ const origin=request.headers.get('origin');if(origin&&origin!==new URL(request.url).origin)return json({error:'Request origin rejected.'},403);
+ try{const claimId=new URL(request.url).searchParams.get('claimId');if(!uuid(claimId))return json({error:'Select a claim.'},400);if(!await claimFor(claimId!,owner))return json({error:'Claim not found.'},404);
+ const filename=decodeURIComponent(request.headers.get('X-Filename')||'').replace(/[\r\n\0]/g,'').trim();if(!filename||filename.length>250)return json({error:'Invalid filename.'},400);
+ const mime=(request.headers.get('Content-Type')||'').split(';')[0];if(!types.has(mime))return json({error:'File type unsupported.'},415);
+ const category=decodeURIComponent(request.headers.get('X-Category')||'');if(!categories.includes(category))return json({error:'Choose an evidence category.'},400);
+ const note=decodeURIComponent(request.headers.get('X-Note')||'');if(note.length>4000)return json({error:'Note too long.'},400);
+ const sourceText=decodeURIComponent(request.headers.get('X-Sources')||'[]');if(sourceText.length>24000)return json({error:'Too many source references.'},400);const sources=JSON.parse(sourceText);if(!Array.isArray(sources))return json({error:'Invalid sources.'},400);
+ const stated=Number(request.headers.get('Content-Length'));if(stated>30*1024*1024)return json({error:'Maximum file size is 30 MB.'},413);const bytes=await request.arrayBuffer();if(!bytes.byteLength||bytes.byteLength>30*1024*1024)return json({error:'Maximum file size is 30 MB.'},413);
+ const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(v=>v.toString(16).padStart(2,'0')).join('');const id=claimId+'-'+hash;const db=database();const existing=await db.prepare('SELECT id FROM evidence WHERE id=? AND owner=?').bind(id,owner).first();if(existing)return json({id,duplicate:true});
+ const key=owner+'/'+claimId+'/'+hash;await files().put(key,bytes,{httpMetadata:{contentType:mime}});const created=new Date().toISOString();await db.prepare('INSERT INTO evidence (id,claim_id,owner,filename,mime,size,category,note,sources,object_key,created) VALUES (?,?,?,?,?,?,?,?,?,?,?)').bind(id,claimId,owner,filename,mime,bytes.byteLength,category,note,JSON.stringify(sources),key,created).run();return json({id,filename,size:bytes.byteLength},201);
+ }catch(error){if(error instanceof SyntaxError||error instanceof URIError)return json({error:'Invalid file metadata.'},400);console.error('Evidence upload failure',error);return json({error:'Upload failed. Your file is unchanged; please retry.'},503);}
+}
+export async function GET(request:Request){const owner=await evidenceOwner(request);if(!owner)return json({error:'Please sign in.'},401);
+ try{const params=new URL(request.url).searchParams,claimId=params.get('claimId');if(!uuid(claimId)||!await claimFor(claimId!,owner))return json({error:'Claim not found.'},404);const id=params.get('fileId');const db=database();if(!id){const result=await db.prepare('SELECT id,filename,mime,size,category,note,sources,created FROM evidence WHERE claim_id=? AND owner=? ORDER BY category,filename').bind(claimId,owner).all();return json({files:result.results.map(row=>({...row,sources:JSON.parse(String(row.sources))}))});}
+ const row=await db.prepare('SELECT * FROM evidence WHERE id=? AND claim_id=? AND owner=?').bind(id,claimId,owner).first();if(!row)return json({error:'File not found.'},404);
+ const object=await files().get(String(row.object_key),{range:request.headers});if(!object)return json({error:'File unavailable. Please retry.'},503);const h=new Headers({'Content-Type':String(row.mime),'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Accept-Ranges':'bytes','Content-Security-Policy':"default-src 'none'; frame-ancestors 'self'; sandbox"});
+ const inline=params.get('download')!=='1'&&['application/pdf','image/jpeg','image/png','image/webp','video/mp4','video/quicktime','audio/mpeg','audio/mp4','text/plain'].includes(String(row.mime));h.set('Content-Disposition',(inline?'inline':'attachment')+"; filename*=UTF-8''"+encodeURIComponent(String(row.filename)));
+ let status=200;if(object.range && 'offset' in object.range && 'length' in object.range && typeof object.range.offset==='number' && typeof object.range.length==='number'){const {offset,length}=object.range;h.set('Content-Range',`bytes ${offset}-${offset+length-1}/${object.size}`);h.set('Content-Length',String(length));status=206;}else h.set('Content-Length',String(object.size));return new Response(object.body,{status,headers:h});
+ }catch(error){console.error('Evidence read failure',error);return json({error:'Evidence could not be loaded. Please try again.'},503);}}

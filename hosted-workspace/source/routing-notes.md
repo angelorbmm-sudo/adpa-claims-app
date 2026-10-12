@@ -1,0 +1,15 @@
+# Coverage routing and exception review
+
+Open `/routing?id=<claim UUID>` from the dashboard or claim navigation. Five base workstreams cover dwelling, other structures, personal contents, ALE and Ordinance or Law. Add distinct issue workstreams within any coverage. Their amounts may overlap; the module never adds them into a claim total.
+
+Record assigned reviewer/role, next action, comparable ADPA-supported and carrier amounts, source files/references, a sourced deadline, active exception flags, disposition and resolution notes. File IDs are validated against the owner's claim. Reviewer names/roles are assignments, not sign-in grants, professional verification, coverage approval or settlement authority.
+
+The rule engine calculates ADPA minus carrier and divides that gap by the ADPA supported amount. Blank values remain unknown; zero is preserved and division by zero produces an unavailable percentage. Configure both dollar and percentage thresholds; no default 10% eligibility rule is assumed. Serious denials, reservations, causation/scope/depreciation/code/housing issues, active negotiation, specialist requests, compliance holds and impending recorded deadlines bypass low percentage variances. Pacific calendar dates are used. Deadlines are entered from reviewed sources rather than inferred by the app.
+
+Statuses identify preparation/evidence, factual review, ready for human review, licensed review, licensed representation, specialist/legal review, compliance hold and documented resolution. Highest open priority rolls up to the claim while unrelated coverages keep their statuses. Active flags and unreviewed sources prevent routine/resolved treatment. A source acknowledgment records a human check, not AI confidence or verified licensed approval.
+
+Review snapshots/hash comparisons flag changed policy, coverage facts, relevant inventory/scopes/ALE, payment/supplement data and evidence manifests. Routing edits themselves do not stale other workstreams. Dashboard summaries conservatively request refresh after later claim edits; the routing page computes precise source changes and deadline priority. New source additions require a fresh review. Source-check revisions and thresholds retain server-authenticated history under `coverageRouting`; ordinary claim editing cannot forge that history. Optimistic claim versions protect concurrent writes.
+
+The module changes no claim amount, payment, policy limit or release approval. It sends no message, notification, referral or settlement. Existing material approval-package hashes incorporate routing changes. AI activation is not required for the current human-entered routing engine.
+
+Validation: `node scripts/test-preparation.mjs` now runs 25 policy/preparation/routing tests, including low-percentage high-dollar gaps, serious-issue bypass, deadline boundaries, unknown/zero amounts, independent source hashes, resolution requirements, owner/origin/source isolation, histories, concurrent versions, preserved financial/authority records and dashboard priority. TypeScript and production build are required before publication.

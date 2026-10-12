@@ -1,0 +1,3 @@
+import {requireChatGPTUser,chatGPTSignOutPath} from '@/app/chatgpt-auth';import Resume from './resume';
+export const dynamic='force-dynamic';export const metadata={title:'Your invitation | ADPA',robots:{index:false,follow:false}};
+export default async function Page({searchParams}:{searchParams:Promise<Record<string,string|string[]|undefined>>}){const q=await searchParams,p=new URLSearchParams();for(const k of ['kind','id','invitationId'])if(typeof q[k]==='string')p.set(k,q[k] as string);const path='/invitation?'+p.toString();await requireChatGPTUser(path);return <Resume switchAccountUrl={chatGPTSignOutPath(path)}/>;}

@@ -1,0 +1,10 @@
+import ts from 'typescript';
+import {readFileSync,writeFileSync} from 'node:fs';
+writeFileSync('public/file-drop.mjs',ts.transpileModule(readFileSync('lib/file-drop.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText);
+const path='app/workspace-html.ts';let html=JSON.parse(readFileSync(path,'utf8').split(' = ')[1].trim().replace(/;$/,''));
+const script='<script type="module" id="adpa-file-drop-loader">import {enhanceFileInputs} from "/file-drop.mjs"; enhanceFileInputs(document.getElementById("adpa-prototype"));</script>';
+if(!html.includes('id="adpa-file-drop-loader"'))html=html.replace('</body>',script+'</body>');
+if(!html.includes('href="/file-drop.css"'))html=html.replace('</head>','<link rel="stylesheet" href="/file-drop.css"></head>');
+html=html.replace("input.value='';await loadEvidence();","input.value='';input.dispatchEvent(new Event('change',{bubbles:true}));await loadEvidence();");
+writeFileSync(path,'export const workspaceHTML = '+JSON.stringify(html)+';\n');
+writeFileSync('.sites-runtime/workspace-test.html',html);

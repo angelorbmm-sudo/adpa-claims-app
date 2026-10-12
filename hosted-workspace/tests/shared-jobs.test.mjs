@@ -30,3 +30,39 @@ test('auth, request origin, duplicate create, stale client and invitation direct
 test('source digest changes or company archival invalidate original downloads',async()=>{await begin();await accept();const e=await contribute();m.setUser(home);m.sqlite.prepare("UPDATE company_assets SET digest='changed' WHERE id='damage'").run();assert.equal((await file(e)).status,404);m.sqlite.prepare("UPDATE company_assets SET digest=? WHERE id='damage'").run(createHash('sha256').update('%PDF-synthetic-damage').digest('hex'));m.sqlite.prepare("UPDATE companies SET state=json_set(state,'$.archived',1) WHERE id='water'").run();assert.equal((await file(e)).status,404);});
 test('portfolio cursor paginates without duplicates and directory search remains bounded across 1000 companies',async()=>{m.setUser(home);for(let n=0;n<125;n++){const id='page-'+String(n).padStart(3,'0'),cid='page-client-'+n,s=clLib.newClient({...contact,name:'Synthetic '+n},now);m.sqlite.prepare('INSERT INTO company_clients VALUES (?,?,?,1,?,?)').run(cid,'water',JSON.stringify(s),now,now);const j=lib.createShared({id:'water',name:'Water',state:{serviceType:'Water mitigation'}},{id:cid,state:s},now,arman);m.sqlite.prepare('INSERT INTO shared_jobs (id,creator_company_id,origin_client_id,homeowner_email,name,address,state,version,created,updated) VALUES (?,?,?,?,?,?,?,1,?,?)').run(id,'water',cid,home.email,j.name,j.address,JSON.stringify(j.state),now,now);m.sqlite.prepare('INSERT INTO shared_job_companies VALUES (?,?,?)').run(id+':water',id,'water');}let d=await (await get()).json();assert.equal(d.jobs.length,100);assert.equal(d.hasMore,true);const c=d.nextCursor,next=await (await api.GET(new Request('https://claims.test/api/shared-jobs?cursorUpdated='+encodeURIComponent(c.updated)+'&cursorId='+encodeURIComponent(c.id)))).json();assert.equal(next.jobs.length,25);assert.equal(next.hasMore,false);assert.equal(new Set([...d.jobs,...next.jobs].map(j=>j.id)).size,125);for(let n=0;n<1000;n++){m.sqlite.prepare('INSERT INTO companies VALUES (?,?,?,?,1,?,?)').run('roof-'+n,owner.userId,'Synthetic Roofer '+String(n).padStart(4,'0'),JSON.stringify(coLib.companyState({serviceType:'Roofing',directoryListed:true})),now,now);}d=await (await get()).json();assert.equal(d.directory.length,100);assert.equal(d.directoryHasMore,true);const search=await (await api.GET(new Request('https://claims.test/api/shared-jobs?search=Synthetic%20Roofer%200999'))).json();assert.equal(search.directory.length,1);assert.equal(search.directory[0].id,'roof-999');m.setUser(other);assert.equal((await (await get()).json()).jobs.length,0);});
 test('source bytes with a false stored digest never enter the ADPA claim',async()=>{await begin();await accept();const e=await contribute();await connect();m.setUser(home);await post({action:'share',evidenceId:e,companyIds:[],includeADPA:true,consent:true});m.storage.set('original/damage',{size:8,body:new TextEncoder().encode('changed'),async arrayBuffer(){return new TextEncoder().encode('changed').buffer;}});m.setUser(owner);assert.equal((await post({action:'importEvidence',evidenceId:e})).status,400);assert.equal(m.sqlite.prepare("SELECT COUNT(*) n FROM evidence WHERE category='Shared job evidence'").get().n,0);});
+
+test('policyholder and assigned companies exchange scoped messages without leaking other company conversations',async()=>{
+ await begin();await accept();await joinAna();m.setUser(home);
+ assert.equal((await post({action:'jobMessage',audience:'company:water',body:'Private water question'})).status,200);
+ assert.equal((await post({action:'jobMessage',audience:'team',body:'Everyone update'})).status,200);
+ m.setUser(arman);let v=await (await get(jobId)).json();assert.deepEqual(v.messages.map(x=>x.body),['Private water question','Everyone update']);
+ assert.equal((await post({action:'jobMessage',companyId:'water',companyVersion:1,audience:'company:water',body:'Water reply'})).status,200);
+ m.setUser(ana);v=await (await get(jobId)).json();assert.deepEqual(v.messages.map(x=>x.body),['Everyone update']);assert.ok(!JSON.stringify(v).includes('Private water question'));
+ assert.equal((await post({action:'jobMessage',companyId:'contents',companyVersion:1,audience:'company:water',body:'Unauthorized'})).status,400);
+ assert.equal((await post({action:'jobMessage',audience:'team',body:'Spoofed sender'})).status,400);
+ m.setUser(home);assert.equal((await post({action:'jobMessage',audience:'adpa',body:'Not connected'})).status,400);
+ await post({action:'removeCompany',companyId:'contents',reason:'Removed'});m.setUser(ana);assert.equal((await get(jobId)).status,404);
+});
+test('pending invitations cannot read or post recovery messages or appointments',async()=>{
+ await begin();m.setUser(home);let v=await (await get(jobId)).json();assert.deepEqual(v.messages,[]);assert.deepEqual(v.appointments,[]);assert.deepEqual(v.channels,[]);
+ assert.equal((await post({action:'jobMessage',audience:'team',body:'Not accepted'})).status,400);
+});
+test('assigned companies schedule their own visits; homeowner and another company cannot forge or cancel them',async()=>{
+ await begin();await accept();await joinAna();m.setUser(arman);
+ const payload={action:'appointment',companyId:'water',companyVersion:1,title:'Moisture check',startsAt:'2099-10-12T15:00:00Z',note:'Please provide access to the kitchen'};
+ assert.equal((await post(payload)).status,200);const visit=state().appointments[0];
+ m.setUser(home);let v=await (await get(jobId)).json();assert.equal(v.appointments[0].id,visit.id);assert.equal(v.canSchedule,false);
+ assert.equal((await post({...payload,companyId:undefined,companyVersion:undefined})).status,400);
+ m.setUser(ana);assert.equal((await post({action:'cancelAppointment',companyId:'contents',companyVersion:1,appointmentId:visit.id,reason:'Forged'})).status,400);
+ m.setUser(arman);assert.equal((await post({...payload,startsAt:'2020-01-01T15:00:00Z'})).status,400);
+ assert.equal((await post({action:'cancelAppointment',companyId:'water',companyVersion:1,appointmentId:visit.id,reason:'Rescheduling with homeowner'})).status,200);assert.equal(state().appointments[0].status,'Cancelled');
+});
+test('ADPA sees team and ADPA conversations only after separate connection; company messages stay private',async()=>{
+ await begin();await accept();m.setUser(home);await post({action:'requestADPA',consent:true});m.setUser(owner);let v=await (await get(jobId)).json();assert.deepEqual(v.channels,[]);
+ m.sqlite.prepare("UPDATE shared_jobs SET state=json_set(state,'$.adpa.status','Connected','$.adpa.claimId','synthetic-claim') WHERE id=?").run(jobId);
+ m.setUser(home);await post({action:'jobMessage',audience:'company:water',body:'Private contractor topic'});await post({action:'jobMessage',audience:'adpa',body:'Private adjuster topic'});await post({action:'jobMessage',audience:'team',body:'Team topic'});
+ m.setUser(owner);v=await (await get(jobId)).json();assert.deepEqual(v.messages.map(x=>x.body),['Private adjuster topic','Team topic']);assert.ok(!JSON.stringify(v).includes('Private contractor topic'));
+ const list=await (await get()).json();assert.equal(list.jobs[0].claimId,'synthetic-claim');
+ m.setUser(arman);v=await (await get(jobId)).json();assert.deepEqual(v.messages.map(x=>x.body),['Private contractor topic','Team topic']);
+ m.setUser(home);await post({action:'removeADPA',reason:'Remove connection'});m.setUser(owner);assert.equal((await get(jobId)).status,404);
+});

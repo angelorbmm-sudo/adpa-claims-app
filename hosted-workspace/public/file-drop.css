@@ -1,0 +1,8 @@
+.adpa-file-drop{display:flex;flex-direction:column;gap:10px;min-width:0;width:100%;padding:16px;border:2px dashed #8799af;border-radius:10px;transition:border-color .15s,background-color .15s;box-sizing:border-box}
+.adpa-file-drop-hint{font-weight:600;font-size:14px}
+.adpa-file-drop input[type=file]{min-height:44px;max-width:100%;width:100%;font:inherit}
+.adpa-file-drop-status{display:block;font-size:13px;overflow-wrap:anywhere}
+.adpa-file-drop-active{border-color:#1454b8;background-color:color-mix(in srgb,#1454b8 12%,transparent)}
+.adpa-file-drop-error{color:#b42318}
+.adpa-file-drop:focus-within{outline:3px solid #86b8ff;outline-offset:3px}
+@media(prefers-color-scheme:dark){.adpa-file-drop-error{color:#ffaaa0}}

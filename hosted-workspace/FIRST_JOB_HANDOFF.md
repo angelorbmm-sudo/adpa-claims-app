@@ -1,0 +1,13 @@
+# Start my first job - October 12, 2026
+
+The signed-in `/first-job` guide connects the existing client intake, company contract and shared recovery-job modules. It is linked from the company onboarding checklist and Clients & Contracts.
+
+1. Search authorized company client records by name, email or property. Search is bounded to 50 results with a narrow-search hint. Creating a new intake requests only name, email, address and requested services; email/text permission defaults remain off. Duplicate active intake by normalized email and property is blocked within each company, including an atomic insert guard.
+2. Review the canonical client/property/service record. Edits use the existing client workspace; no parallel intake authority is introduced.
+3. Select the company's PDF template, review the original and save agreement preparation with template revision/digest and recorded recipient. Preparation does not send, sign or mark a contract completed. The deep link opens that client and its Contract tab in Clients & Contracts, with the prepared template selected. Provider activation, contact permission, recipient and signature placement still require review there.
+4. Create the originating recovery invitation only after verified completion and retained signed agreement/certificate. Existing shared-job APIs enforce contract and homeowner acceptance gates. The manager copies the exact job link; the guide does not claim automatic email delivery or grant private Site access.
+5. Show blockers or open the approved recovery workspace. Readiness requires current client details, non-cancelled inquiry, verified contract assets and accepted homeowner/company participation. This is workspace readiness only, not insurance, licensing, safety or payment approval.
+
+Additional companies that already joined a job reuse that matching client/job relationship instead of creating a separate property workspace. Drafts use per-account, per-company R2 keys with conditional ETag writes, and are visible only to current accepted managers. Guide navigation and typed intake progress can be resumed across devices after explicit Save progress. Contract and client records are independently server-persisted. Version checks prevent stale company/client writes; revoked/archived company access is denied.
+
+Live signatures, email, texting/calling and wider Site access remain separate activation tasks. No provider or external account was activated and no invitation/email was sent by this work. The Site's private audience is unchanged. Browser visual QA is unavailable in this environment; automated API/domain checks, TypeScript and production build validate the code, with real-user acceptance remaining a rollout requirement.

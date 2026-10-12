@@ -1,0 +1,1 @@
+ALTER TABLE `agreement_templates` ADD `mime` text DEFAULT 'application/pdf' NOT NULL;

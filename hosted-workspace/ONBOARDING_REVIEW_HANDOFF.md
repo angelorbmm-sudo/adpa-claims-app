@@ -1,0 +1,13 @@
+# ADPA onboarding review - October 12, 2026
+
+`/onboarding-review` is linked from the ADPA dashboard. Both the server page and read/write APIs require the authenticated ADPA owner ID. Additional staff access has not been configured; naming a responsible person does not grant a role or send notifications.
+
+The board shows three active-record sources: companies, active policyholder dashboard invitations, and company client/job intakes. Company setup checks use manager acceptance, confirmed industry/services/area, an active client intake and a company PDF template. Provider configuration indicators remain separate from setup readiness and do not prove delivery. Policyholder rows show invitation acceptance, published-update availability and open published requests. Job-intake rows check client details, retained verified signature evidence and authorized recovery participation.
+
+Recovery job details/links are included only when the existing shared-job access rules authorize the ADPA owner, including separate ADPA participation or actual company-manager membership. When participation is not visible, the board says so rather than asserting no job exists. It never returns private communication bodies, evidence, personal onboarding drafts or first-job drafts.
+
+Search is server-side. Each source page has up to 50 records with next/previous navigation and all-active-source counts. Attention, overdue and assigned-follow-up filters are explicitly scoped to the loaded source page; they are not global filtered totals. Overdue uses the Pacific calendar. Refresh is explicit.
+
+Follow-up records store responsible-person text, due date, Open/Waiting/Resolved status and an internal note. Records are private R2 objects keyed by the exact source target (company, claim invitation or client intake). ETag guards reject concurrent overwrites and source-revision guards reject stale saves. Prior entries are retained, bounded to 50 history entries. A changed source flags the saved follow-up for review. Resolving a note does not change source readiness, signing status, homeowner approval or claim authority. Archival/revocation prevents writing to inactive targets; the notes remain retained.
+
+This feature sends no emails, invitations, reminders or provider requests. It does not verify qualifications or activate communication/signature/banking services. The Site audience remains owner-private. Browser visual QA is unavailable in this environment; automated API/domain tests, TypeScript and production build checks are the available validation. Real-user rollout and staff roles remain separate work.
