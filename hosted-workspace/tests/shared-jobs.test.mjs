@@ -177,3 +177,39 @@ test('ADPA only sees inspections while all originals are shared and representati
  m.setUser(home);await post({action:'withdrawEvidence',evidenceId:e,reason:'Synthetic withdrawal'});let v=await (await get(jobId)).json();assert.equal(v.inspections[0].unavailableSources,1);
  m.setUser(arman);assert.equal((await post(inspection(e,'after-withdrawal'))).status,409);
 });
+const sendQuestion=()=>({action:'sendInspectionQuestion',companyId:'water',companyVersion:1,inspectionId:'inspection-one',noSensitiveData:true});
+async function questionSetup(){await begin();await accept();await joinAna();const e=await contribute();m.setUser(arman);await post(inspection(e));await connect();m.setUser(home);await post({action:'share',evidenceId:e,companyIds:['contents'],includeADPA:true,consent:true});m.setUser(arman);return e;}
+test('inspection question becomes a tracked ADPA review with preserved answer and company resolution',async()=>{
+ await questionSetup();assert.equal((await post(sendQuestion())).status,200);const t=state().tasks.at(-1);assert.equal(t.claimId,'claim');assert.equal(t.stage,'Awaiting ADPA answer');assert.equal((await post(sendQuestion())).status,400);
+ m.setUser(owner);let v=await (await get(jobId)).json();assert.equal(v.tasks[0].id,t.id);assert.equal(v.inspections[0].questionTask.stage,t.stage);assert.equal((await api.inspectionQuestionReviews('claim',owner)).length,1);
+ assert.equal((await post({action:'answerInspectionQuestion',taskId:t.id,answer:'Record a safe visual inspection of the cavity before final scoping.'})).status,200);
+ m.setUser(arman);v=await (await get(jobId)).json();assert.equal(v.inspections[0].questionTask.stage,'Answered — company review');assert.ok(!JSON.stringify(v.inspections[0].questionTask).includes('actorId'));
+ assert.equal((await post({action:'resolveInspectionQuestion',companyId:'water',companyVersion:1,taskId:t.id,note:'Answer reviewed. We will obtain the missing evidence.'})).status,200);
+ assert.equal(state().tasks[0].answers.length,1);assert.equal(state().tasks[0].stage,'Resolved');m.setUser(owner);assert.deepEqual(await api.inspectionQuestionReviews('claim',owner),[]);
+ m.setUser(home);assert.equal((await (await get(jobId)).json()).inspections[0].questionTask.stage,'Resolved');
+});
+test('questions cannot bypass roles, source consent, stale versions or normal task completion',async()=>{
+ const e=await questionSetup();m.setUser(home);await post({action:'share',evidenceId:e,companyIds:['contents'],includeADPA:false,consent:true});m.setUser(arman);assert.equal((await post(sendQuestion())).status,409);assert.equal(state().tasks.length,0);
+ m.setUser(home);await post({action:'share',evidenceId:e,companyIds:['contents'],includeADPA:true,consent:true});m.setUser(arman);assert.equal((await post({...sendQuestion(),version:1})).status,409);assert.equal((await post(sendQuestion())).status,200);const t=state().tasks[0];
+ assert.equal((await post({action:'completeTask',companyId:'water',companyVersion:1,taskId:t.id,note:'Skip ADPA answer'})).status,400);
+ assert.equal((await post({action:'resolveInspectionQuestion',companyId:'water',companyVersion:1,taskId:t.id,note:'No answer'})).status,400);
+ assert.equal((await post({action:'answerInspectionQuestion',taskId:t.id,answer:'Forged answer'})).status,400);
+ m.setUser(ana);let v=await (await get(jobId)).json();assert.equal(v.inspections.length,1);assert.equal(v.inspections[0].questionTask,null);assert.deepEqual(v.tasks,[]);assert.equal((await post({...sendQuestion(),companyId:'contents'})).status,400);
+ m.setUser(home);assert.equal((await post({action:'answerInspectionQuestion',taskId:t.id,answer:'Forged answer'})).status,400);m.setUser(tech);assert.equal((await get(jobId)).status,404);
+});
+test('withdrawal or changed engagement removes questions from ADPA queue but preserves company history',async()=>{
+ const e=await questionSetup();await post(sendQuestion());const t=state().tasks[0];m.setUser(owner);await post({action:'answerInspectionQuestion',taskId:t.id,answer:'Please obtain the missing readings.'});
+ m.setUser(home);await post({action:'share',evidenceId:e,companyIds:[],includeADPA:false,consent:true});m.setUser(owner);let v=await (await get(jobId)).json();assert.deepEqual(v.tasks,[]);assert.deepEqual(await api.inspectionQuestionReviews('claim',owner),[]);assert.equal((await post({action:'answerInspectionQuestion',taskId:t.id,answer:'No longer authorized'})).status,409);
+ m.setUser(arman);v=await (await get(jobId)).json();assert.equal(v.inspections[0].questionTask.paused,true);assert.equal(v.inspections[0].questionTask.answers.length,1);assert.equal((await post({action:'resolveInspectionQuestion',companyId:'water',companyVersion:1,taskId:t.id,note:'Closed without consent'})).status,409);
+ m.setUser(home);await post({action:'share',evidenceId:e,companyIds:[],includeADPA:true,consent:true});m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.authority.controls.engagementFileId','new-engagement') WHERE id='claim'").run();m.setUser(owner);assert.deepEqual(await api.inspectionQuestionReviews('claim',owner),[]);
+ m.setUser(arman);assert.equal((await (await get(jobId)).json()).inspections[0].questionTask.paused,true);
+ m.sqlite.prepare("UPDATE claims SET state=json_set(state,'$.authority.controls.engagementFileId','engagement') WHERE id='claim'").run();m.sqlite.prepare("UPDATE company_assets SET digest='changed' WHERE id='damage'").run();m.setUser(owner);assert.deepEqual(await api.inspectionQuestionReviews('claim',owner),[]);
+});
+test('an earlier corrected inspection cannot be submitted as a new ADPA question',async()=>{
+ const e=await questionSetup();const fix=inspection(e,'inspection-corrected');fix.record.correctionOf='inspection-one';fix.record.correctionReason='New observation';await post(fix);assert.equal((await post(sendQuestion())).status,400);assert.equal((await post({...sendQuestion(),inspectionId:'inspection-corrected'})).status,200);
+});
+test('ADPA morning dashboard includes authorized inspection tasks and removes withdrawn ones',async()=>{
+ const e=await questionSetup();await post(sendQuestion());m.setUser(owner);const morningApi=await import(new URL('morning-route.mjs',base));
+ let response=await morningApi.GET(new Request('https://claims.test/api/morning'));assert.equal(response.status,200,await response.clone().text());let d=await response.json();assert.ok(d.reviews.some(r=>r.id.startsWith('inspection-question:')&&r.href.includes('tab=Inspection')));
+ m.setUser(home);await post({action:'withdrawEvidence',evidenceId:e,reason:'Synthetic withdrawal'});m.setUser(owner);d=await (await morningApi.GET(new Request('https://claims.test/api/morning'))).json();assert.ok(!d.reviews.some(r=>r.id.startsWith('inspection-question:')));
+});
