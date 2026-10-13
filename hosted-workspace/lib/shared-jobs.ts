@@ -1,3 +1,4 @@
+import {draftInputs,applyDraft} from './evidence-drafts';
 import {missingInputs,applyMissing} from './missing-evidence';
 import {z} from 'zod';
 import {inboxInputs,applyInbox} from './evidence-inbox';
@@ -9,6 +10,7 @@ export const inspectionRecord=z.object({id,area:short,areaType:z.enum(['Room','R
 export const sharedInput=z.discriminatedUnion('action',[
  ...inboxInputs,
  ...missingInputs,
+ ...draftInputs,
  z.object({action:z.literal('sendInspectionQuestion'),version,companyId:id,companyVersion:version,inspectionId:id,noSensitiveData:z.literal(true)}).strict(),
  z.object({action:z.literal('answerInspectionQuestion'),version,taskId:id,answer:text}).strict(),
  z.object({action:z.literal('resolveInspectionQuestion'),version,companyId:id,companyVersion:version,taskId:id,note:text}).strict(),
@@ -96,6 +98,10 @@ export function applyShared(j:any,companies:any[],actor:any,input:any,context:an
   work(input.companyId);const t=s.tasks.find((t:any)=>t.id===input.taskId&&t.companyId===input.companyId&&t.kind==='Inspection question'&&t.status==='Open');
   if(!t?.answers?.length||!context.questionAuthorized)throw Error('Review ADPA’s answer and current sources before resolving your company’s question.');
   t.status='Complete';t.stage='Resolved';t.completedAt=now;t.completionNote=input.note;t.resolvedBy=actor.userId;
+ }
+ else if(input.action.startsWith('draft')){
+  let role:string;if(input.companyId){work(input.companyId);if(!input.companyVersion)throw Error('Refresh the company first.');role=input.companyId;}else if(acceptedHomeowner(j,actor)){role='homeowner';}else if(adpaActive(j,actor)&&context.inboxAdpaVerified){role='adpa';}else throw Error('Only an approved participant may create evidence drafts.');
+  Object.assign(s,applyDraft(s,input,role,actor.userId,context,now));
  }
  else if(input.action.startsWith('missing')){
   let role:string;if(input.companyId){work(input.companyId);if(!input.companyVersion)throw Error('Refresh the company first.');role=input.companyId;}else if(acceptedHomeowner(j,actor)){role='homeowner';}else if(adpaActive(j,actor)&&context.inboxAdpaVerified){role='adpa';}else throw Error('Only an approved participant can use this checklist.');

@@ -1,3 +1,4 @@
+import {draftView,sameDraftProof} from '@/lib/evidence-drafts';
 import {missingView,roleFileAccess} from '@/lib/missing-evidence';
 import {env} from 'cloudflare:workers';
 import {photoRunsView} from '@/lib/evidence-photo';
@@ -44,6 +45,18 @@ export async function POST(request:Request){const actor=await getChatGPTUser();i
    const c=await company(current.entry.companyId);if(!c||c.state.archived)return json({error:'Source company is unavailable.'},409);guard('EXISTS(SELECT 1 FROM companies WHERE id=? AND version=?)',[c.id,c.version]);
   }
   ctx.questionAuthorized=true;
+ }
+ if(i.action.startsWith('draft')){
+  const input:any=i,view=await evidenceInbox(j,d.companies,actor),role=input.companyId||(acceptedHomeowner(j,actor)?'homeowner':'adpa'),draft=j.state.evidenceDrafts?.find((r:any)=>r.id===input.draftId),run=j.state.photoRuns?.find((r:any)=>r.id===input.runId);
+  ctx.inboxAdpaVerified=j.state.adpa.status==='Connected'&&!!await engagement(j);const mine=companyActor(j,d.companies,actor).map(x=>x.company.id),allowed=(e:any)=>role==='homeowner'?acceptedHomeowner(j,actor):role==='adpa'?ctx.inboxAdpaVerified&&adpaActive(j,actor)&&!!e.includeADPA:mine.includes(role)&&(e.companyId===role||e.companyIds.includes(role));
+  ctx.draftVisible=!!view.evidenceDrafts.find((v:any)=>v.id===input.draftId)&&(role===draft?.createdRole||role==='homeowner'||role==='adpa'&&draft?.status!=='Draft');ctx.draftCurrent=true;ctx.draftAreas=view.areas.map((a:any)=>a.id);ctx.draftSubjects=view.subjects.map((s:any)=>s.id);ctx.draftCompleted=[];ctx.draftExtra=[];
+  const originals:any[]=[];const validate=async(id:string,proof?:any)=>{const c=await usableEvidence(j,d.companies,actor,id);if(!c||!allowed(c.entry)||proof&&!sameDraftProof(proof,c.entry)||!await files().get(String(c.asset.object_key)))return null;originals.push(c);return c.entry;};
+  if(input.action==='draftCreate'){const e=run?await validate(run.evidenceId):null;ctx.draftSource=e;ctx.draftRoleAllowed=!!e;
+   for(const request of view.missingEvidence.filter((r:any)=>r.runId===input.runId&&r.findingIndex===input.findingIndex&&r.status==='Complete'&&r.active)){const raw=j.state.missingEvidence.find((r:any)=>r.id===request.id),response=raw?.responses?.at(-1);if(response){const entry=await validate(response.evidenceId,response);if(entry)ctx.draftCompleted.push({entry,requestId:request.id,title:request.title});}}
+  }else if(input.action!=='draftDismiss'){for(const source of draft?.sources||[]){if(!await validate(source.evidenceId,source))ctx.draftCurrent=false;}}
+  if(input.action==='draftEdit'){for(const id of input.fields.supportingEvidenceIds){const entry=await validate(id);if(!entry)return json({error:'Every additional original must be current and shared with the selected role.'},409);ctx.draftExtra.push(entry);}}
+  for(const current of originals){if(current.entry.sourceKind!=='Homeowner'){guard('EXISTS(SELECT 1 FROM company_assets WHERE id=? AND company_id=? AND client_id=? AND digest=? AND created=? AND revision=?)',[current.asset.id,current.asset.company_id,current.asset.client_id,current.asset.digest,current.asset.created,current.asset.revision]);const contributor=await company(current.entry.companyId);if(!contributor||contributor.state.archived)return json({error:'Source contributor unavailable.'},409);guard('EXISTS(SELECT 1 FROM companies WHERE id=? AND version=?)',[contributor.id,contributor.version]);}}
+  if(role==='adpa'&&ctx.inboxAdpaVerified){const link=await engagement(j);if(link){guard('EXISTS(SELECT 1 FROM claims WHERE id=? AND version=?)',[link.claim.id,link.claim.version]);guard('EXISTS(SELECT 1 FROM evidence WHERE id=? AND claim_id=? AND owner=?)',[link.file.id,link.claim.id,ADPA_OWNER]);}}
  }
  if(i.action.startsWith('missing')){
   const input:any=i,view=await evidenceInbox(j,d.companies,actor),role=input.companyId||(acceptedHomeowner(j,actor)?'homeowner':'adpa'),request=j.state.missingEvidence?.find((r:any)=>r.id===input.requestId),run=j.state.photoRuns?.find((r:any)=>r.id===input.runId),sourceId=input.action==='missingCreate'?run?.evidenceId:request?.evidenceId;
@@ -150,5 +163,5 @@ export async function evidenceInbox(j:any,companies:any[],actor:any){
  const cids=[...new Set([...allowed.filter((e:any)=>e.sourceKind!=='Homeowner').map((e:any)=>e.companyId),...j.state.companies.filter((p:any)=>!p.removedAt&&p.acceptedAt&&p.approvedAt).map((p:any)=>p.companyId)])],active=new Set<string>();if(cids.length){const rs=(await database().prepare('SELECT id,state FROM companies WHERE id IN ('+cids.map(()=>'?').join(',')+')').bind(...cids).all()).results;for(const r of rs)if(!JSON.parse(String(r.state)).archived)active.add(String(r.id));}
  const current=allowed.filter((e:any)=>{if(e.sourceKind==='Homeowner')return e.companyId==='homeowner'&&e.clientId===j.id&&e.contributedBy===j.state.homeowner.userId&&!!j.state.homeowner.acceptedAt&&e.originalKey==='shared-jobs/'+j.id+'/homeowner/'+e.assetId;const a=assets.get(e.assetId);return active.has(e.companyId)&&a&&a.company_id===e.companyId&&a.client_id===e.clientId&&a.kind==='Client document'&&a.digest===e.digest&&a.created===e.sourceCreated&&a.revision===e.revision;});
  const retained=allowed.filter((e:any)=>current.some((v:any)=>v.id===e.id)||home||mine.includes(e.companyId)),roles=[...mine,...(home?['homeowner']:[]),...(adpa?['adpa']:[])];
- const projection=inboxProjection(j,current,retained,roles,home,!!canWork);return {...projection,missingEvidence:missingView(j,projection.files,roles,home,[...active],!!adpaVerified),photoRuns:photoRunsView(j,projection.files,roles,home),photoAIConnected:!!(env as any).OPENAI_API_KEY,canOrganize:!!canWork,myRoles:roles};
+ const projection=inboxProjection(j,current,retained,roles,home,!!canWork);return {...projection,evidenceDrafts:draftView(j,projection.files,roles,home),missingEvidence:missingView(j,projection.files,roles,home,[...active],!!adpaVerified),photoRuns:photoRunsView(j,projection.files,roles,home),photoAIConnected:!!(env as any).OPENAI_API_KEY,canOrganize:!!canWork,myRoles:roles};
 }
