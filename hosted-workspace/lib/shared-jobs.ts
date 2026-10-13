@@ -1,3 +1,4 @@
+import {missingInputs,applyMissing} from './missing-evidence';
 import {z} from 'zod';
 import {inboxInputs,applyInbox} from './evidence-inbox';
 import {ADPA_OWNER,companyAccess} from './company';
@@ -7,6 +8,7 @@ const dimension=z.string().trim().max(12).refine(v=>!v||/^\d{1,6}(\.\d{1,4})?$/.
 export const inspectionRecord=z.object({id,area:short,areaType:z.enum(['Room','Roof','Exterior','Other']),observedAt:z.string().datetime({offset:true}),inspector:short,measurementStatus:z.enum(['Not measured','Measured']),length:dimension,width:dimension,height:dimension,unit:z.enum(['ft','m']),basis:z.string().trim().max(2000),condition:text,missing:z.string().trim().max(3000),question:z.string().trim().max(3000),sources:z.array(z.object({evidenceId:id,locator:short}).strict()).min(1).max(12).refine(v=>new Set(v.map(s=>s.evidenceId)).size===v.length),correctionOf:z.string().max(180),correctionReason:z.string().trim().max(2000)}).strict().refine(r=>r.measurementStatus==='Measured'?!!r.basis&&!!(r.length||r.width||r.height):!r.length&&!r.width&&!r.height,'Measured dimensions need a basis; unmeasured areas leave dimensions blank').refine(r=>!!r.correctionOf===!!r.correctionReason,'Corrections need the original record and a reason');
 export const sharedInput=z.discriminatedUnion('action',[
  ...inboxInputs,
+ ...missingInputs,
  z.object({action:z.literal('sendInspectionQuestion'),version,companyId:id,companyVersion:version,inspectionId:id,noSensitiveData:z.literal(true)}).strict(),
  z.object({action:z.literal('answerInspectionQuestion'),version,taskId:id,answer:text}).strict(),
  z.object({action:z.literal('resolveInspectionQuestion'),version,companyId:id,companyVersion:version,taskId:id,note:text}).strict(),
@@ -94,6 +96,10 @@ export function applyShared(j:any,companies:any[],actor:any,input:any,context:an
   work(input.companyId);const t=s.tasks.find((t:any)=>t.id===input.taskId&&t.companyId===input.companyId&&t.kind==='Inspection question'&&t.status==='Open');
   if(!t?.answers?.length||!context.questionAuthorized)throw Error('Review ADPA’s answer and current sources before resolving your company’s question.');
   t.status='Complete';t.stage='Resolved';t.completedAt=now;t.completionNote=input.note;t.resolvedBy=actor.userId;
+ }
+ else if(input.action.startsWith('missing')){
+  let role:string;if(input.companyId){work(input.companyId);if(!input.companyVersion)throw Error('Refresh the company first.');role=input.companyId;}else if(acceptedHomeowner(j,actor)){role='homeowner';}else if(adpaActive(j,actor)&&context.inboxAdpaVerified){role='adpa';}else throw Error('Only an approved participant can use this checklist.');
+  Object.assign(s,applyMissing(s,input,role,actor.userId,context,now));
  }
  else if(['inboxArea','inboxSubject','inboxTag'].includes(input.action)){
   let role:string;if(input.companyId){work(input.companyId);if(!input.companyVersion)throw Error('Refresh the company before tagging.');role=input.companyId;}else if(acceptedHomeowner(j,actor)){role='homeowner';}else if(adpaActive(j,actor)&&context.inboxAdpaVerified){role='adpa';}else throw Error('Only an approved participant can organize evidence.');
