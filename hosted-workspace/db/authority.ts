@@ -26,6 +26,7 @@ export function canonical(value:unknown):string{if(Array.isArray(value))return '
 async function hash(value:unknown){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical(value))))).map(n=>n.toString(16).padStart(2,'0')).join('');}
 export function authorityFrom(state:Entry):Authority{return state.authority||emptyAuthority();}
 export function ordinaryWriteError(previous:Entry|null,next:Entry):string|null{
+ if(['inventoryComparisons','inventorySupplementDrafts','inventoryComparisonAudit'].some(k=>canonical(previous?.[k]??null)!==canonical(next[k]??null)))return 'Inventory carrier comparisons and supplement reviews can only be changed through reconciliation.';
  if(['inventorySubmissions','inventoryFollowupDrafts','inventorySubmissionAudit'].some(k=>canonical(previous?.[k]??null)!==canonical(next[k]??null)))return 'Inventory submissions and follow-up tracking can only be changed through the submission workflow.';
  if(['adjusterContacts','inventoryEmailDrafts'].some(k=>canonical(previous?.[k]??null)!==canonical(next[k]??null)))return 'Adjuster contact reviews and inventory email drafts can only be changed through the contact workflow.';
  if(['contentsExportHistory','contentsExportDecisions','contentsValuations','contentsExportAudit'].some(k=>canonical(previous?.[k]??null)!==canonical(next[k]??null)))return 'Inventory export reviews and valuations can only be changed through the inventory export workflow.';

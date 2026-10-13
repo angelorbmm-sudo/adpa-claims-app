@@ -2,7 +2,7 @@ import { database,files } from '@/db/store';
 import { evidenceOwner,json } from '@/db/import-auth';
 export const dynamic='force-dynamic';
 const categories=['Policy and representation','Construction and mitigation','Contents','Property photos','Videos','Ownership and appraisal','Financial and supporting records','EUO and correspondence'];
-const types=new Set(['application/pdf','image/jpeg','image/png','image/webp','video/mp4','video/quicktime','audio/mpeg','audio/mp4','text/plain','message/rfc822','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/zip']);
+const types=new Set(['application/pdf','image/jpeg','image/png','image/webp','video/mp4','video/quicktime','audio/mpeg','audio/mp4','text/plain','text/csv','text/tab-separated-values','message/rfc822','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/zip']);
 const uuid=(s:string|null)=>!!s&&/^[a-f0-9-]{36}$/i.test(s);
 async function claimFor(id:string,owner:string){return database().prepare('SELECT id FROM claims WHERE id=? AND owner=?').bind(id,owner).first();}
 export async function POST(request:Request){
