@@ -58,6 +58,9 @@ try{
  transpile('lib/water-ai.ts', {"'./water'":"'./water.mjs'","'./preparation'":"'./preparation.mjs'"});
  transpile('app/api/water/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/water'":"'./water.mjs'","'@/lib/water-ai'":"'./water-ai.mjs'"}, 'water-route.mjs');
  transpile('app/api/water-evidence/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/water/route'":"'./water-route.mjs'","'@/lib/water'":"'./water.mjs'"}, 'water-evidence-route.mjs');
+ transpile('lib/payment-review.ts', {"'./adjuster-contact'":"'./adjuster-contact.mjs'","'./carrier-sheet'":"'./carrier-sheet.mjs'"});
+ transpile('lib/check-extract.ts', {"'./payment-review'":"'./payment-review.mjs'"});
+ transpile('app/api/payment-review/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/payment-review'":"'./payment-review.mjs'","'@/lib/check-extract'":"'./check-extract.mjs'","'@/lib/carrier-sheet'":"'./carrier-sheet.mjs'","'@/lib/adjuster-contact'":"'./adjuster-contact.mjs'"},'payment-review-route.mjs');
  transpile('lib/carrier-sheet.ts');
  transpile('lib/inventory-reconciliation.ts', {"'./carrier-sheet'":"'./carrier-sheet.mjs'","'./adjuster-contact'":"'./adjuster-contact.mjs'"});
  transpile('lib/carrier-extract.ts', {"'./inventory-reconciliation'":"'./inventory-reconciliation.mjs'"});
@@ -73,7 +76,7 @@ try{
  transpile('lib/inventory-pdf.ts', {"'./fonts/export-font'":"'./export-font.mjs'","'./inventory-export'":"'./inventory-export.mjs'"});
  transpile('app/api/inventory-export/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/inventory-export'":"'./inventory-export.mjs'","'@/lib/inventory-pdf'":"'./inventory-pdf.mjs'","'@/lib/inventory-xlsx'":"'./inventory-xlsx.mjs'","'@/lib/adjuster-contact'":"'./adjuster-contact.mjs'"},'inventory-export-route.mjs');
  transpile('lib/replacement-research.ts', {"'./pricing'":"'./pricing.mjs'"});
- transpile('lib/morning.ts', {"'./policyholder'":"'./policyholder.mjs'","'./contents-care-adapter'":"'./contents-care-adapter.mjs'","'./water'":"'./water.mjs'","'./pricing'":"'./pricing.mjs'","'./inventory-submissions'":"'./inventory-submissions.mjs'","'./adjuster-contact'":"'./adjuster-contact.mjs'"});
+ transpile('lib/morning.ts', {"'./policyholder'":"'./policyholder.mjs'","'./contents-care-adapter'":"'./contents-care-adapter.mjs'","'./water'":"'./water.mjs'","'./pricing'":"'./pricing.mjs'","'./inventory-submissions'":"'./inventory-submissions.mjs'","'./adjuster-contact'":"'./adjuster-contact.mjs'","'./payment-review'":"'./payment-review.mjs'"});
  transpile('app/api/morning/route.ts', {"'@/app/api/shared-jobs/route'":"'./shared-jobs-route.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/morning'":"'./morning.mjs'","'@/lib/claim-package'":"'./claim-package.mjs'","'@/lib/preparation'":"'./preparation.mjs'"}, 'morning-route.mjs');
  transpile('lib/pricing-search.ts', {"'./pricing'":"'./pricing.mjs'"});
  transpile('lib/pricing-extract.ts', {"'./pricing'":"'./pricing.mjs'"});
@@ -84,7 +87,7 @@ try{
  writeFileSync(join(dir,'mitigation-review.js'),readFileSync('lib/mitigation-review.js'));
  transpile('lib/mitigation-adapter.ts',{},'mitigation-adapter.mjs');
  transpile('app/api/mitigation/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/mitigation-adapter'":"'./mitigation-adapter.mjs'","'@/lib/mitigation-review.js'":"'./mitigation-review.js'"},'mitigation-route.mjs');
- transpile('lib/claim-package.ts',{"'./water'":"'./water.mjs'","'./preparation'":"'./preparation.mjs'","'./policy-review'":"'./policy-review.mjs'","'./mitigation-adapter'":"'./mitigation-adapter.mjs'","'./contents-care-adapter'":"'./contents-care-adapter.mjs'","'./pricing'":"'./pricing.mjs'","'../lib/pricing'":"'./pricing.mjs'"});
+ transpile('lib/claim-package.ts',{"'./payment-review'":"'./payment-review.mjs'","'./water'":"'./water.mjs'","'./preparation'":"'./preparation.mjs'","'./policy-review'":"'./policy-review.mjs'","'./mitigation-adapter'":"'./mitigation-adapter.mjs'","'./contents-care-adapter'":"'./contents-care-adapter.mjs'","'./pricing'":"'./pricing.mjs'","'../lib/pricing'":"'./pricing.mjs'"});
  transpile('lib/package-approval.ts',{"'@/db/store'":"'./mocks.mjs'","'./claim-package'":"'./claim-package.mjs'"});
  transpile('app/api/authority/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/db/authority'":"'./authority.mjs'","'@/lib/package-approval'":"'./package-approval.mjs'"},'authority-route.mjs');
  transpile('app/api/packages/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/db/import-auth'":"'./mocks.mjs'","'@/lib/claim-package'":"'./claim-package.mjs'"},'packages-route.mjs');
