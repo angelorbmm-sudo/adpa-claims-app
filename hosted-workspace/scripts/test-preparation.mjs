@@ -6,6 +6,7 @@ const dir=mkdtempSync(resolve('.sites-runtime/preparation-test-'));
 const transpile=(file,replacements={},destination=null)=>{let js=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;js=js.replaceAll("'./invitations'","'./invitations.mjs'");for(const [a,b] of Object.entries(replacements))js=js.replaceAll(a,b);writeFileSync(join(dir,destination||file.split('/').at(-1).replace('.ts','.mjs')),js);};
 try{
  transpile('lib/claim-intake.ts');
+ transpile('lib/workspace-save.ts');
  transpile('app/api/claims/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/db/authority'":"'./authority.mjs'","'@/lib/claim-intake'":"'./claim-intake.mjs'"},'claims-route.mjs');
  transpile('db/import-auth.ts',{"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'"});
  transpile('app/api/evidence/route.ts',{"'@/db/store'":"'./mocks.mjs'","'@/db/import-auth'":"'./import-auth.mjs'"},'evidence-route.mjs');
