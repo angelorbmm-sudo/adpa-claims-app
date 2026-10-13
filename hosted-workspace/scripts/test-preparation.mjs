@@ -58,6 +58,8 @@ try{
  transpile('lib/water-ai.ts', {"'./water'":"'./water.mjs'","'./preparation'":"'./preparation.mjs'"});
  transpile('app/api/water/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/water'":"'./water.mjs'","'@/lib/water-ai'":"'./water-ai.mjs'"}, 'water-route.mjs');
  transpile('app/api/water-evidence/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/water/route'":"'./water-route.mjs'","'@/lib/water'":"'./water.mjs'"}, 'water-evidence-route.mjs');
+ transpile('lib/adjuster-contact.ts');
+ transpile('app/api/adjuster-contact/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/adjuster-contact'":"'./adjuster-contact.mjs'","'@/lib/inventory-export'":"'./inventory-export.mjs'"},'adjuster-contact-route.mjs');
  transpile('lib/pricing.ts');
  transpile('lib/fonts/export-font.ts',{},'export-font.mjs');
  transpile('lib/inventory-export.ts', {"'./pricing'":"'./pricing.mjs'","'./replacement-research'":"'./replacement-research.mjs'"});
