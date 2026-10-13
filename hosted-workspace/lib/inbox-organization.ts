@@ -1,0 +1,9 @@
+// Input must be the existing authorized inbox projection, never raw shared-job state.
+export function inboxOrganization(file:any,role:string,view:any){
+ const current=file.available?(file.tags||[]).filter((t:any)=>!t.stale):[],own=current.find((t:any)=>t.role===role),tags=own?[own]:current;
+ const subjectIds=[...new Set<string>(tags.flatMap((t:any)=>t.subjectIds||[]))],subjects=(view.subjects||[]).filter((s:any)=>subjectIds.includes(s.id));
+ const areaIds=[...new Set<string>([...tags.flatMap((t:any)=>t.areaIds||[]),...subjects.map((s:any)=>s.originalAreaId)])],areas=(view.areas||[]).filter((a:any)=>areaIds.includes(a.id));
+ const building=tags.some((t:any)=>['Building damage','Both'].includes(t.classification)),contents=tags.some((t:any)=>['Contents','Both'].includes(t.classification));
+ return {borrowed:!own&&tags.length>0,classification:building&&contents?'Both':building?'Building damage':contents?'Contents':'Unassigned',areaIds,subjectIds,areas,subjects,searchText:[file.title,file.filename,file.sourceName,...areas.flatMap((a:any)=>[a.building,a.floor,a.name]),...subjects.flatMap((s:any)=>[s.label,s.inventoryRef])].filter(Boolean).join(' ').toLowerCase()};
+}
+export function inboxUploadMime(filename:string,browserMime:string){const ext=filename.split('.').at(-1)?.toLowerCase(),known:Record<string,string>={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',mp4:'video/mp4',mov:'video/quicktime',mp3:'audio/mpeg',m4a:'audio/mp4',txt:'text/plain',csv:'text/csv',tsv:'text/tab-separated-values',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'};return !browserMime||browserMime==='application/octet-stream'||browserMime==='application/vnd.ms-excel'&&ext==='csv'?known[ext||'']||'application/octet-stream':browserMime;}
