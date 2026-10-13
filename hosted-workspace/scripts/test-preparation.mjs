@@ -59,6 +59,8 @@ try{
  transpile('app/api/water/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/water'":"'./water.mjs'","'@/lib/water-ai'":"'./water-ai.mjs'"}, 'water-route.mjs');
  transpile('app/api/water-evidence/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/water/route'":"'./water-route.mjs'","'@/lib/water'":"'./water.mjs'"}, 'water-evidence-route.mjs');
  transpile('lib/adjuster-contact.ts');
+ transpile('lib/inventory-submissions.ts', {"'./adjuster-contact'":"'./adjuster-contact.mjs'"});
+ transpile('app/api/inventory-submissions/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/inventory-submissions'":"'./inventory-submissions.mjs'","'@/lib/adjuster-contact'":"'./adjuster-contact.mjs'","'@/lib/inventory-export'":"'./inventory-export.mjs'"},'inventory-submissions-route.mjs');
  transpile('app/api/adjuster-contact/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/adjuster-contact'":"'./adjuster-contact.mjs'","'@/lib/inventory-export'":"'./inventory-export.mjs'"},'adjuster-contact-route.mjs');
  transpile('lib/pricing.ts');
  transpile('lib/fonts/export-font.ts',{},'export-font.mjs');
@@ -67,7 +69,7 @@ try{
  transpile('lib/inventory-pdf.ts', {"'./fonts/export-font'":"'./export-font.mjs'","'./inventory-export'":"'./inventory-export.mjs'"});
  transpile('app/api/inventory-export/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/inventory-export'":"'./inventory-export.mjs'","'@/lib/inventory-pdf'":"'./inventory-pdf.mjs'","'@/lib/inventory-xlsx'":"'./inventory-xlsx.mjs'"},'inventory-export-route.mjs');
  transpile('lib/replacement-research.ts', {"'./pricing'":"'./pricing.mjs'"});
- transpile('lib/morning.ts', {"'./policyholder'":"'./policyholder.mjs'","'./contents-care-adapter'":"'./contents-care-adapter.mjs'","'./water'":"'./water.mjs'","'./pricing'":"'./pricing.mjs'"});
+ transpile('lib/morning.ts', {"'./policyholder'":"'./policyholder.mjs'","'./contents-care-adapter'":"'./contents-care-adapter.mjs'","'./water'":"'./water.mjs'","'./pricing'":"'./pricing.mjs'","'./inventory-submissions'":"'./inventory-submissions.mjs'"});
  transpile('app/api/morning/route.ts', {"'@/app/api/shared-jobs/route'":"'./shared-jobs-route.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/morning'":"'./morning.mjs'","'@/lib/claim-package'":"'./claim-package.mjs'","'@/lib/preparation'":"'./preparation.mjs'"}, 'morning-route.mjs');
  transpile('lib/pricing-search.ts', {"'./pricing'":"'./pricing.mjs'"});
  transpile('lib/pricing-extract.ts', {"'./pricing'":"'./pricing.mjs'"});
