@@ -40,9 +40,11 @@ export async function POST(request:Request){const actor=await getChatGPTUser();i
   guard('EXISTS(SELECT 1 FROM evidence WHERE id=? AND claim_id=? AND owner=?)',[linked.file.id,linked.claim.id,ADPA_OWNER]);
   const sourceCompany=await company(r.companyId);if(!sourceCompany||sourceCompany.state.archived)return json({error:'Inspection company is unavailable.'},409);
   guard('EXISTS(SELECT 1 FROM companies WHERE id=? AND version=?)',[sourceCompany.id,sourceCompany.version]);
+  if(task&&('questionRevision' in input)&&(input.action==='answerInspectionQuestion'&&adpaActive(j,actor)||input.action==='resolveInspectionQuestion'&&task.companyId===input.companyId)&&input.questionRevision!==1+(task.answers?.length||0)+(task.status==='Complete'?1:0))return json({error:'This question has a newer answer or resolution. Keep your notes and review the current thread.'},409);
   for(const source of r.sources){const current=await usableEvidence(j,d.companies,actor,source.evidenceId);if(!current||!current.entry.includeADPA||current.entry.digest!==source.digest||current.entry.sourceCreated!==source.sourceCreated||current.entry.revision!==source.revision)return json({error:'Every inspection original must be current, available to you and explicitly shared with ADPA by the policyholder.'},409);
+   const object=await files().get(String(current.asset.object_key));if(!object)return json({error:'Inspection question original is unavailable. Nothing recorded.'},409);const bytes=await object.arrayBuffer(),digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(n=>n.toString(16).padStart(2,'0')).join('');if(digest!==current.entry.digest||bytes.byteLength!==Number(current.asset.size))return json({error:'Inspection question original bytes changed. Nothing recorded.'},409);
    if(current.entry.sourceKind==='Homeowner')continue;
-   guard('EXISTS(SELECT 1 FROM company_assets WHERE id=? AND company_id=? AND client_id=? AND digest=? AND created=?)',[current.asset.id,current.asset.company_id,current.asset.client_id,current.asset.digest,current.asset.created]);
+   guard('EXISTS(SELECT 1 FROM company_assets WHERE id=? AND company_id=? AND client_id=? AND digest=? AND created=? AND revision=?)',[current.asset.id,current.asset.company_id,current.asset.client_id,current.asset.digest,current.asset.created,current.asset.revision]);
    const c=await company(current.entry.companyId);if(!c||c.state.archived)return json({error:'Source company is unavailable.'},409);guard('EXISTS(SELECT 1 FROM companies WHERE id=? AND version=?)',[c.id,c.version]);
   }
   ctx.questionAuthorized=true;
@@ -147,7 +149,7 @@ export async function inspectionView(j:any,companies:any[],actor:any){
   const currentLink=!!link&&(!rawTask||rawTask.claimId===link.claim.id&&rawTask.engagementFileId===link.file.id);
   const allShared=r.sources.every((s:any)=>j.state.evidence.some((e:any)=>e.id===s.evidenceId&&!e.withdrawnAt&&e.includeADPA));
   const corrected=(j.state.inspections||[]).some((x:any)=>x.correctionOf===r.id&&x.companyId===r.companyId),questionReady=currentLink&&allShared&&!unavailable&&!corrected;
-  const questionTask=rawTask&&(h||isOwn||adpa&&questionReady)?{id:rawTask.id,kind:rawTask.kind,companyId:rawTask.companyId,inspectionId:r.id,title:rawTask.title,note:rawTask.note,status:rawTask.status,stage:rawTask.stage,at:rawTask.at,due:'',answers:(rawTask.answers||[]).map(({actorId,...answer}:any)=>answer),completionNote:rawTask.completionNote||'',completedAt:rawTask.completedAt||'',paused:!questionReady}:null;
+  const questionTask=rawTask&&(h||isOwn||adpa&&questionReady)?{id:rawTask.id,questionRevision:1+(rawTask.answers?.length||0)+(rawTask.status==='Complete'?1:0),resolvedAnswerCount:rawTask.resolvedAnswerCount??null,kind:rawTask.kind,companyId:rawTask.companyId,inspectionId:r.id,title:rawTask.title,note:rawTask.note,status:rawTask.status,stage:rawTask.stage,at:rawTask.at,due:'',answers:(rawTask.answers||[]).map(({actorId,...answer}:any)=>answer),completionNote:rawTask.completionNote||'',completedAt:rawTask.completedAt||'',paused:!questionReady}:null;
   result.push({...safe,companyName:p.name,sources,unavailableSources:unavailable,questionReady,questionTask,corrected:(j.state.inspections||[]).some((x:any)=>x.correctionOf===r.id&&x.companyId===r.companyId)});
  }
  return result;

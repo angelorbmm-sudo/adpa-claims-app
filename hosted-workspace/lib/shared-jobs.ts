@@ -6,14 +6,15 @@ import {ADPA_OWNER,companyAccess} from './company';
 export const jobTrades=['Water mitigation','Contents care','General contractor','Roofing','Handyman','Other restoration'] as const;
 const id=z.string().min(1).max(180),short=z.string().trim().min(1).max(200),text=z.string().trim().min(1).max(3000),version=z.number().int().positive();
 const dimension=z.string().trim().max(12).refine(v=>!v||/^\d{1,6}(\.\d{1,4})?$/.test(v)&&Number(v)>0,'Use a positive measured dimension or leave blank');
+export const inspectionQuestionRevision=(t:any)=>1+(t.answers?.length||0)+(t.status==='Complete'?1:0);
 export const inspectionRecord=z.object({id,area:short,areaType:z.enum(['Room','Roof','Exterior','Other']),observedAt:z.string().datetime({offset:true}),inspector:short,measurementStatus:z.enum(['Not measured','Measured']),length:dimension,width:dimension,height:dimension,unit:z.enum(['ft','m']),basis:z.string().trim().max(2000),condition:text,missing:z.string().trim().max(3000),question:z.string().trim().max(3000),sources:z.array(z.object({evidenceId:id,locator:short}).strict()).min(1).max(12).refine(v=>new Set(v.map(s=>s.evidenceId)).size===v.length),correctionOf:z.string().max(180),correctionReason:z.string().trim().max(2000)}).strict().refine(r=>r.measurementStatus==='Measured'?!!r.basis&&!!(r.length||r.width||r.height):!r.length&&!r.width&&!r.height,'Measured dimensions need a basis; unmeasured areas leave dimensions blank').refine(r=>!!r.correctionOf===!!r.correctionReason,'Corrections need the original record and a reason');
 export const sharedInput=z.discriminatedUnion('action',[
  ...inboxInputs,
  ...missingInputs,
  ...draftInputs,
  z.object({action:z.literal('sendInspectionQuestion'),version,companyId:id,companyVersion:version,inspectionId:id,noSensitiveData:z.literal(true)}).strict(),
- z.object({action:z.literal('answerInspectionQuestion'),version,taskId:id,answer:text}).strict(),
- z.object({action:z.literal('resolveInspectionQuestion'),version,companyId:id,companyVersion:version,taskId:id,note:text}).strict(),
+ z.object({action:z.literal('answerInspectionQuestion'),version,taskId:id,questionRevision:z.number().int().positive().max(52),sourceChecked:z.literal(true),answer:text}).strict(),
+ z.object({action:z.literal('resolveInspectionQuestion'),version,companyId:id,companyVersion:version,taskId:id,questionRevision:z.number().int().positive().max(52),sourceChecked:z.literal(true),note:text}).strict(),
  z.object({action:z.literal('inspection'),version,companyId:id,companyVersion:version,record:inspectionRecord,sourceProofs:z.array(z.object({evidenceId:id,digest:z.string().regex(/^[a-f0-9]{64}$/),sourceCreated:z.string().min(1).max(100),revision:z.string().min(1).max(180)}).strict()).min(1).max(12),noSensitiveData:z.literal(true)}).strict(),
  z.object({action:z.literal('create'),companyId:id,companyVersion:version,clientId:id,clientVersion:version}).strict(),
  z.object({action:z.literal('acceptHomeowner'),version,consent:z.literal(true)}).strict(),
@@ -91,13 +92,15 @@ export function applyShared(j:any,companies:any[],actor:any,input:any,context:an
  else if(input.action==='answerInspectionQuestion'){
   const t=s.tasks.find((t:any)=>t.id===input.taskId&&t.kind==='Inspection question'&&t.status==='Open');
   if(!adpaActive(j,actor)||!t||!context.questionAuthorized)throw Error('Only connected ADPA can answer a current authorized inspection question.');
+  if(input.questionRevision!==inspectionQuestionRevision(t))throw Error('This question has a newer answer or resolution. Keep your notes and review the current thread.');
   if((t.answers||[]).length>=50)throw Error('Answer history limit reached.');
   t.answers.push({body:input.answer,at:now,actorId:actor.userId});t.stage='Answered — company review';
  }
  else if(input.action==='resolveInspectionQuestion'){
   work(input.companyId);const t=s.tasks.find((t:any)=>t.id===input.taskId&&t.companyId===input.companyId&&t.kind==='Inspection question'&&t.status==='Open');
   if(!t?.answers?.length||!context.questionAuthorized)throw Error('Review ADPA’s answer and current sources before resolving your company’s question.');
-  t.status='Complete';t.stage='Resolved';t.completedAt=now;t.completionNote=input.note;t.resolvedBy=actor.userId;
+  if(input.questionRevision!==inspectionQuestionRevision(t))throw Error('Review the latest ADPA answer before resolving this question.');
+  t.status='Complete';t.stage='Resolved';t.completedAt=now;t.completionNote=input.note;t.resolvedBy=actor.userId;t.resolvedAnswerCount=t.answers.length;
  }
  else if(input.action.startsWith('draft')){
   let role:string;if(input.companyId){work(input.companyId);if(!input.companyVersion)throw Error('Refresh the company first.');role=input.companyId;}else if(acceptedHomeowner(j,actor)){role='homeowner';}else if(adpaActive(j,actor)&&context.inboxAdpaVerified){role='adpa';}else throw Error('Only an approved participant may create evidence drafts.');
