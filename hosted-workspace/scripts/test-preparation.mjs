@@ -23,8 +23,10 @@ try{
  transpile('app/api/marketing-logo/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/company/route'":"'./company-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/app/api/marketing/route'":"'./marketing-route.mjs'"},'marketing-logo-route.mjs');
  transpile('app/api/marketing-page/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/company/route'":"'./company-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/app/api/marketing/route'":"'./marketing-route.mjs'","'@/lib/company-marketing'":"'./company-marketing.mjs'"},'marketing-page-route.mjs');
  transpile('app/api/marketing-inquiries/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/company/route'":"'./company-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/app/api/marketing/route'":"'./marketing-route.mjs'","'@/lib/company-clients'":"'./company-clients.mjs'"},'marketing-inquiries-route.mjs');
- transpile('lib/shared-jobs.ts', {"'./company'":"'./company.mjs'"});
- transpile('app/api/shared-jobs/route.ts', {"'@/lib/company-onboarding'":"'./company-onboarding.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'"},'shared-jobs-route.mjs');
+ transpile('lib/evidence-inbox.ts');
+ transpile('app/api/evidence-inbox-upload/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/shared-jobs/route'":"'./shared-jobs-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/lib/evidence-inbox'":"'./evidence-inbox.mjs'"},'evidence-inbox-upload-route.mjs');
+ transpile('lib/shared-jobs.ts', {"'./evidence-inbox'":"'./evidence-inbox.mjs'","'./company'":"'./company.mjs'"});
+ transpile('app/api/shared-jobs/route.ts', {"'@/lib/evidence-inbox'":"'./evidence-inbox.mjs'","'@/lib/company-onboarding'":"'./company-onboarding.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'"},'shared-jobs-route.mjs');
  transpile('app/api/shared-job-evidence/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/shared-jobs/route'":"'./shared-jobs-route.mjs'"},'shared-job-evidence-route.mjs');
  transpile('lib/company-clients.ts', {"'./company'":"'./company.mjs'"});
  transpile('lib/signing.ts');
