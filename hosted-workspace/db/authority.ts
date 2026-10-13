@@ -26,6 +26,7 @@ export function canonical(value:unknown):string{if(Array.isArray(value))return '
 async function hash(value:unknown){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical(value))))).map(n=>n.toString(16).padStart(2,'0')).join('');}
 export function authorityFrom(state:Entry):Authority{return state.authority||emptyAuthority();}
 export function ordinaryWriteError(previous:Entry|null,next:Entry):string|null{
+ if(canonical(previous?.evidenceTransfers??null)!==canonical(next.evidenceTransfers??null)||canonical(previous?.draftTransferSources??null)!==canonical(next.draftTransferSources??null))return 'Accepted evidence transfers and provenance can only be changed through the reviewed draft workflow.';
  if(canonical(previous?.companyJobs??null)!==canonical(next.companyJobs??null))return 'Company jobs can only be changed through the company dashboard.';
  if(canonical(previous?.clientPortal??null)!==canonical(next.clientPortal??null))return 'Policyholder dashboard records can only be changed through My Claim.';
  if(canonical(previous?.water??null)!==canonical(next.water??null))return 'Water-job records can only be changed through Water Scope Studio.';

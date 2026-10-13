@@ -59,11 +59,12 @@ try{
  transpile('app/api/water/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/water'":"'./water.mjs'","'@/lib/water-ai'":"'./water-ai.mjs'"}, 'water-route.mjs');
  transpile('app/api/water-evidence/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/water/route'":"'./water-route.mjs'","'@/lib/water'":"'./water.mjs'"}, 'water-evidence-route.mjs');
  transpile('lib/pricing.ts');
+ transpile('lib/replacement-research.ts', {"'./pricing'":"'./pricing.mjs'"});
  transpile('lib/morning.ts', {"'./policyholder'":"'./policyholder.mjs'","'./contents-care-adapter'":"'./contents-care-adapter.mjs'","'./water'":"'./water.mjs'","'./pricing'":"'./pricing.mjs'"});
  transpile('app/api/morning/route.ts', {"'@/app/api/shared-jobs/route'":"'./shared-jobs-route.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/morning'":"'./morning.mjs'","'@/lib/claim-package'":"'./claim-package.mjs'","'@/lib/preparation'":"'./preparation.mjs'"}, 'morning-route.mjs');
  transpile('lib/pricing-search.ts', {"'./pricing'":"'./pricing.mjs'"});
  transpile('lib/pricing-extract.ts', {"'./pricing'":"'./pricing.mjs'"});
- transpile('app/api/pricing/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/pricing'":"'./pricing.mjs'","'@/lib/pricing-search'":"'./pricing-search.mjs'","'@/lib/pricing-extract'":"'./pricing-extract.mjs'"}, 'pricing-route.mjs');
+ transpile('app/api/pricing/route.ts', {"'@/lib/company'":"'./company.mjs'","'@/lib/replacement-research'":"'./replacement-research.mjs'","'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/pricing'":"'./pricing.mjs'","'@/lib/pricing-search'":"'./pricing-search.mjs'","'@/lib/pricing-extract'":"'./pricing-extract.mjs'"}, 'pricing-route.mjs');
  writeFileSync(join(dir,'contents-care-review.js'),readFileSync('lib/contents-care-review.js'));
  transpile('lib/contents-care-adapter.ts',{},'contents-care-adapter.mjs');
  transpile('app/api/contents-care/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/contents-care-schema'":"'./contents-care-schema.mjs'","'@/lib/pricing'":"'./pricing.mjs'","'@/lib/contents-care-adapter'":"'./contents-care-adapter.mjs'","'@/lib/contents-care-review.js'":"'./contents-care-review.js'"},'contents-care-route.mjs');
