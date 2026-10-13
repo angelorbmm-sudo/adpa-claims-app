@@ -23,6 +23,8 @@ try{
  transpile('app/api/marketing-logo/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/company/route'":"'./company-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/app/api/marketing/route'":"'./marketing-route.mjs'"},'marketing-logo-route.mjs');
  transpile('app/api/marketing-page/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/company/route'":"'./company-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/app/api/marketing/route'":"'./marketing-route.mjs'","'@/lib/company-marketing'":"'./company-marketing.mjs'"},'marketing-page-route.mjs');
  transpile('app/api/marketing-inquiries/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/company/route'":"'./company-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/app/api/marketing/route'":"'./marketing-route.mjs'","'@/lib/company-clients'":"'./company-clients.mjs'"},'marketing-inquiries-route.mjs');
+ transpile('lib/draft-transfer.ts', {"'./water'":"'./water.mjs'","'./contents-care-schema'":"'./contents-care-schema.mjs'"});
+ transpile('app/api/draft-transfer/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/app/api/shared-jobs/route'":"'./shared-jobs-route.mjs'","'@/lib/evidence-drafts'":"'./evidence-drafts.mjs'","'@/lib/draft-transfer'":"'./draft-transfer.mjs'","'@/lib/water'":"'./water.mjs'"},'draft-transfer-route.mjs');
  transpile('lib/evidence-drafts.ts');
  transpile('lib/missing-evidence.ts');
  transpile('lib/evidence-inbox.ts');
