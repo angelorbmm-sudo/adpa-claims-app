@@ -27,6 +27,7 @@ try{
  transpile('app/api/draft-transfer/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/app/api/shared-jobs/route'":"'./shared-jobs-route.mjs'","'@/lib/evidence-drafts'":"'./evidence-drafts.mjs'","'@/lib/draft-transfer'":"'./draft-transfer.mjs'","'@/lib/water'":"'./water.mjs'"},'draft-transfer-route.mjs');
  transpile('lib/evidence-drafts.ts');
  transpile('lib/missing-evidence.ts');
+ transpile('lib/missing-information.ts');
  transpile('lib/evidence-inbox.ts');
  transpile('lib/evidence-photo.ts');
  transpile('app/api/evidence-photo/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/shared-jobs/route'":"'./shared-jobs-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/lib/evidence-photo'":"'./evidence-photo.mjs'"},'evidence-photo-route.mjs');
