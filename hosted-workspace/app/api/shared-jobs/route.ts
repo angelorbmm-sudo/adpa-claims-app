@@ -1,3 +1,5 @@
+import {env} from 'cloudflare:workers';
+import {photoRunsView} from '@/lib/evidence-photo';
 import {getChatGPTUser} from '@/app/chatgpt-auth';
 import {database,files} from '@/db/store';
 import {z} from 'zod';
@@ -137,5 +139,5 @@ export async function evidenceInbox(j:any,companies:any[],actor:any){
  const cids=[...new Set(allowed.filter((e:any)=>e.sourceKind!=='Homeowner').map((e:any)=>e.companyId))],active=new Set<string>();if(cids.length){const rs=(await database().prepare('SELECT id,state FROM companies WHERE id IN ('+cids.map(()=>'?').join(',')+')').bind(...cids).all()).results;for(const r of rs)if(!JSON.parse(String(r.state)).archived)active.add(String(r.id));}
  const current=allowed.filter((e:any)=>{if(e.sourceKind==='Homeowner')return e.companyId==='homeowner'&&e.clientId===j.id&&e.contributedBy===j.state.homeowner.userId&&!!j.state.homeowner.acceptedAt&&e.originalKey==='shared-jobs/'+j.id+'/homeowner/'+e.assetId;const a=assets.get(e.assetId);return active.has(e.companyId)&&a&&a.company_id===e.companyId&&a.client_id===e.clientId&&a.kind==='Client document'&&a.digest===e.digest&&a.created===e.sourceCreated&&a.revision===e.revision;});
  const retained=allowed.filter((e:any)=>current.some((v:any)=>v.id===e.id)||home||mine.includes(e.companyId)),roles=[...mine,...(home?['homeowner']:[]),...(adpa?['adpa']:[])];
- return {...inboxProjection(j,current,retained,roles,home,!!canWork),canOrganize:!!canWork,myRoles:roles};
+ const projection=inboxProjection(j,current,retained,roles,home,!!canWork);return {...projection,photoRuns:photoRunsView(j,projection.files,roles,home),photoAIConnected:!!(env as any).OPENAI_API_KEY,canOrganize:!!canWork,myRoles:roles};
 }
