@@ -35,7 +35,8 @@ try{
  transpile('lib/missing-information.ts');
  transpile('lib/evidence-inbox.ts');
  transpile('lib/inbox-organization.ts');
- transpile('lib/evidence-photo.ts');
+ transpile('lib/photo-review-client.ts');
+ transpile('lib/evidence-photo.ts', {"'./photo-review-client'":"'./photo-review-client.mjs'"});
  transpile('app/api/evidence-photo/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/shared-jobs/route'":"'./shared-jobs-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/lib/evidence-photo'":"'./evidence-photo.mjs'"},'evidence-photo-route.mjs');
  transpile('app/api/evidence-inbox-upload/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/shared-jobs/route'":"'./shared-jobs-route.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/lib/evidence-inbox'":"'./evidence-inbox.mjs'"},'evidence-inbox-upload-route.mjs');
  transpile('lib/shared-jobs.ts', {"'./evidence-drafts'":"'./evidence-drafts.mjs'","'./missing-evidence'":"'./missing-evidence.mjs'","'./evidence-inbox'":"'./evidence-inbox.mjs'","'./company'":"'./company.mjs'"});

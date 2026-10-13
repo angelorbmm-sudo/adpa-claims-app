@@ -3,13 +3,15 @@ import {Buffer} from 'node:buffer';
 const text=z.string().trim().max(1200),id=z.string().max(180);
 export const photoFinding=z.object({kind:z.enum(['Building damage','Contents','Both','Uncertain']),label:z.string().trim().min(1).max(200),observation:z.string().trim().min(1).max(1200),locator:z.string().trim().min(1).max(300),visibleIdentity:text,uncertainty:text,areaId:id,subjectId:id,missing:z.array(z.string().trim().min(1).max(300)).max(8)}).strict();
 export const photoOutput=z.object({findings:z.array(photoFinding).max(20),limitations:z.string().trim().min(1).max(2000)}).strict();
+export const photoSourceProof=z.object({digest:z.string().regex(/^[a-f0-9]{64}$/),sourceCreated:z.string().min(1).max(100),revision:z.string().min(1).max(180)}).strict();
+export {samePhotoSource} from './photo-review-client';
 export const photoInput=z.discriminatedUnion('action',[
- z.object({action:z.literal('examine'),version:z.number().int().positive(),companyId:id.optional(),companyVersion:z.number().int().positive().optional(),evidenceId:id,consent:z.literal(true)}).strict(),
- z.object({action:z.literal('manual'),version:z.number().int().positive(),companyId:id.optional(),companyVersion:z.number().int().positive().optional(),evidenceId:id,result:photoOutput,sourceChecked:z.literal(true)}).strict(),
- z.object({action:z.literal('confirm'),version:z.number().int().positive(),companyId:id.optional(),companyVersion:z.number().int().positive().optional(),evidenceId:id,runId:z.string().uuid(),result:photoOutput,sourceChecked:z.literal(true)}).strict()
+ z.object({action:z.literal('examine'),version:z.number().int().positive(),companyId:id.optional(),companyVersion:z.number().int().positive().optional(),evidenceId:id,sourceProof:photoSourceProof,consent:z.literal(true)}).strict(),
+ z.object({action:z.literal('manual'),version:z.number().int().positive(),companyId:id.optional(),companyVersion:z.number().int().positive().optional(),evidenceId:id,sourceProof:photoSourceProof,result:photoOutput,sourceChecked:z.literal(true)}).strict(),
+ z.object({action:z.literal('confirm'),version:z.number().int().positive(),companyId:id.optional(),companyVersion:z.number().int().positive().optional(),evidenceId:id,sourceProof:photoSourceProof,runId:z.string().uuid(),result:photoOutput,sourceChecked:z.literal(true)}).strict()
 ]);
 export const photoMimes=['image/jpeg','image/png','image/webp'];
-export function validatePhotoResult(value:any,areas:any[],subjects:any[]){const r=photoOutput.parse(value);if(r.findings.some(f=>f.areaId&&!areas.some(a=>a.id===f.areaId)||f.subjectId&&!subjects.some(s=>s.id===f.subjectId)))throw Error('A suggested association is not an authorized room or item.');return r;}
+export function validatePhotoResult(value:any,areas:any[],subjects:any[]){const r=photoOutput.parse(value);if(r.findings.some(f=>f.areaId&&!areas.some(a=>a.id===f.areaId)||f.subjectId&&!subjects.some(s=>s.id===f.subjectId)))throw Error('A suggested association is not an authorized room or item.');if(r.findings.some(f=>f.subjectId&&(f.kind==='Contents'&&subjects.find(s=>s.id===f.subjectId)?.kind!=='Contents item'||f.kind==='Building damage'&&subjects.find(s=>s.id===f.subjectId)?.kind!=='Building component')))throw Error('Finding type must match the selected physical-item reference.');return r;}
 const str={type:'string'},object=(properties:any)=>({type:'object',properties,required:Object.keys(properties),additionalProperties:false});
 const schema=object({findings:{type:'array',items:object({kind:{type:'string',enum:['Building damage','Contents','Both','Uncertain']},label:str,observation:str,locator:str,visibleIdentity:str,uncertainty:str,areaId:str,subjectId:str,missing:{type:'array',items:str}})},limitations:str});
 export async function examinePhoto(key:string,model:string,file:any,bytes:ArrayBuffer,areas:any[],subjects:any[],fetcher:typeof fetch=fetch){
