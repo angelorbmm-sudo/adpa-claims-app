@@ -1,6 +1,6 @@
 import {z} from 'zod';
 export const invitationExpiry=(now:string)=>new Date(Date.parse(now)+14*24*60*60*1000).toISOString();
-export function invitationExpired(i:any,now=Date.now()){return !i.acceptedAt&&!!i.expiresAt&&Date.parse(i.expiresAt)<=now;}
+export function invitationExpired(i:any,now=Date.now()){if(i.acceptedAt||i.expiresAt===undefined||i.expiresAt===null||i.expiresAt==='')return false;const expiry=typeof i.expiresAt==='string'?Date.parse(i.expiresAt):NaN;return !Number.isFinite(expiry)||expiry<=now;}
 export function invitationLive(i:any,now=Date.now()){return !i.revoked&&!invitationExpired(i,now);}
 export function invitationStatus(i:any,now=Date.now()){if(i.revoked)return 'Revoked';if(i.acceptedAt)return 'Accepted';if(invitationExpired(i,now))return 'Expired';return i.delivery?.providerId&&['Accepted by provider','Delivered'].includes(i.delivery.status)?'Sent':'Created';}
 export const recoveryInput=z.object({kind:z.enum(['company','policyholder']),id:z.string().min(1).max(180),invitationId:z.string().min(1).max(180),version:z.number().int().positive(),action:z.enum(['prepareLink','renew','replace','revoke']),name:z.string().trim().max(200).optional(),email:z.string().trim().email().max(254).optional(),reason:z.string().trim().min(1).max(3000)}).strict();
@@ -9,5 +9,8 @@ export function recoverInvitation(records:any[],input:any,actor:any,now:string,l
  if(input.action==='revoke'){old.revoked=true;old.revokedAt=now;old.reason=input.reason;return {records:copy,current:old};}
  if(old.acceptedAt)throw Error('Do not change an accepted identity. Revoke its access and create a separately reviewed invitation.');
  if(input.action==='renew'&&!invitationExpired(old,Date.parse(now)))throw Error('This invitation is still valid. Prepare its existing link instead.');
- if(copy.length>=limit)throw Error('Invitation record limit reached. Contact ADPA.');const email=input.action==='replace'?input.email?.trim().toLowerCase():old.email;if(!email)throw Error('Provide the corrected sign-in email.');if(email===actor.email.trim().toLowerCase())throw Error('Do not invite your own sign-in account.');if(copy.some((i:any)=>i.id!==old.id&&!i.revoked&&i.email===email))throw Error('This email already has an invitation on this record.');
+ if(copy.length>=limit)throw Error('Invitation record limit reached. Contact ADPA.');const email=input.action==='replace'?input.email?.trim().toLowerCase():String(old.email||'').trim().toLowerCase();if(!email)throw Error('Provide the corrected sign-in email.');if(email===actor.email.trim().toLowerCase())throw Error('Do not invite your own sign-in account.');if(copy.some((i:any)=>i.id!==old.id&&!i.revoked&&String(i.email||'').trim().toLowerCase()===email))throw Error('This email already has an invitation on this record.');
  old.revoked=true;old.revokedAt=now;old.reason=input.reason;const fresh={id:crypto.randomUUID(),name:input.name?.trim()||old.name,email,...(old.role?{role:old.role}:{}),userId:null,acceptedAt:null,revoked:false,expiresAt:invitationExpiry(now),replaces:old.id,at:now,invitedBy:actor.userId};copy.push(fresh);old.replacedBy=fresh.id;return {records:copy,current:fresh};}
+
+export function invitationDestination(kind:string,id:string){return (kind==='policyholder'?'/policyholder?id=':'/company-jobs?companyId=')+encodeURIComponent(id);}
+export function invitationSelection(q:URLSearchParams){const kind=q.get('kind')==='policyholder'?'policyholder':'company';return {kind,id:q.get('id')||(kind==='company'?q.get('companyId')||'':'')};}
