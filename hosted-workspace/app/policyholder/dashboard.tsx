@@ -2,6 +2,7 @@
 import {useEffect,useRef,useState} from 'react';
 import {stages,workStatuses} from '@/lib/policyholder';
 import './dashboard.css';
+import SigningInbox from '@/components/signing-inbox';
 import Recovery from './recovery';
 const fmt=(v:any)=>v===''||v==null?'Not reported':new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(v));
 const when=(v:string)=>v?new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'America/Los_Angeles'}).format(new Date(v.length===10?v+'T12:00:00-07:00':v)):'Not scheduled';
@@ -31,6 +32,7 @@ export default function Dashboard(){
  return <main className="ph-dashboard"><a className="portal-shared-link" href="/shared-jobs">Shared recovery jobs ↗</a>
  <header className="ph-top"><a href="/policyholder" onClick={e=>{e.preventDefault();if(changed){setStatus('Finish or discard your entries before changing claims.');return;}setId('');history.replaceState(null,'','/policyholder');}}>ADPA<span>Angelo Daniel Public Adjusting</span></a><a href="/getting-started?role=policyholder">My setup checklist ↗</a><span className="ph-private">PRIVATE CLAIM WORKSPACE</span></header>
  <div className="ph-selector"><label>{owner?'Preview a policyholder’s claim':'Your claim'}<select value={id} disabled={busy||changed} onChange={e=>{setId(e.target.value);history.replaceState(null,'','/policyholder?id='+encodeURIComponent(e.target.value));}}><option value="">Choose a claim</option>{list.map(c=><option key={c.id} value={c.id}>{c.name}{!c.accepted?' · invitation':''}</option>)}</select></label>{id&&<button disabled={busy} onClick={()=>void refresh()}>Refresh update</button>}{owner&&<a href="/" onClick={e=>{if(changed){e.preventDefault();setStatus('Finish or discard your entries before opening the ADPA dashboard.');}}}>ADPA dashboard</a>}</div>
+ <SigningInbox/>
  <p className="ph-feedback" role="status" aria-live="polite">{busy?'Working… ':''}{status||(!id?'Select your claim to get started.':!data?'Loading your dashboard…':owner?'ADPA preview. Only published updates are visible to invited clients.':'Your private claim dashboard.')}</p>
  {!id&&<section className="ph-welcome"><p className="ph-kicker">YOUR RECOVERY, IN ONE PLACE</p><h1>Know what’s happening.<br/>Know what comes next.</h1><p>Claim updates, documents and next steps, shared by your ADPA team.</p>{!list.length&&<div className="ph-panel"><h2>No claim invitations yet</h2><p>Ask your ADPA contact to invite the email address you used to sign in. You also need access to this private app.</p></div>}</section>}
  {data&&!data.accepted&&<section className="ph-panel ph-invitation"><h1>Welcome, {data.inviteName}</h1><p>ADPA has invited you to a private claim dashboard. Accept to see shared updates, upload documents and respond to requests.</p><p>This accepts workspace access. It does not sign a representation agreement, approve a settlement or authorize a payment.</p><button disabled={busy} onClick={()=>void post({action:'accept',consent:true})}>Accept dashboard invitation</button></section>}

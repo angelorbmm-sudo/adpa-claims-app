@@ -1,6 +1,6 @@
 import {z} from 'zod';
 const string=z.string().min(1),email=z.string().email();
-const settings=z.object({email:z.object({apiKey:string,from:email,replyTo:email.optional()}).optional(),sms:z.object({accountSid:z.string().regex(/^AC[a-fA-F0-9]{32}$/),authToken:string,messagingServiceSid:z.string().regex(/^MG[a-fA-F0-9]{32}$/)}).optional(),signature:z.object({accountId:z.string().uuid(),accessToken:string,baseUri:z.string().url().refine(x=>/^https:\/\/(demo|na\d+|eu|au|ca)\.docusign\.net$/.test(x))}).optional()}).strict();
+const settings=z.object({email:z.object({apiKey:string,from:email,replyTo:email.optional()}).optional(),sms:z.object({accountSid:z.string().regex(/^AC[a-fA-F0-9]{32}$/),authToken:string,messagingServiceSid:z.string().regex(/^MG[a-fA-F0-9]{32}$/)}).optional(),signature:z.object({accountId:z.string().uuid(),accessToken:string,connectHmacKeys:z.array(z.string().min(16)).max(5).optional(),baseUri:z.string().url().refine(x=>/^https:\/\/(demo|na\d+|eu|au|ca)\.docusign\.net$/.test(x))}).optional()}).strict();
 export function companyChannelConfig(env:any,companyId:string){try{return settings.parse(JSON.parse(env.ADPA_COMPANY_CHANNELS_JSON||'{}')[companyId]||{});}catch{return {};}}
 export function channelReadiness(config:any){return {email:!!config.email,sms:!!config.sms,signature:!!config.signature};}
 export function bytes64(bytes:ArrayBuffer){let s='';for(const n of new Uint8Array(bytes))s+=String.fromCharCode(n);return btoa(s);}
