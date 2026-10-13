@@ -14,7 +14,7 @@ export const sharedInput=z.discriminatedUnion('action',[
  z.object({action:z.literal('sendInspectionQuestion'),version,companyId:id,companyVersion:version,inspectionId:id,noSensitiveData:z.literal(true)}).strict(),
  z.object({action:z.literal('answerInspectionQuestion'),version,taskId:id,answer:text}).strict(),
  z.object({action:z.literal('resolveInspectionQuestion'),version,companyId:id,companyVersion:version,taskId:id,note:text}).strict(),
- z.object({action:z.literal('inspection'),version,companyId:id,companyVersion:version,record:inspectionRecord,noSensitiveData:z.literal(true)}).strict(),
+ z.object({action:z.literal('inspection'),version,companyId:id,companyVersion:version,record:inspectionRecord,sourceProofs:z.array(z.object({evidenceId:id,digest:z.string().regex(/^[a-f0-9]{64}$/),sourceCreated:z.string().min(1).max(100),revision:z.string().min(1).max(180)}).strict()).min(1).max(12),noSensitiveData:z.literal(true)}).strict(),
  z.object({action:z.literal('create'),companyId:id,companyVersion:version,clientId:id,clientVersion:version}).strict(),
  z.object({action:z.literal('acceptHomeowner'),version,consent:z.literal(true)}).strict(),
  z.object({action:z.literal('inviteCompany'),version,companyId:id}).strict(),
@@ -117,6 +117,7 @@ export function applyShared(j:any,companies:any[],actor:any,input:any,context:an
   if(existing.length>=200||existing.some((v:any)=>v.id===r.id))throw Error('Inspection limit reached or record already saved. Refresh before retrying.');
   if(Date.parse(r.observedAt)>Date.parse(now))throw Error('Record the actual inspection time, not a future appointment.');
   if(r.correctionOf&&!existing.some((v:any)=>v.id===r.correctionOf&&v.companyId===input.companyId))throw Error('Correct an inspection from your own company.');
+  if(r.correctionOf&&existing.some((v:any)=>v.correctionOf===r.correctionOf&&v.companyId===input.companyId))throw Error('This inspection already has a correction. Correct the latest record instead.');
   const sources=r.sources.map((source:any)=>{const e=context.inspectionSources?.find((e:any)=>e.id===source.evidenceId);if(!e)throw Error('Use current authorized job originals.');return {...source,digest:e.digest,sourceCreated:e.sourceCreated,revision:e.revision};});
   s.inspections=[...existing,{...r,sources,companyId:input.companyId,at:now,actorId:actor.userId}];
  }
