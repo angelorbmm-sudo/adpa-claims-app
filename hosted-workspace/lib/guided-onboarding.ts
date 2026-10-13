@@ -1,6 +1,6 @@
 import {z} from 'zod';
 import {industries,serviceCatalog,classification} from './company-onboarding';
-export const draftSchema=z.object({name:z.string().trim().max(200),primaryIndustry:z.enum(industries),industries:z.array(z.enum(industries)).min(1).max(16).refine(v=>new Set(v).size===v.length),serviceIds:z.array(z.string()).max(30).refine(v=>new Set(v).size===v.length&&v.every(id=>serviceCatalog.some(s=>s.id===id))),otherServices:z.array(z.string().trim().min(1).max(120)).max(10),serviceArea:z.string().trim().max(200)}).strict().refine(v=>v.industries.includes(v.primaryIndustry));
+export const draftSchema=z.object({name:z.string().trim().max(200),primaryIndustry:z.enum(industries),industries:z.array(z.enum(industries)).min(1).max(16).refine(v=>new Set(v).size===v.length),serviceIds:z.array(z.string()).max(30).refine(v=>new Set(v).size===v.length&&v.every(id=>serviceCatalog.some(s=>s.id===id))),otherServices:z.array(z.string().trim().min(1).max(120)).max(10).refine(v=>new Set(v.map(s=>s.toLowerCase())).size===v.length,'Use distinct other-service names.'),serviceArea:z.string().trim().max(200)}).strict().refine(v=>v.industries.includes(v.primaryIndustry));
 export const draftKey=(userId:string,companyId:string)=>'onboarding/'+encodeURIComponent(userId)+'/'+encodeURIComponent(companyId||'new')+'.json';
 export function companyChecklist(c:any,facts:any){const p=classification(c.state),link=(path:string)=>path+'?companyId='+encodeURIComponent(c.id);
  return [
@@ -10,7 +10,7 @@ export function companyChecklist(c:any,facts:any){const p=classification(c.state
  {id:'job',title:'Join a recovery job',status:facts.jobs?'Ready to use':'Awaiting approval',href:link('/shared-jobs'),detail:'Your signed service agreement and homeowner approval are required.'},
  {id:'staff',title:'Invite your employees when needed',status:'Optional next step',href:link('/company'),detail:'Use staff permissions; never share a login.'},
  {id:'marketing',title:'Prepare your public-facing profile',status:facts.marketing?'Ready to use':'Optional next step',href:link('/marketing'),detail:'Add contact information, hours and branding when you want to market your company.'},
- {id:'providers',title:'Activate signatures, email, texting and calls',status:'Awaiting activation',href:link('/company-clients'),detail:'Jose must configure and test providers. This checklist does not activate them.'}
+ {id:'providers',title:'Activate signatures, email and texting',status:'Awaiting activation',href:link('/company-clients'),detail:'Jose must configure and test providers. Calling needs separate integration work.'}
  ];
 }
 export function policyholderChecklist(claims:any[],jobs:any[],tasks:any[]){return [
