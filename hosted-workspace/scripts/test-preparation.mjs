@@ -23,6 +23,7 @@ try{
  transpile('app/api/invitations/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/policyholder'":"'./policyholder.mjs'","'@/lib/invitations'":"'./invitations.mjs'"},'invitations-route.mjs');
  transpile('lib/onboarding-review.ts', {"'./company-onboarding'":"'./company-onboarding.mjs'","'./first-job'":"'./first-job.mjs'"});
  transpile('app/api/onboarding-review/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/lib/company-delivery'":"'./company-delivery.mjs'","'@/lib/onboarding-review'":"'./onboarding-review.mjs'"},'onboarding-review-route.mjs');
+ transpile('lib/job-readiness-client.ts',{});
  transpile('lib/first-job.ts');
  transpile('app/api/first-job/route.ts', {"'@/lib/company-onboarding'":"'./company-onboarding.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/company/route'":"'./company-route.mjs'","'@/lib/company-clients'":"'./company-clients.mjs'","'@/lib/first-job'":"'./first-job.mjs'","'@/lib/company-delivery'":"'./company-delivery.mjs'","'cloudflare:workers'":"'./mocks.mjs'"},'first-job-route.mjs');
  transpile('lib/guided-onboarding.ts', {"'./company-onboarding'":"'./company-onboarding.mjs'"});
