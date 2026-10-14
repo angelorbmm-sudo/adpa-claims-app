@@ -71,6 +71,7 @@ try{
  transpile('app/api/company/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/contents-company'":"'./contents-company.mjs'"},'company-route.mjs');
  transpile('app/api/company-evidence/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/app/api/company/route'":"'./company-route.mjs'"},'company-evidence-route.mjs');
  transpile('lib/portal-recovery-client.ts',{});
+ transpile('lib/recovery-calendar-client.ts');
  transpile('lib/policyholder.ts');
  transpile('app/api/policyholder/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/policyholder'":"'./policyholder.mjs'"},'policyholder-route.mjs');
  transpile('app/api/policyholder-evidence/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/policyholder'":"'./policyholder.mjs'","'@/app/api/policyholder/route'":"'./policyholder-route.mjs'"},'policyholder-evidence-route.mjs');

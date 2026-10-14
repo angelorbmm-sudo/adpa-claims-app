@@ -30,8 +30,8 @@ export const sharedInput=z.discriminatedUnion('action',[
  z.object({action:z.literal('confirmADPA'),version,consent:z.literal(true)}).strict(),
  z.object({action:z.literal('removeADPA'),version,reason:text}).strict(),
  z.object({action:z.literal('importEvidence'),version,evidenceId:id}).strict(),
- z.object({action:z.literal('jobMessage'),version,companyId:id.optional(),companyVersion:version.optional(),audience:z.string().min(1).max(200),body:text}).strict(),
- z.object({action:z.literal('appointment'),version,companyId:id.optional(),companyVersion:version.optional(),title:short,startsAt:z.string().datetime({offset:true}),note:text,assignedTo:z.string().trim().min(1).max(200).optional()}).strict(),
+ z.object({action:z.literal('jobMessage'),version,requestId:z.string().uuid().optional(),companyId:id.optional(),companyVersion:version.optional(),audience:z.string().min(1).max(200),body:text}).strict(),
+ z.object({action:z.literal('appointment'),version,requestId:z.string().uuid().optional(),companyId:id.optional(),companyVersion:version.optional(),title:short,startsAt:z.string().datetime({offset:true}),note:text,assignedTo:z.string().trim().min(1).max(200).optional()}).strict(),
  z.object({action:z.literal('cancelAppointment'),version,companyId:id.optional(),companyVersion:version.optional(),appointmentId:id,reason:text}).strict(),
  z.object({action:z.literal('task'),version,companyId:id,companyVersion:version,title:short,due:z.string().refine(v=>!v||/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v),note:text}).strict(),
  z.object({action:z.literal('completeTask'),version,companyId:id,companyVersion:version,taskId:id,note:text}).strict()
@@ -51,9 +51,10 @@ export function recoveryChannels(j:any,companies:any[],actor:any){
  if(!h&&!mine.length&&!adpa)return [];
  return [{id:'team',name:'Everyone on this job'},...(j.state.adpa?.status==='Connected'&&(h||adpa)?[{id:'adpa',name:'ADPA only'}]:[]),...j.state.companies.filter((p:any)=>!p.removedAt&&p.acceptedAt&&p.approvedAt&&(h||mine.some(x=>x.company.id===p.companyId))).map((p:any)=>({id:'company:'+p.companyId,name:p.name+' + policyholder'}))];
 }
+export function appointmentParticipationCurrent(j:any,a:any){const p=a.companyId==='adpa'?null:participant(j,a.companyId);return a.companyId==='adpa'?j.state.adpa?.status==='Connected':!!p?.acceptedAt&&!!p?.approvedAt&&!!j.state.homeowner.acceptedAt;}
 export function recoveryView(j:any,companies:any[],actor:any){
  const channels=recoveryChannels(j,companies,actor),allowed=new Set(channels.map(c=>c.id));
- return {channels,messages:(j.state.messages||[]).filter((m:any)=>allowed.has(m.audience)).map(({actorId,...m}:any)=>m),appointments:channels.length?(j.state.appointments||[]).map(({actorId,...a}:any)=>a):[],canSchedule:!!companyActor(j,companies,actor).length||adpaActive(j,actor)};
+ return {channels,messages:(j.state.messages||[]).filter((m:any)=>allowed.has(m.audience)).map(({actorId,requestId,...m}:any)=>m),appointments:channels.length?(j.state.appointments||[]).map(({actorId,cancelledBy,requestId,...a}:any)=>({...a,participationCurrent:appointmentParticipationCurrent(j,a)})):[],canSchedule:!!companyActor(j,companies,actor).length||adpaActive(j,actor)};
 }
 export function applyShared(j:any,companies:any[],actor:any,input:any,context:any,now:string){const s=structuredClone(j.state);if((s.audit||[]).length>=1000)throw Error('Job history limit reached. Earlier decisions were retained.');const own=()=>{if(!acceptedHomeowner(j,actor))throw Error('The signed-in homeowner must authorize this action.');},work=(id:string)=>{const x=companyActor(j,companies,actor).find(x=>x.company.id===id);if(!x)throw Error('An approved company manager must perform this action.');return x;};
  if(['jobMessage','appointment','cancelAppointment'].includes(input.action)){
@@ -63,18 +64,18 @@ export function applyShared(j:any,companies:any[],actor:any,input:any,context:an
   if(sender&&!input.companyVersion)throw Error('Refresh the company before sending.');
   const from=sender?sender.company.name:h?j.state.homeowner.name:'ADPA';
   if(input.action==='jobMessage'){
-   if(!recoveryChannels(j,companies,actor).some(c=>c.id===input.audience))throw Error('Choose an authorized conversation.');
+   if(sender&&!['team','company:'+sender.company.id].includes(input.audience))throw Error('Use the selected company’s own conversation or the team channel.');if(!recoveryChannels(j,companies,actor).some(c=>c.id===input.audience))throw Error('Choose an authorized conversation.');
    if(!sender&&!h&&!adpa)throw Error('Choose your sending company.');
    if((s.messages||[]).length>=500)throw Error('Conversation record limit reached.');
-   s.messages=[...(s.messages||[]),{id:crypto.randomUUID(),audience:input.audience,body:input.body,from,companyId:sender?.company.id||'',actorId:actor.userId,at:now}];
+   s.messages=[...(s.messages||[]),{id:crypto.randomUUID(),audience:input.audience,body:input.body,requestId:input.requestId||'',from,companyId:sender?.company.id||'',actorId:actor.userId,at:now}];
   }else{
    if(!sender&&!adpa)throw Error('Only an assigned company or ADPA can schedule visits.');
    const cid=sender?.company.id||'adpa';
    if(input.action==='appointment'){
     if((s.appointments||[]).length>=100)throw Error('Appointment record limit reached.');
     if(Date.parse(input.startsAt)<Date.parse(now))throw Error('Choose a future appointment time.');
-    s.appointments=[...(s.appointments||[]),{id:crypto.randomUUID(),companyId:cid,from,title:input.title,startsAt:input.startsAt,note:input.note,status:'Scheduled',assignedTo:input.assignedTo||'',at:now,actorId:actor.userId}];
-   }else{const visit=(s.appointments||[]).find((v:any)=>v.id===input.appointmentId&&v.companyId===cid&&v.status==='Scheduled');if(!visit)throw Error('Choose your own scheduled visit.');visit.status='Cancelled';visit.cancelledAt=now;visit.reason=input.reason;}
+    s.appointments=[...(s.appointments||[]),{id:crypto.randomUUID(),companyId:cid,from,title:input.title,requestId:input.requestId||'',startsAt:input.startsAt,note:input.note,status:'Scheduled',assignedTo:input.assignedTo||'',at:now,actorId:actor.userId}];
+   }else{const visit=(s.appointments||[]).find((v:any)=>v.id===input.appointmentId&&v.companyId===cid&&v.status==='Scheduled');if(!visit)throw Error('Choose your own scheduled visit.');visit.status='Cancelled';visit.cancelledAt=now;visit.cancelledBy=actor.userId;visit.reason=input.reason;}
   }
  }
  else if(input.action==='acceptHomeowner'){if(!homeowner(j,actor)||s.homeowner.acceptedAt)throw Error('Only the invited homeowner can accept once.');if(!context.initialContractVerified)throw Error('The originating company must have its own verified signed service contract before job approval.');s.homeowner.userId=actor.userId;s.homeowner.acceptedAt=now;const first=s.companies[0];first.approvedAt=now;first.contractRequestId=context.initialContractRequestId;}
@@ -134,5 +135,5 @@ export function applyShared(j:any,companies:any[],actor:any,input:any,context:an
  else if(input.action==='task'){work(input.companyId);s.tasks.push({id:crypto.randomUUID(),companyId:input.companyId,title:input.title,due:input.due,note:input.note,status:'Open',at:now});}
  else if(input.action==='completeTask'){work(input.companyId);const t=s.tasks.find((t:any)=>t.id===input.taskId&&t.companyId===input.companyId&&t.kind!=='Inspection question'&&t.status==='Open');if(!t)throw Error('Choose this company’s open task.');t.status='Complete';t.completedAt=now;t.completionNote=input.note;}
  else throw Error('Unsupported shared job action.');
- if(s.companies.length>50||s.evidence.length>500||s.tasks.length>300)throw Error('Shared job record limit reached.');s.audit=[...s.audit,{action:input.action,companyId:input.companyId||'',evidenceId:input.evidenceId||'',inspectionId:input.inspectionId||'',taskId:input.taskId||'',actorId:actor.userId,at:now,reason:input.reason||'',...(input.action==='share'?{companyIds:input.companyIds,includeADPA:input.includeADPA}:{}),...(input.action==='confirmADPA'?{claimId:s.adpa.claimId,engagementFileId:s.adpa.engagementFileId}:{}),...(input.action==='acceptHomeowner'?{contractRequestId:context.initialContractRequestId}:{}),...(input.action==='acceptCompany'?{contractRequestId:context.client?.state.contract?.requestId}:{} )}];return s;
+ if(s.companies.length>50||s.evidence.length>500||s.tasks.length>300)throw Error('Shared job record limit reached.');s.audit=[...s.audit,{action:input.action,companyId:input.companyId||'',evidenceId:input.evidenceId||'',inspectionId:input.inspectionId||'',taskId:input.taskId||'',actorId:actor.userId,at:now,reason:input.reason||'',...(input.action==='jobMessage'?{messageId:s.messages.at(-1)?.id}:{}),...(input.action==='appointment'?{appointmentId:s.appointments.at(-1)?.id}:{}),...(input.action==='cancelAppointment'?{appointmentId:input.appointmentId}:{}),...(input.action==='share'?{companyIds:input.companyIds,includeADPA:input.includeADPA}:{}),...(input.action==='confirmADPA'?{claimId:s.adpa.claimId,engagementFileId:s.adpa.engagementFileId}:{}),...(input.action==='acceptHomeowner'?{contractRequestId:context.initialContractRequestId}:{}),...(input.action==='acceptCompany'?{contractRequestId:context.client?.state.contract?.requestId}:{} )}];return s;
 }
