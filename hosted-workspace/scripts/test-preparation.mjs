@@ -53,6 +53,7 @@ try{
  transpile('lib/shared-jobs.ts', {"'./evidence-drafts'":"'./evidence-drafts.mjs'","'./missing-evidence'":"'./missing-evidence.mjs'","'./evidence-inbox'":"'./evidence-inbox.mjs'","'./company'":"'./company.mjs'"});
  transpile('app/api/shared-jobs/route.ts', {"'@/lib/evidence-drafts'":"'./evidence-drafts.mjs'","'@/lib/missing-evidence'":"'./missing-evidence.mjs'","'cloudflare:workers'":"'./mocks.mjs'","'@/lib/evidence-photo'":"'./evidence-photo.mjs'","'@/lib/evidence-inbox'":"'./evidence-inbox.mjs'","'@/lib/company-onboarding'":"'./company-onboarding.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'"},'shared-jobs-route.mjs');
  transpile('app/api/shared-job-evidence/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/shared-jobs/route'":"'./shared-jobs-route.mjs'"},'shared-job-evidence-route.mjs');
+ transpile('lib/company-clients-client.ts');
  transpile('lib/company-clients.ts', {"'./company'":"'./company.mjs'"});
  transpile('lib/signing.ts');
  transpile('lib/signing-provider.ts', {"'./company-delivery'":"'./company-delivery.mjs'"});
