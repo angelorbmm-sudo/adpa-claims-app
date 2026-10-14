@@ -2,7 +2,7 @@
 
 Canonical numbering comes from `ADPA_Complete_Module_Inventory_2026-10-13.pdf` (52 workflow areas). Later handoff documents used review sequence numbers after area 37; those are historical review labels, not canonical inventory numbers. This ledger corrects that drift. Earlier claims that inventory areas 21–52 were all reviewed were inaccurate: communication adapters and the platform-wide permissions/persistence review remain outstanding.
 
-Completed or covered by a dedicated related review: 47 canonical areas. Remaining dedicated passes: 5. This describes code review coverage, not commercial readiness. Contents package exports and adjuster discovery remain conservatively open despite related submission/package checks.
+Completed or covered by a dedicated related review: 48 canonical areas. Remaining dedicated passes: 4. This describes code review coverage, not commercial readiness. Contents package exports and adjuster discovery remain conservatively open despite related submission/package checks.
 
 | Canonical area | Review evidence |
 | --- | --- |
@@ -25,6 +25,7 @@ Completed or covered by a dedicated related review: 47 canonical areas. Remainin
 | 17 In-app conversations/appointments | RECOVERY_CONVERSATIONS_REVIEW_HANDOFF.md |
 | 18 Carrier communication timeline/reply drafts | CARRIER_COMMUNICATIONS_REVIEW_HANDOFF.md |
 | 19 Policy review | Policy review and policy tests |
+| 20 Coverage accounting/routing | COVERAGE_ROUTING_REVIEW_HANDOFF.md |
 | 21–37 Evidence, inspection, mitigation, contents, pricing and construction | Existing area-specific review handoffs retaining canonical numbering |
 | 38 Receipt matching/depreciation | RECEIPT_RECOVERY_REVIEW_HANDOFF.md (historical label 41) |
 | 39 AI preparation queue | PREPARATION_ENGINE_REVIEW_HANDOFF.md (historical label 44) |
@@ -36,8 +37,8 @@ Completed or covered by a dedicated related review: 47 canonical areas. Remainin
 | 49 ALE ledger | ALE_EXPENSE_REVIEW_HANDOFF.md (historical label 42) |
 | 50 Mortgage/draws | MORTGAGE_DRAW_REVIEW_HANDOFF.md (historical label 39) |
 
-Remaining canonical areas: 20 coverage accounting/routing; 41 contents PDF/spreadsheet package; 42 adjuster discovery/inventory email; 51 company communication delivery adapters; 52 permissions/persistence/version history.
+Remaining canonical areas: 41 contents PDF/spreadsheet package; 42 adjuster discovery/inventory email; 51 company communication delivery adapters; 52 permissions/persistence/version history.
 
-Next: area 20, Coverage accounting and routing. First-job and shared participation now have dedicated reviews. The production handoff is separate from canonical area 52.
+Next: area 41, Contents PDF and spreadsheet package. First-job and shared participation now have dedicated reviews. The production handoff is separate from canonical area 52.
 
 Specialist validation with Arman, Ana and Peter remains pending. Jose provider setup/integrations and independent review, real multi-user/browser/iPhone walkthroughs, security/recovery/performance checks and a controlled pilot are separate release gates. Passing automated checks alone does not establish launch readiness.

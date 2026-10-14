@@ -3,8 +3,9 @@ import {mkdtempSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import {resolve,join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 const dir=mkdtempSync(resolve('.sites-runtime/preparation-test-'));
-const transpile=(file,replacements={},destination=null)=>{replacements={...replacements,"'@/lib/communication-review.js'":"'./communication-review.js'","'@/lib/ale-review.js'":"'./ale-review.js'","'./receipt-recovery'":"'./receipt-recovery.mjs'","'@/lib/receipt-recovery'":"'./receipt-recovery.mjs'","'@/source/scope-engine.mjs'":"'./scope-engine.mjs'","'@/lib/supplement-review.js'":"'./supplement-review.js'","'@/lib/mortgage-draw-review.js'":"'./mortgage-draw-review.js'","'@/lib/agreement-review.js'":"'./agreement-review.js'"};let js=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;js=js.replaceAll("'./invitations'","'./invitations.mjs'");for(const [a,b] of Object.entries(replacements))js=js.replaceAll(a,b);writeFileSync(join(dir,destination||file.split('/').at(-1).replace('.ts','.mjs')),js);};
+const transpile=(file,replacements={},destination=null)=>{replacements={...replacements,"'@/lib/coverage-accounting.js'":"'./coverage-accounting.js'","'@/lib/communication-review.js'":"'./communication-review.js'","'@/lib/ale-review.js'":"'./ale-review.js'","'./receipt-recovery'":"'./receipt-recovery.mjs'","'@/lib/receipt-recovery'":"'./receipt-recovery.mjs'","'@/source/scope-engine.mjs'":"'./scope-engine.mjs'","'@/lib/supplement-review.js'":"'./supplement-review.js'","'@/lib/mortgage-draw-review.js'":"'./mortgage-draw-review.js'","'@/lib/agreement-review.js'":"'./agreement-review.js'"};let js=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;js=js.replaceAll("'./invitations'","'./invitations.mjs'");for(const [a,b] of Object.entries(replacements))js=js.replaceAll(a,b);writeFileSync(join(dir,destination||file.split('/').at(-1).replace('.ts','.mjs')),js);};
 try{
+ writeFileSync(join(dir,'coverage-accounting.js'),readFileSync('lib/coverage-accounting.js'));
  writeFileSync(join(dir,'communication-review.js'),readFileSync('lib/communication-review.js'));
  writeFileSync(join(dir,'ale-review.js'),readFileSync('lib/ale-review.js'));
  writeFileSync(join(dir,'agreement-review.js'),readFileSync('lib/agreement-review.js'));
@@ -127,6 +128,7 @@ try{
  transpile('lib/package-approval.ts',{"'@/db/store'":"'./mocks.mjs'","'./claim-package'":"'./claim-package.mjs'"});
  transpile('app/api/authority/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/db/authority'":"'./authority.mjs'","'@/lib/package-approval'":"'./package-approval.mjs'","'@/lib/authority-sources'":"'./authority-sources.mjs'"},'authority-route.mjs');
  transpile('app/api/packages/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/db/import-auth'":"'./mocks.mjs'","'@/lib/claim-package'":"'./claim-package.mjs'"},'packages-route.mjs');
+ transpile('lib/routing-client.ts');
  transpile('lib/coverage-routing.ts',{"'./policy-review'":"'./policy-review.mjs'"});
  transpile('app/dashboard-summary.ts',{"'@/lib/coverage-routing'":"'./coverage-routing.mjs'"});
  transpile('app/api/routing/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/db/import-auth'":"'./mocks.mjs'","'@/lib/coverage-routing'":"'./coverage-routing.mjs'"},'routing-route.mjs');
