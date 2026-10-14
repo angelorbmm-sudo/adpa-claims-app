@@ -110,6 +110,7 @@ try{
  transpile('lib/package-records-client.ts',{});
  transpile('lib/claim-package.ts',{"'./package-export'":"'./package-export.mjs'","'./payment-review'":"'./payment-review.mjs'","'./water'":"'./water.mjs'","'./preparation'":"'./preparation.mjs'","'./policy-review'":"'./policy-review.mjs'","'./mitigation-adapter'":"'./mitigation-adapter.mjs'","'./contents-care-adapter'":"'./contents-care-adapter.mjs'","'./pricing'":"'./pricing.mjs'","'../lib/pricing'":"'./pricing.mjs'"});
  transpile('lib/authority-sources.ts', {"'@/db/store'":"'./mocks.mjs'","'@/db/authority'":"'./authority.mjs'"});
+ transpile('lib/package-approval-client.ts',{});
  transpile('lib/package-approval.ts',{"'@/db/store'":"'./mocks.mjs'","'./claim-package'":"'./claim-package.mjs'"});
  transpile('app/api/authority/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/db/authority'":"'./authority.mjs'","'@/lib/package-approval'":"'./package-approval.mjs'","'@/lib/authority-sources'":"'./authority-sources.mjs'"},'authority-route.mjs');
  transpile('app/api/packages/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/db/import-auth'":"'./mocks.mjs'","'@/lib/claim-package'":"'./claim-package.mjs'"},'packages-route.mjs');
