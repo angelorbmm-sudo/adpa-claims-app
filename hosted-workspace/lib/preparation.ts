@@ -1,3 +1,4 @@
+import {supplementFindings} from '@/lib/supplement-review.js';
 import {scopeFindings} from '@/source/scope-engine.mjs';
 import {waterFindings} from './water';
 import {pricingFindings} from './pricing';
@@ -20,6 +21,7 @@ export async function fingerprint(claim:ClaimInput,evidence:EvidenceFile[]){cons
 export function recordChecks(claim:ClaimInput,evidence:EvidenceFile[]):PreparationResult{
  const proposals:Proposal[]=[];const add=(kind:Proposal['kind'],title:string,detail:string,recordRefs:string[]=[])=>proposals.push({kind,title,detail,recordRefs,citations:[],itemRef:null,uncertainty:'This check uses saved records and file categories only. Inspect the original documents; it does not establish coverage or entitlement.'});
  const waterGaps=waterFindings(claim.state,evidence);if(waterGaps.length)add('missing_document','Water Scope Studio needs review',waterGaps.join(' ').slice(0,2900));
+ const supplementGaps=supplementFindings(claim.state,evidence);if(supplementGaps.length)add('missing_document','Supplements and disputes need evidence review',supplementGaps.join(' ').slice(0,2900));
  const constructionGaps=scopeFindings(claim.state,evidence);if(constructionGaps.length)add('missing_document','Construction comparison needs source review',constructionGaps.join(' ').slice(0,2900));
  const pricingGaps=pricingFindings(claim.state,evidence);if(pricingGaps.length)add('missing_document','Evidence-to-pricing needs review',pricingGaps.join(' ').slice(0,2900));
  const contentsGaps=contentsCareFindings(claim.state,evidence);if(contentsGaps.length)add('missing_document','Contents inventory / care needs evidence review',contentsGaps.slice(0,8).join(' ').slice(0,2900));
