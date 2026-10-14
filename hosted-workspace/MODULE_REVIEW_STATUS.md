@@ -1,11 +1,36 @@
-# ADPA module cleanup status — 2026-10-13
+# ADPA module cleanup status — 2026-10-14
 
-The complete module inventory contains 52 module/feature areas. This ledger tracks the current cleanup pass, not whether features were previously built or commercial release readiness.
+Canonical numbering comes from `ADPA_Complete_Module_Inventory_2026-10-13.pdf` (52 workflow areas). Later handoff documents used review sequence numbers after area 37; those are historical review labels, not canonical inventory numbers. This ledger corrects that drift. Earlier claims that inventory areas 21–52 were all reviewed were inaccurate: communication adapters and the platform-wide permissions/persistence review remain outstanding.
 
-Completed review areas: 3 company industry/services; 4 guided onboarding; 5 invitation/access recovery; 6 onboarding review board; 10 signing center; 14 direct claim intake; 19 policy review; 21 claim evidence store; 22 shared evidence inbox; 23 photo findings; 24 evidence-linked drafts; 25 missing evidence/information; 26 initial inspection; 27 inspection questions/answers; 28 water mitigation workspace/company dashboard; 29 daily mitigation visits/drying logs; 30 material drying/removal/cleaning decisions; 31 equipment quantities and drying duration; 32 contents inventory and treatment; 33 contents custody, pack-out, storage and return; 34 contents service charges and corrections; 35 evidence-draft transfer; 36 replacement and service pricing; 37 construction scope comparison; 38 supplements and disputes; 39 mortgage and draws; 40 agreement library and signature packets; 41 receipt matching and depreciation recovery; 42 ALE expense ledger; 43 authority gates and review records; 44 AI claim preparation engine; 45 morning action dashboard; 46 claim package assembly and internal exports; 47 package approval connection and release handoff; 48 carrier submission and follow-up handoff; 49 inventory reconciliation and carrier response comparison; 50 payment review and depreciation accounting handoff; 51 policyholder status and recovery handoff; 52 job readiness and production handoff.
+Completed or covered by a dedicated related review: 40 canonical areas. Remaining dedicated passes: 12. This describes code review coverage, not commercial readiness. Contents package exports and adjuster discovery remain conservatively open despite related submission/package checks.
 
-Total: 39 reviewed; 13 remaining. Thirteen earlier areas still require a dedicated pass: 1, 2, 7, 8, 9, 11, 12, 13, 15, 16, 17, 18, 20. Workflow areas 21–52 have completed this cleanup pass. Related areas may be reviewed together.
+| Canonical area | Review evidence |
+| --- | --- |
+| 1 Company marketing profiles and pages | COMPANY_MARKETING_REVIEW_HANDOFF.md |
+| 3 Company industry and services | COMPANY_SETUP_REVIEW_HANDOFF.md |
+| 4 Guided onboarding | ONBOARDING_REVIEW_HANDOFF.md |
+| 5 Staff/invitation recovery | INVITATION_ACCESS_REVIEW_HANDOFF.md |
+| 6 Onboarding review board | ONBOARDING_BOARD_REVIEW_HANDOFF.md |
+| 9 Agreement library/claim packets | AGREEMENT_PACKET_REVIEW_HANDOFF.md (historical label 40) |
+| 10 Expanded Signing center | Signing review and signing tests |
+| 13 Ready to begin work checklist | JOB_READINESS_REVIEW_HANDOFF.md (historical label 52) |
+| 14 Direct claim intake | CLAIM_CORE_REVIEW_HANDOFF.md |
+| 15 Morning dashboard | MORNING_DASHBOARD_REVIEW_HANDOFF.md (historical label 45) |
+| 16 Policyholder recovery dashboard | POLICYHOLDER_RECOVERY_REVIEW_HANDOFF.md (historical label 51) |
+| 19 Policy review | Policy review and policy tests |
+| 21–37 Evidence, inspection, mitigation, contents, pricing and construction | Existing area-specific review handoffs retaining canonical numbering |
+| 38 Receipt matching/depreciation | RECEIPT_RECOVERY_REVIEW_HANDOFF.md (historical label 41) |
+| 39 AI preparation queue | PREPARATION_ENGINE_REVIEW_HANDOFF.md (historical label 44) |
+| 40 Packages/authority/approval | AUTHORITY_RECORDS_REVIEW_HANDOFF.md, PACKAGE_ASSEMBLY_REVIEW_HANDOFF.md, PACKAGE_APPROVAL_REVIEW_HANDOFF.md (historical labels 43/46/47) |
+| 43 Inventory submission/follow-up | SUBMISSION_FOLLOWUP_REVIEW_HANDOFF.md (historical label 48) |
+| 44 Carrier inventory reconciliation | INVENTORY_RECONCILIATION_REVIEW_HANDOFF.md (historical label 49) |
+| 45 General supplements/disputes | SUPPLEMENT_DISPUTE_REVIEW_HANDOFF.md (historical label 38) |
+| 46–48 Check reading, payment ledger and recoverable depreciation | PAYMENT_ACCOUNTING_REVIEW_HANDOFF.md (historical label 50); PAYMENT_REVIEW_HANDOFF.md |
+| 49 ALE ledger | ALE_EXPENSE_REVIEW_HANDOFF.md (historical label 42) |
+| 50 Mortgage/draws | MORTGAGE_DRAW_REVIEW_HANDOFF.md (historical label 39) |
 
-Next workflow: return to the earlier areas, starting with a dedicated area 1 review. Specialist field validation with Arman, contents validation with Ana and estimating input from Peter remain pending. Jose provider integrations and live multi-user/browser walkthroughs are separate steps; automated checks do not establish commercial readiness.
+Remaining canonical areas: 2 marketing design/posting connections; 7 company clients/intake; 8 start first job; 11 shared recovery participation; 12 My Jobs/navigation; 17 conversations/appointments; 18 carrier communication timeline; 20 coverage accounting/routing; 41 contents PDF/spreadsheet package; 42 adjuster discovery/inventory email; 51 company communication delivery adapters; 52 permissions/persistence/version history.
 
-Release gates remain explicit: Jose completes required setup/integrations and independent review; real workflow walkthroughs follow with Angelo, Arman, Ana and Peter; security/mobile/recovery/performance checks and a controlled pilot precede launch. Code cleanup and passing tests alone are not launch validation.
+Next: area 2, Marketing design and posting connections. First-job and shared-job handoffs have related checks but still need dedicated reviews. The production handoff is separate from canonical area 52.
+
+Specialist validation with Arman, Ana and Peter remains pending. Jose provider setup/integrations and independent review, real multi-user/browser/iPhone walkthroughs, security/recovery/performance checks and a controlled pilot are separate release gates. Passing automated checks alone does not establish launch readiness.
