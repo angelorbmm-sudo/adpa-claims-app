@@ -1,3 +1,4 @@
+import {receiptFindings} from '@/lib/receipt-recovery';
 import {agreementFindings} from '@/lib/agreement-review.js';
 import {mortgageDrawFindings} from '@/lib/mortgage-draw-review.js';
 import {supplementFindings} from '@/lib/supplement-review.js';
@@ -23,6 +24,7 @@ export async function fingerprint(claim:ClaimInput,evidence:EvidenceFile[]){cons
 export function recordChecks(claim:ClaimInput,evidence:EvidenceFile[]):PreparationResult{
  const proposals:Proposal[]=[];const add=(kind:Proposal['kind'],title:string,detail:string,recordRefs:string[]=[])=>proposals.push({kind,title,detail,recordRefs,citations:[],itemRef:null,uncertainty:'This check uses saved records and file categories only. Inspect the original documents; it does not establish coverage or entitlement.'});
  const waterGaps=waterFindings(claim.state,evidence);if(waterGaps.length)add('missing_document','Water Scope Studio needs review',waterGaps.join(' ').slice(0,2900));
+ const receiptGaps=receiptFindings(claim.state,evidence);if(receiptGaps.length)add('missing_document','Receipt matches need source review',receiptGaps.join(' ').slice(0,2900));
  const agreementGaps=agreementFindings(claim.state,evidence);if(agreementGaps.length)add('missing_document','Agreement preparation needs review',agreementGaps.join(' ').slice(0,2900));
  const drawGaps=mortgageDrawFindings(claim.state,evidence);if(drawGaps.length)add('missing_document','Mortgage and draws need evidence review',drawGaps.join(' ').slice(0,2900));
  const supplementGaps=supplementFindings(claim.state,evidence);if(supplementGaps.length)add('missing_document','Supplements and disputes need evidence review',supplementGaps.join(' ').slice(0,2900));
