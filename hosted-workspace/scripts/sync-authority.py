@@ -12,7 +12,7 @@ for start,end,source,anchor in [('<!-- authority-panel-start -->','<!-- authorit
   html=html.replace(anchor,fragment+anchor)
 if 'data-view="authority"' not in html:html=html.replace('<button class="cursor-interaction" data-view="construction">','<button class="cursor-interaction" data-view="authority">Approvals &amp; release</button><button class="cursor-interaction" data-view="construction">',1)
 if "if(name==='authority')loadAuthority();" not in html:html=html.replace('function view(name){',"function view(name){if(name==='authority')loadAuthority();",1)
-html=html.replace("'receipts','construction'].includes","'receipts','construction','authority'].includes")
+html=re.sub(r"view\(\[([^]]*)\]\.includes",lambda m:'view(['+m.group(1)+''.join(",'"+name+"'" for name in ['authority','ale','accounting'] if "'"+name+"'" not in m.group(1))+'].includes',html)
 # Make the old manual readiness label unable to authorize a new release.
 html=html.replace('<option>Ready to submit</option>','<option disabled>Ready to submit</option>')
 p.write_text('export const workspaceHTML = '+json.dumps(html)+';\n');Path('.sites-runtime/workspace-test.html').write_text(html)

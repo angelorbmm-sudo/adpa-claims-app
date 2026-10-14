@@ -1,0 +1,13 @@
+import {files as objectStorage} from '@/db/store';
+import {authoritySourceMetadata} from '@/db/authority';
+type Entry=Record<string,any>;
+async function digest(bytes:ArrayBuffer){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(x=>x.toString(16).padStart(2,'0')).join('');}
+export async function hydrateAuthorityOriginals(entries:Entry[],state:Entry,input?:Entry){const a=state.authority||{},ids=new Set<string>(),add=(v:any)=>{if(typeof v==='string'&&v&&!v.startsWith('assembled:'))ids.add(v);};
+ for(const k of ['fileId','policyFileId','engagementFileId','licenseFileId','evidenceId'])add(input?.[k]);for(const k of ['policyFileId','engagementFileId'])add(a.controls?.[k]);
+ const active=(a.packages||[]).filter((p:Entry)=>!(a.packages||[]).some((x:Entry)=>x.supersedes===p.id)&&!(a.events||[]).some((e:Entry)=>e.action==='package.withdrawn'&&e.target===p.id));
+ for(const p of active){add(p.fileId);for(const stage of ['OPERATIONS_COMPLETE','LICENSED_RECOMMENDATION_EVIDENCE','CLIENT_AUTHORIZATION_EVIDENCE'])add((a.reviews||[]).filter((r:Entry)=>r.packageId===p.id&&r.stage===stage).at(-1)?.evidenceId);}
+ for(const p of a.participants||[])if(!(a.events||[]).some((e:Entry)=>e.action==='participant.deactivated'&&e.target===p.id))add(p.licenseFileId);
+ let budget=0;for(const f of entries){if(!ids.has(f.id))continue;try{if(!f.object_key||!Number.isInteger(f.size)||f.size<=0||f.size>12*1024*1024||budget+f.size>60*1024*1024)throw Error('Original exceeds the authority verification size/batch limit; use a reviewed document of 12 MB or less.');budget+=f.size;const object=await objectStorage().get(f.object_key);if(!object)throw Error('Original bytes are unavailable.');const bytes=await object.arrayBuffer();if(bytes.byteLength!==f.size)throw Error('Original size does not match its evidence record.');const sha=await digest(bytes),suffix=String(f.id).split('-').at(-1)||'';if(/^[a-f0-9]{64}$/i.test(suffix)&&suffix.toLowerCase()!==sha)throw Error('Original bytes do not match the uploaded evidence digest.');f.contentProof={digest:sha,metadata:authoritySourceMetadata(f),bytes:bytes.byteLength};f.objectLease=object.etag||null;}catch(e){f.contentProofError=e instanceof Error?e.message:'Original could not be checked.';}}
+ return entries;
+}
+export async function authorityObjectLeasesCurrent(entries:Entry[]){for(const f of entries.filter(f=>f.contentProof&&f.object_key)){const object=await objectStorage().get(f.object_key);if(!object)return false;if(f.objectLease){if(object.etag!==f.objectLease||object.size!==f.size)return false;}else{const bytes=await object.arrayBuffer();if(bytes.byteLength!==f.size||await digest(bytes)!==f.contentProof.digest)return false;}}return true;}
