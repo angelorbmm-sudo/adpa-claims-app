@@ -82,6 +82,7 @@ try{
  transpile('lib/carrier-extract.ts', {"'./inventory-reconciliation'":"'./inventory-reconciliation.mjs'"});
  transpile('app/api/inventory-reconciliation/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/inventory-reconciliation'":"'./inventory-reconciliation.mjs'","'@/lib/carrier-sheet'":"'./carrier-sheet.mjs'","'@/lib/carrier-extract'":"'./carrier-extract.mjs'","'@/lib/adjuster-contact'":"'./adjuster-contact.mjs'"},'inventory-reconciliation-route.mjs');
  transpile('lib/adjuster-contact.ts');
+ transpile('lib/submission-review-client.ts',{});
  transpile('lib/inventory-submissions.ts', {"'./adjuster-contact'":"'./adjuster-contact.mjs'"});
  transpile('app/api/inventory-submissions/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/inventory-submissions'":"'./inventory-submissions.mjs'","'@/lib/adjuster-contact'":"'./adjuster-contact.mjs'","'@/lib/inventory-export'":"'./inventory-export.mjs'"},'inventory-submissions-route.mjs');
  transpile('app/api/adjuster-contact/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/adjuster-contact'":"'./adjuster-contact.mjs'","'@/lib/inventory-export'":"'./inventory-export.mjs'"},'adjuster-contact-route.mjs');
