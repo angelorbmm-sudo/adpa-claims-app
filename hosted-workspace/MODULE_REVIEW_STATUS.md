@@ -2,7 +2,7 @@
 
 Canonical numbering comes from `ADPA_Complete_Module_Inventory_2026-10-13.pdf` (52 workflow areas). Later handoff documents used review sequence numbers after area 37; those are historical review labels, not canonical inventory numbers. This ledger corrects that drift. Earlier claims that inventory areas 21–52 were all reviewed were inaccurate: communication adapters and the platform-wide permissions/persistence review remain outstanding.
 
-Completed or covered by a dedicated related review: 48 canonical areas. Remaining dedicated passes: 4. This describes code review coverage, not commercial readiness. Contents package exports and adjuster discovery remain conservatively open despite related submission/package checks.
+Completed or covered by a dedicated related review: 49 canonical areas. Remaining dedicated passes: 3. This describes code review coverage, not commercial readiness. Contents package exports and adjuster discovery remain conservatively open despite related submission/package checks.
 
 | Canonical area | Review evidence |
 | --- | --- |
@@ -30,6 +30,7 @@ Completed or covered by a dedicated related review: 48 canonical areas. Remainin
 | 38 Receipt matching/depreciation | RECEIPT_RECOVERY_REVIEW_HANDOFF.md (historical label 41) |
 | 39 AI preparation queue | PREPARATION_ENGINE_REVIEW_HANDOFF.md (historical label 44) |
 | 40 Packages/authority/approval | AUTHORITY_RECORDS_REVIEW_HANDOFF.md, PACKAGE_ASSEMBLY_REVIEW_HANDOFF.md, PACKAGE_APPROVAL_REVIEW_HANDOFF.md (historical labels 43/46/47) |
+| 41 Contents PDF/spreadsheet package | CONTENTS_EXPORT_REVIEW_HANDOFF.md |
 | 43 Inventory submission/follow-up | SUBMISSION_FOLLOWUP_REVIEW_HANDOFF.md (historical label 48) |
 | 44 Carrier inventory reconciliation | INVENTORY_RECONCILIATION_REVIEW_HANDOFF.md (historical label 49) |
 | 45 General supplements/disputes | SUPPLEMENT_DISPUTE_REVIEW_HANDOFF.md (historical label 38) |
@@ -37,8 +38,8 @@ Completed or covered by a dedicated related review: 48 canonical areas. Remainin
 | 49 ALE ledger | ALE_EXPENSE_REVIEW_HANDOFF.md (historical label 42) |
 | 50 Mortgage/draws | MORTGAGE_DRAW_REVIEW_HANDOFF.md (historical label 39) |
 
-Remaining canonical areas: 41 contents PDF/spreadsheet package; 42 adjuster discovery/inventory email; 51 company communication delivery adapters; 52 permissions/persistence/version history.
+Remaining canonical areas: 42 adjuster discovery/inventory email; 51 company communication delivery adapters; 52 permissions/persistence/version history.
 
-Next: area 41, Contents PDF and spreadsheet package. First-job and shared participation now have dedicated reviews. The production handoff is separate from canonical area 52.
+Next: area 42, Adjuster discovery and inventory email. First-job and shared participation now have dedicated reviews. The production handoff is separate from canonical area 52.
 
 Specialist validation with Arman, Ana and Peter remains pending. Jose provider setup/integrations and independent review, real multi-user/browser/iPhone walkthroughs, security/recovery/performance checks and a controlled pilot are separate release gates. Passing automated checks alone does not establish launch readiness.

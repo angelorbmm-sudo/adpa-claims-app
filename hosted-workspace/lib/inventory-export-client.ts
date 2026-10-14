@@ -1,0 +1,1 @@
+export async function completeInventoryExport(write:()=>Promise<void>,confirmed:()=>void,refresh:()=>Promise<void>){await write();confirmed();try{await refresh();return '';}catch(e){return 'Saved successfully. '+((e as Error).message||'Screen refresh failed.')+' Refresh saved inventory before continuing.';}}

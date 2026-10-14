@@ -1,0 +1,15 @@
+# Contents PDF and spreadsheet package — canonical area 41
+
+Completed 2026-10-14. Canonical review coverage is 49/52; three dedicated passes remain. Next: area 42 Adjuster discovery and inventory email.
+
+Every export action requires the fingerprint of the inventory and original manifest displayed for human review. Same-version changes before the request require refresh/recheck. The final update additionally compares exact claim state/name/address/version and the full evidence manifest, retaining concurrent corrections instead of overwriting them.
+
+New PDF/workbook snapshots retain SHA-256 digests of their exact bytes. Direct downloads verify those digests and block changed attachments. Historical snapshots remain historical, but legacy records lacking saved integrity proof require a fresh reviewed export. Existing history is retained; review audit entries extend beyond the former 100-entry truncation and stop at 300 without dropping earlier records. Snapshot history remains bounded at 20.
+
+Exclusion, valuation and whole-package fingerprints bind complete original provenance: identifier, filename, MIME, size, category and creation time. Any changed original conservatively requires re-review. Duplicate contents reference IDs hold all affected rows even when descriptions/rooms/tags differ. Totals reject unsafe cents precision; unknown/held amounts remain omitted rather than converted to zero. Depreciation must remain nonnegative safe integer cents within the approved proposal.
+
+Long insured names wrap in repeated PDF headers instead of overflowing. Existing workbook structure, inline text safety, Unicode, numeric values, blank unknowns and source sheets are preserved. Successful writes remain successful if refresh fails, reset acknowledgments immediately and require reloaded data for another write. Rejected requests retain entries; a synchronous guard stops duplicate writes and busy state blocks related studio operations.
+
+Validation: all 719 automated tests passed; TypeScript and production build passed. New regressions cover attachment tampering/legacy proof, displayed-source changes, exact final races, full provenance, audit retention/cap, duplicate references and confirmed-save/refresh behavior. A synthetic long-name/description PDF was rendered and all three pages visually inspected without clipping or overlap. The synthetic workbook reopened with Summary, Inventory, Sources and Valuation basis; numeric proposal totals, blank unsupported values, held rows and formula-safe text were verified. These synthetic QA files are temporary test output, not client records.
+
+Browser/iPhone, native Excel/Numbers, real multi-user and real provider walkthroughs remain pending. No real correspondence was sent or live financial records changed. Provider setup, specialist review, security/recovery/performance and controlled pilot remain release gates. Failed generation commits may leave inaccessible unreferenced staging objects in private storage; storage housekeeping remains part of platform operations.

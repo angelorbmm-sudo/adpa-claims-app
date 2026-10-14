@@ -103,6 +103,7 @@ try{
  transpile('app/api/receipt-recovery/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/receipt-recovery'":"'./receipt-recovery.mjs'","'@/lib/pricing'":"'./pricing.mjs'"},'receipt-recovery-route.mjs');
  transpile('lib/pricing.ts');
  transpile('lib/fonts/export-font.ts',{},'export-font.mjs');
+ transpile('lib/inventory-export-client.ts');
  transpile('lib/inventory-export.ts', {"'./pricing'":"'./pricing.mjs'","'./replacement-research'":"'./replacement-research.mjs'"});
  transpile('lib/inventory-xlsx.ts');
  transpile('lib/inventory-pdf.ts', {"'./fonts/export-font'":"'./export-font.mjs'","'./inventory-export'":"'./inventory-export.mjs'"});
