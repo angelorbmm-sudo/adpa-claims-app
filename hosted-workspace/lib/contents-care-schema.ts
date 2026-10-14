@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {careTimestamp} from './contents-care-review.js';
 const text=z.string().max(2000),short=z.string().max(200),ref=z.string().max(200),optional=(s:any)=>s.optional();
 const number=z.union([z.string().max(30),z.number().finite()]).refine(v=>v===''||/^\d{1,9}(\.\d{1,4})?$/.test(String(v)),'Use a nonnegative quantity');
 const money=z.union([z.string().max(20),z.number().finite()]).refine(v=>v===''||/^\d{1,9}(\.\d{1,2})?$/.test(String(v)),'Use nonnegative dollars and cents');
@@ -17,7 +18,7 @@ export const careSchema=z.object({applicable:z.boolean().optional(),...strings([
 export function validateCare(next:any,prior:any,files:any[]){
  careSchema.parse(next);
  for(const [kind,schema] of Object.entries(careRows)){
-  const rows=next[kind]||[],ids=new Set();for(const row of rows){schema.parse(row);if(ids.has(row.id))throw Error('Record IDs must be unique.');ids.add(row.id);for(const [key,value] of Object.entries(row))if((key==='documentId'||/DocumentId$/.test(key))&&value&&!files.some(f=>f.id===value))throw Error('Supporting evidence must belong to this claim.');}
+  const rows=next[kind]||[],ids=new Set();for(const row of rows){schema.parse(row);const old=(prior[kind]||[]).find((r:any)=>r.id===row.id);for(const key of ['observedAt','startedAt','endedAt','createdAt','updatedAt'])if(row[key]&&row[key]!==old?.[key]&&!careTimestamp(row[key]))throw Error('Use a real calendar timestamp with its timezone offset.');if(ids.has(row.id))throw Error('Record IDs must be unique.');ids.add(row.id);for(const [key,value] of Object.entries(row))if((key==='documentId'||/DocumentId$/.test(key))&&value&&!files.some(f=>f.id===value))throw Error('Supporting evidence must belong to this claim.');}
   if((prior[kind]||[]).some((r:any)=>!ids.has(r.id)))throw Error('Keep existing records for history. Correct a record or void a service line with a reason.');
  }
  for(const [key,value] of Object.entries(next))if(/DocumentId$/.test(key)&&value&&!files.some(f=>f.id===value))throw Error('Supporting evidence must belong to this claim.');
