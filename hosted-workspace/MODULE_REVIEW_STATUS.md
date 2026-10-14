@@ -2,7 +2,7 @@
 
 Canonical numbering comes from `ADPA_Complete_Module_Inventory_2026-10-13.pdf` (52 workflow areas). Later handoff documents used review sequence numbers after area 37; those are historical review labels, not canonical inventory numbers. This ledger corrects that drift. Earlier claims that inventory areas 21–52 were all reviewed were inaccurate: communication adapters and the platform-wide permissions/persistence review remain outstanding.
 
-Completed or covered by a dedicated related review: 44 canonical areas. Remaining dedicated passes: 8. This describes code review coverage, not commercial readiness. Contents package exports and adjuster discovery remain conservatively open despite related submission/package checks.
+Completed or covered by a dedicated related review: 45 canonical areas. Remaining dedicated passes: 7. This describes code review coverage, not commercial readiness. Contents package exports and adjuster discovery remain conservatively open despite related submission/package checks.
 
 | Canonical area | Review evidence |
 | --- | --- |
@@ -17,6 +17,7 @@ Completed or covered by a dedicated related review: 44 canonical areas. Remainin
 | 9 Agreement library/claim packets | AGREEMENT_PACKET_REVIEW_HANDOFF.md (historical label 40) |
 | 10 Expanded Signing center | Signing review and signing tests |
 | 11 Shared recovery job/company participation | SHARED_PARTICIPATION_REVIEW_HANDOFF.md |
+| 12 Company My Jobs/focused navigation | COMPANY_JOBS_REVIEW_HANDOFF.md |
 | 13 Ready to begin work checklist | JOB_READINESS_REVIEW_HANDOFF.md (historical label 52) |
 | 14 Direct claim intake | CLAIM_CORE_REVIEW_HANDOFF.md |
 | 15 Morning dashboard | MORNING_DASHBOARD_REVIEW_HANDOFF.md (historical label 45) |
@@ -33,8 +34,8 @@ Completed or covered by a dedicated related review: 44 canonical areas. Remainin
 | 49 ALE ledger | ALE_EXPENSE_REVIEW_HANDOFF.md (historical label 42) |
 | 50 Mortgage/draws | MORTGAGE_DRAW_REVIEW_HANDOFF.md (historical label 39) |
 
-Remaining canonical areas: 12 My Jobs/navigation; 17 conversations/appointments; 18 carrier communication timeline; 20 coverage accounting/routing; 41 contents PDF/spreadsheet package; 42 adjuster discovery/inventory email; 51 company communication delivery adapters; 52 permissions/persistence/version history.
+Remaining canonical areas: 17 conversations/appointments; 18 carrier communication timeline; 20 coverage accounting/routing; 41 contents PDF/spreadsheet package; 42 adjuster discovery/inventory email; 51 company communication delivery adapters; 52 permissions/persistence/version history.
 
-Next: area 12, Company My Jobs and focused navigation. First-job and shared participation now have dedicated reviews. The production handoff is separate from canonical area 52.
+Next: area 17, In-app conversations and appointments. First-job and shared participation now have dedicated reviews. The production handoff is separate from canonical area 52.
 
 Specialist validation with Arman, Ana and Peter remains pending. Jose provider setup/integrations and independent review, real multi-user/browser/iPhone walkthroughs, security/recovery/performance checks and a controlled pilot are separate release gates. Passing automated checks alone does not establish launch readiness.

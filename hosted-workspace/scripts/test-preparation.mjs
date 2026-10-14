@@ -18,6 +18,7 @@ try{
  transpile('app/api/evidence/route.ts',{"'@/db/store'":"'./mocks.mjs'","'@/db/import-auth'":"'./import-auth.mjs'"},'evidence-route.mjs');
  transpile('lib/company-onboarding.ts');
  transpile('lib/service-selection.ts', {"'./company-onboarding'":"'./company-onboarding.mjs'"});
+ transpile('lib/company-jobs-client.ts');
  transpile('app/api/company-jobs/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/shared-jobs'":"'./shared-jobs.mjs'","'@/app/api/shared-jobs/route'":"'./shared-jobs-route.mjs'"},'company-jobs-route.mjs');
  transpile('lib/invitations.ts');
  transpile('app/api/invitations/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/policyholder'":"'./policyholder.mjs'","'@/lib/invitations'":"'./invitations.mjs'"},'invitations-route.mjs');
