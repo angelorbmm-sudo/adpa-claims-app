@@ -106,7 +106,9 @@ try{
  writeFileSync(join(dir,'mitigation-review.js'),readFileSync('lib/mitigation-review.js'));
  transpile('lib/mitigation-adapter.ts',{},'mitigation-adapter.mjs');
  transpile('app/api/mitigation/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/mitigation-adapter'":"'./mitigation-adapter.mjs'","'@/lib/mitigation-review.js'":"'./mitigation-review.js'"},'mitigation-route.mjs');
- transpile('lib/claim-package.ts',{"'./payment-review'":"'./payment-review.mjs'","'./water'":"'./water.mjs'","'./preparation'":"'./preparation.mjs'","'./policy-review'":"'./policy-review.mjs'","'./mitigation-adapter'":"'./mitigation-adapter.mjs'","'./contents-care-adapter'":"'./contents-care-adapter.mjs'","'./pricing'":"'./pricing.mjs'","'../lib/pricing'":"'./pricing.mjs'"});
+ transpile('lib/package-export.ts',{});
+ transpile('lib/package-records-client.ts',{});
+ transpile('lib/claim-package.ts',{"'./package-export'":"'./package-export.mjs'","'./payment-review'":"'./payment-review.mjs'","'./water'":"'./water.mjs'","'./preparation'":"'./preparation.mjs'","'./policy-review'":"'./policy-review.mjs'","'./mitigation-adapter'":"'./mitigation-adapter.mjs'","'./contents-care-adapter'":"'./contents-care-adapter.mjs'","'./pricing'":"'./pricing.mjs'","'../lib/pricing'":"'./pricing.mjs'"});
  transpile('lib/authority-sources.ts', {"'@/db/store'":"'./mocks.mjs'","'@/db/authority'":"'./authority.mjs'"});
  transpile('lib/package-approval.ts',{"'@/db/store'":"'./mocks.mjs'","'./claim-package'":"'./claim-package.mjs'"});
  transpile('app/api/authority/route.ts',{"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/db/authority'":"'./authority.mjs'","'@/lib/package-approval'":"'./package-approval.mjs'","'@/lib/authority-sources'":"'./authority-sources.mjs'"},'authority-route.mjs');
