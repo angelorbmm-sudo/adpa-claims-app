@@ -5,6 +5,7 @@ Module 36 code cleanup completed.
 - Pricing source triage and candidate/quote snapshots bind filename, MIME type, size, category and creation date. Legacy triage without the new source key must be repeated.
 - Source review submits the file version opened by the reviewer. Candidate review and replacement approval submit the opened candidate snapshot; refreshed claim versions cannot silently authorize an older comparison.
 - Final writes also require exact evidence metadata to remain unchanged throughout the operation. Inventory export reads the same metadata so approved proposals stay consistent across the pricing-to-package workflow.
+- Malformed quantities (scientific notation, hex, whitespace and excess decimal precision) remain incomplete rather than displaying misleading totals. Pricing note inputs pause during saves to preserve the submitted review.
 - Duplicate active pricing candidates for one destination record are flagged even when their physical keys differ. Invalid or unsafe extended quantities display incomplete totals.
 - Price dates require real calendar timestamps with timezones, alongside the existing future/30-day freshness checks.
 - Editing a public query resets its privacy confirmation. Unsaved pricing rows, queries and review notes have navigation protection and Copy; refreshing warns before discarding them.
