@@ -74,6 +74,7 @@ try{
  transpile('lib/water-ai.ts', {"'./water'":"'./water.mjs'","'./preparation'":"'./preparation.mjs'"});
  transpile('app/api/water/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/water'":"'./water.mjs'","'@/lib/water-ai'":"'./water-ai.mjs'"}, 'water-route.mjs');
  transpile('app/api/water-evidence/route.ts', {"'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/app/api/water/route'":"'./water-route.mjs'","'@/lib/water'":"'./water.mjs'"}, 'water-evidence-route.mjs');
+ transpile('lib/payment-review-client.ts',{});
  transpile('lib/payment-review.ts', {"'./adjuster-contact'":"'./adjuster-contact.mjs'","'./carrier-sheet'":"'./carrier-sheet.mjs'"});
  transpile('lib/check-extract.ts', {"'./payment-review'":"'./payment-review.mjs'"});
  transpile('app/api/payment-review/route.ts', {"'cloudflare:workers'":"'./mocks.mjs'","'@/app/chatgpt-auth'":"'./mocks.mjs'","'@/db/store'":"'./mocks.mjs'","'@/lib/company'":"'./company.mjs'","'@/lib/payment-review'":"'./payment-review.mjs'","'@/lib/check-extract'":"'./check-extract.mjs'","'@/lib/carrier-sheet'":"'./carrier-sheet.mjs'","'@/lib/adjuster-contact'":"'./adjuster-contact.mjs'"},'payment-review-route.mjs');
