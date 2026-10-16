@@ -1,0 +1,6 @@
+case_id,roof_type,loss_type,validation_focus
+R1,Simple gable,Wind,Two facets and ridge/eave/rake
+R2,Hip roof,Wind,Per-facet pitch and hip/ridge
+R3,Multi-valley,Hail,Complex geometry and waste
+R4,Penetration-heavy,Mixed,Flashing and repair scope
+R5,Obscured roof,Unknown,Missing/conflicting measurements
