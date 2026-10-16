@@ -1,0 +1,70 @@
+{
+  "version": "1.0",
+  "status": "proposed_internal_contract",
+  "vendor_api_status": "not_verified",
+  "objects": {
+    "MeasurementSource": [
+      "source_id",
+      "vendor",
+      "report_id",
+      "licensed_use",
+      "retrieved_at",
+      "units"
+    ],
+    "RoofFacet": [
+      "facet_id",
+      "plan_area_sqft",
+      "sloped_area_sqft",
+      "pitch_rise_per_12",
+      "source_id"
+    ],
+    "ScopeCandidate": [
+      "candidate_id",
+      "assembly_key",
+      "measurement_refs",
+      "evidence_refs",
+      "quantity",
+      "review_required"
+    ],
+    "ApprovedScopeLine": [
+      "scope_line_id",
+      "approved_quantity",
+      "unit",
+      "reviewer_id",
+      "revision"
+    ],
+    "EstimateMapping": [
+      "scope_line_id",
+      "generic_work_code",
+      "licensed_catalog_reference_optional"
+    ],
+    "PricingObservation": [
+      "source",
+      "observed_at",
+      "geography",
+      "unit",
+      "amount",
+      "license_rights"
+    ],
+    "SupplementProposal": [
+      "baseline_estimate_version",
+      "proposed_scope_version",
+      "evidence_refs",
+      "reviewer_status"
+    ]
+  },
+  "internal_endpoints": [
+    "POST /measurement-jobs",
+    "POST /measurement-imports",
+    "POST /scope-proposals",
+    "POST /scope-reviews",
+    "POST /estimate-exports"
+  ],
+  "hard_gates": [
+    "No unlicensed vendor data export",
+    "No duplicate pitch correction",
+    "No unapproved final estimate export",
+    "No automatic coverage determination",
+    "No automatic supplement submission"
+  ]
+}
