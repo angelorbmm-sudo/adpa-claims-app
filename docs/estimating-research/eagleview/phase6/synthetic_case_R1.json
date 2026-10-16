@@ -1,0 +1,19 @@
+{
+  "synthetic": true,
+  "case_id": "R1",
+  "facets": [
+    {
+      "id": "A",
+      "plan_area_sqft": 600,
+      "pitch_rise_per_12": 6
+    },
+    {
+      "id": "B",
+      "plan_area_sqft": 600,
+      "pitch_rise_per_12": 6
+    }
+  ],
+  "expected_total_sloped_area_sqft": 1341.6408,
+  "example_waste_percent": 10,
+  "note": "Illustrative geometry only, not vendor or claim data."
+}
