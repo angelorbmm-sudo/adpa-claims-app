@@ -1,0 +1,17 @@
+test_id,scenario,expected
+P3-01,Flat roof 0:12,sloped area equals plan area
+P3-02,6:12 roof 1200 sqft plan,sloped area approximately 1341.6408 sqft
+P3-03,12:12 roof 100 sqft plan,sloped area approximately 141.4214 sqft
+P3-04,Reported sloped area,do not apply pitch factor twice
+P3-05,Mixed-pitch facets,sum separately computed facet areas
+P3-06,Missing pitch,require review before authoritative sloped area
+P3-07,Negative area,reject
+P3-08,Unknown units,reject until normalized
+P3-09,Duplicate edge IDs,reconcile and avoid double counting
+P3-10,Roof waste,apply only once and preserve rationale
+P3-11,Package rounding,round after quantity aggregation
+P3-12,Conflicting sources,flag reviewer decision
+P3-13,Manual override,require identity reason and audit event
+P3-14,Opening subtraction,follow trade-specific measurement rules
+P3-15,Occluded roof,require field verification
+P3-16,Unauthorized vendor data export,block
