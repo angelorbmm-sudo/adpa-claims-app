@@ -1,0 +1,31 @@
+test_id,scenario,expected_result,status
+T01,0:12 pitch,Factor equals one,NOT RUN
+T02,6:12 pitch,Factor approximately 1.1180339887,NOT RUN
+T03,Reported sloped area,Do not apply pitch again,NOT RUN
+T04,Multiple facets,Calculate each facet separately,NOT RUN
+T05,Missing pitch,Review gate,NOT RUN
+T06,Negative area,Reject,NOT RUN
+T07,Unknown units,Reject,NOT RUN
+T08,Duplicate roof edge,Prevent double count,NOT RUN
+T09,Ridge versus hip,Maintain distinct types,NOT RUN
+T10,Valley membrane,Require geometry and assembly,NOT RUN
+T11,Starter strip,Require applicability,NOT RUN
+T12,Drip edge,Require verified edge context,NOT RUN
+T13,Penetration flashing,Require evidence,NOT RUN
+T14,Decking,Do not infer hidden damage,NOT RUN
+T15,Waste,Apply only once,NOT RUN
+T16,Bundle rounding,After aggregation,NOT RUN
+T17,Baseline revision,Preserve version,NOT RUN
+T18,Bundled accessory,No false omission,NOT RUN
+T19,Unmatched item,Human review,NOT RUN
+T20,Unlicensed report,Block reuse,NOT RUN
+T21,Cross-app sharing,Check entitlement,NOT RUN
+T22,Manual override,Audit,NOT RUN
+T23,Unapproved scope,Block export,NOT RUN
+T24,Conflicting sources,Exception review,NOT RUN
+T25,Occluded roof,Field verification,NOT RUN
+T26,Estimate unit mismatch,Normalize,NOT RUN
+T27,Coverage determination,Human assessment,NOT RUN
+T28,Private client data,No public publication,NOT RUN
+T29,Failed export retry,Idempotent,NOT RUN
+T30,Audit metadata,Source version actor timestamp,NOT RUN
