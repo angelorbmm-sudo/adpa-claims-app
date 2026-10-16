@@ -1,0 +1,25 @@
+id,scenario,expected
+EV4-01,Reported sloped area,Do not apply pitch twice
+EV4-02,Plan area and pitch,Compute facet-specific sloped area
+EV4-03,Missing pitch,Require review
+EV4-04,Duplicate report order,Prevent duplicate purchase
+EV4-05,Unlicensed report reuse,Block export
+EV4-06,Duplicate roof edges,Prevent double count
+EV4-07,Starter candidate,Require assembly review
+EV4-08,Valley membrane,Require geometry and product width
+EV4-09,Roof waste,Separate reviewed waste from installed quantity
+EV4-10,Bundle coverage,Round after quantity aggregation
+EV4-11,Conflicting sources,Require reviewer decision
+EV4-12,Manual override,Audit before after reason actor
+EV4-13,Carrier estimate comparison,Version baseline and proposal
+EV4-14,Potential omission,Require evidence and nonduplication
+EV4-15,LifeWorth comparison,Normalize units and retain provenance
+EV4-16,Xactimate API unavailable,Support human-mediated handoff
+EV4-17,Unknown proprietary item code,Do not invent mapping
+EV4-18,Unauthorized reviewer,Deny approval
+EV4-19,Failed export,Idempotent retry
+EV4-20,Confidential client data,Do not publish
+EV4-21,HomeBack cross-product reuse,Check licensed rights
+EV4-22,Exterior openings,Apply trade-specific measurement rule
+EV4-23,Coverage conclusion,Require professional assessment
+EV4-24,Supplement submission,Require explicit authorization
