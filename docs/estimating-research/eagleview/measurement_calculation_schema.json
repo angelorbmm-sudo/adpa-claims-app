@@ -1,0 +1,34 @@
+{
+  "version": "1.0",
+  "status": "proposed",
+  "roofFacet": {
+    "facet_id": "string",
+    "plan_area_sqft": "decimal|null",
+    "sloped_area_sqft_reported": "decimal|null",
+    "pitch_rise_per_12": "decimal|null",
+    "calculated_sloped_area_sqft": "decimal|null",
+    "source_id": "string",
+    "measurement_method": "licensed_report|field|manual|inferred",
+    "review_status": "pending|approved|rejected"
+  },
+  "roofEdge": {
+    "edge_id": "string",
+    "type": "ridge|hip|valley|eave|rake|other",
+    "length_ft": "decimal",
+    "source_id": "string"
+  },
+  "quantityCalculation": {
+    "formula_version": "string",
+    "inputs": "object",
+    "outputs": "object",
+    "waste_basis": "string|null",
+    "override_reason": "string|null",
+    "reviewer_id": "string|null"
+  },
+  "rules": [
+    "Never double-apply pitch factor",
+    "Never double-count roof edges",
+    "No inferred measurement presented as verified",
+    "Track licensing/retention permissions"
+  ]
+}
