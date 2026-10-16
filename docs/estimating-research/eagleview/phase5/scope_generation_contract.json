@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "status": "proposed_not_implemented",
+  "scope_run": {
+    "measurement_version": "string",
+    "loss_evidence_refs": [
+      "string"
+    ],
+    "baseline_estimate_version": "string",
+    "approval_status": "draft|review|approved|rejected"
+  },
+  "scope_candidate": {
+    "candidate_id": "string",
+    "assembly_key": "string",
+    "rule_version": "string",
+    "quantity": "decimal|null",
+    "unit": "string",
+    "source_measurement_refs": [
+      "string"
+    ],
+    "evidence_refs": [
+      "string"
+    ],
+    "inclusion_screen": "unreviewed|bundled|separate|not_applicable",
+    "review_state": "pending|approved|rejected"
+  },
+  "comparison_finding": {
+    "baseline_line_refs": [
+      "string"
+    ],
+    "candidate_id": "string",
+    "classification": "supported_omission|verify|included_elsewhere|not_applicable|rejected",
+    "reason": "string",
+    "reviewer_id": "string|null"
+  },
+  "export_gate": [
+    "licensed_use_verified",
+    "all_critical_exceptions_resolved",
+    "reviewer_approved",
+    "version_locked"
+  ]
+}
