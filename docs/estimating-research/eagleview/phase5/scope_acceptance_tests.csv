@@ -1,0 +1,31 @@
+id,scenario,expected
+P5-01,Missing measurement source,Block candidate
+P5-02,Missing damage evidence,Mark needs verification
+P5-03,Unconfirmed roof layers,Do not assume tear-off layers
+P5-04,Missing roof pitch,Require review
+P5-05,Reported sloped area,Do not apply pitch twice
+P5-06,Mixed roof pitches,Sum facet-specific areas
+P5-07,Negative roof area,Reject
+P5-08,Unknown measurement unit,Reject
+P5-09,Duplicate edge ID,Prevent double count
+P5-10,Starter candidate,Require system applicability
+P5-11,Starter bundled in baseline,Flag included elsewhere
+P5-12,Drip edge candidate,Require approved edge geometry
+P5-13,Valley membrane candidate,Require valley detail
+P5-14,Ridge cap candidate,Require ridge and hip lengths
+P5-15,Flashing candidate,Require penetration evidence
+P5-16,Ventilation candidate,Require verified conditions
+P5-17,Deck condition unknown,Do not infer confirmed repair
+P5-18,Roof covering waste,Require rationale and apply once
+P5-19,Bundle rounding,Use product-specific coverage
+P5-20,Price comparison,Normalize units and geography
+P5-21,Carrier baseline revision,Preserve immutable version
+P5-22,Similar wording different assembly,Do not auto-match
+P5-23,Same assembly different units,Normalize before comparison
+P5-24,No baseline match,Flag for review not automatically owed
+P5-25,No policy review,Do not assert coverage
+P5-26,Manual quantity override,Audit identity reason before and after
+P5-27,Unapproved export,Block
+P5-28,Unlicensed proprietary data,Block reuse
+P5-29,HomeBack reuse request,Check entitlement and consent
+P5-30,Supplement draft,Require evidence and approval
