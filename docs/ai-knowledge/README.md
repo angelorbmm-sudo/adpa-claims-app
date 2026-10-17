@@ -46,3 +46,15 @@ Deduplicate by video ID and checksum; reject empty transcripts. Preserve origina
 - [ ] José reviews and merges after testing
 
 **No app functionality or corpus upload is claimed by this document.**
+
+## October 17 English-only corpus update (verified)
+The owner directed that only English transcripts be used. A new corpus was extracted and uploaded to private Google Drive: **235 English transcript JSON files**, 266 discovered source videos, 31 unavailable/excluded. Includes timestamped segments, channel inventory and SHA256 manifest.
+
+- Permanent Drive ZIP: https://drive.google.com/file/d/1GF9EO6RXb4kMqBfNZbnM3FdKpQOTwrBo/view
+- Drive file ID: `1GF9EO6RXb4kMqBfNZbnM3FdKpQOTwrBo`
+- Stored size: `3,471,843` bytes; MIME `application/zip`
+- Folder: `1PBie5XdpSzlYuiWqPVUrt8CzsYcMLgtP` (José Technical Development Packages)
+- Verified owner-only Drive metadata; not publicly shared. José may need explicit access granted.
+- Earlier 45-transcript checkpoint superseded by this English-only archive; do not ingest non-English tracks from earlier checkpoint.
+
+**Next technical action:** ingest only the verified English JSON files from controlled Drive/object storage into the ADPA retrieval index, then implement and test the four AI specialist workflows. This PR is documentation only; app ingestion and deployment remain unimplemented.
