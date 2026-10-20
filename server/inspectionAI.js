@@ -12,7 +12,7 @@ const outputSchema={type:'object',additionalProperties:false,required:['observat
 export async function suggestInspection({room,frames,apiKey,model,fetcher=fetch}) {
   if(!apiKey||!model)throw Object.assign(new Error('Inspection AI is not configured. Ask the administrator to set the server API key and vision model.'),{status:503});
   if(!room.transcript?.trim()&&!frames.length)throw Object.assign(new Error('Provide material notes or photo/video frames before analysis.'),{status:400});
-  const content=[{type:'input_text',text:JSON.stringify({room:{name:room.name,length:room.length,width:room.width,height:room.height,openingsArea:room.openingsArea,measurementSource:room.measurementSource,measurementVerified:room.measurementVerified,transcript:room.transcript},evidenceIds:room.evidenceIds,frames:frames.map(({dataUrl,...reference})=>reference)})}];
+  const content=[{type:'input_text',text:JSON.stringify({room:{name:room.name,length:room.length,width:room.width,height:room.height,openingsArea:room.openingsArea,measurementSource:room.measurementSource,measurementVerified:room.measurementVerified,measurementMode:room.measurementMode||'rectangle',scanGeometry:room.scanGeometry||null,transcript:room.transcript},evidenceIds:room.evidenceIds,frames:frames.map(({dataUrl,...reference})=>reference)})}];
   for(const frame of frames)content.push({type:'input_text',text:`Evidence ${frame.evidenceId}; video timestamp ${frame.timestampSeconds??'photo'}`},{type:'input_image',image_url:frame.dataUrl,detail:'high'});
   const response=await fetcher('https://api.openai.com/v1/responses',{
     method:'POST',headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json'},signal:AbortSignal.timeout(60000),

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normalizeNativeScan, polygonQuantities } from './scanGeometry.js';
 
 const finite = z.number().finite().nonnegative().max(1000000);
 export const ScanSchema = z.object({
@@ -10,6 +11,7 @@ export const ScanSchema = z.object({
   }).strict()).min(1).max(100)
 }).strict();
 export function normalizeScan(input) {
+  if(input?.version===2)return normalizeNativeScan(input);
   const scan = ScanSchema.parse(input), factor = scan.units === 'm' ? 1 / 0.3048 : 1;
   return scan.rooms.map(room => ({
     name: room.name, length: room.length * factor, width: room.width * factor, height: room.height * factor,
@@ -19,6 +21,7 @@ export function normalizeScan(input) {
   }));
 }
 export function roomQuantities(room) {
+  if(room.measurementMode==='polygon')return polygonQuantities(room);
   const values = ['length', 'width', 'height'].map(key => Number(room[key]));
   if (values.some(v => !Number.isFinite(v) || v <= 0 || v > 1000000)) return null;
   const [l, w, h] = values, openings = Number(room.openingsArea || 0), gross = 2 * (l + w) * h;
@@ -59,7 +62,7 @@ export function comparisonLines(room, documents, timestamp) {
     status: 'Needs review', createdAt: timestamp,
     source: `${room.measurementSource}; evidence: ${line.evidenceIds.join(', ')}; ${line.rationale}`,
     scopeReviewer: room.reviewer, scopeReviewedAt: timestamp,
-    sourceRefs: line.evidenceIds, measurementSnapshot: {length:room.length,width:room.width,height:room.height,openingsArea:room.openingsArea||0,basis:line.basis}
+    sourceRefs: line.evidenceIds, measurementSnapshot: {length:room.length,width:room.width,height:room.height,openingsArea:room.openingsArea||0,basis:line.basis,measurementMode:room.measurementMode||'rectangle',scanGeometry:room.scanGeometry||null}
   }));
 }
 export function mergeComparisonLines(existing, incoming, roomId) {

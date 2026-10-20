@@ -1,0 +1,5 @@
+{
+ "version":2,"scanId":"synthetic-apple-room","provider":"Apple RoomPlan (synthetic fixture)","captureMethod":"apple_roomplan","units":"m","capturedAt":"2026-10-20T06:30:00Z",
+ "warnings":["Synthetic fixture, not a real scan.","Floor projection assumes vertical walls and a level ceiling."],
+ "rooms":[{"name":"Apple example bedroom","points":[{"x":0,"z":0},{"x":3.6576,"z":0},{"x":3.6576,"z":3.048},{"x":0,"z":3.048}],"height":2.4384,"openingsArea":0,"heightSource":"RoomPlan wall-height candidate; field verification required","notes":"Synthetic dimensions only. Inspect actual materials and damage."}]
+}

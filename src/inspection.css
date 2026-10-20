@@ -17,3 +17,8 @@
 .inspection-preview a { display:block; padding:10px; }
 .inspection-scope .record { display:block; }
 .inspection-scope button:disabled { opacity:.5; cursor:not-allowed; }
+.capture-choice { border:1px solid #d4dfe7; border-radius:10px; padding:14px; cursor:pointer; }
+.capture-choice.selected { border-color:#126b7c; background:#eaf4f5; }
+.capture-choice span { display:flex; align-items:center; gap:8px; }
+.capture-choice input { width:auto; }
+.scan-source-preview { overflow:auto; max-height:280px; font-size:12px; white-space:pre-wrap; overflow-wrap:anywhere; }

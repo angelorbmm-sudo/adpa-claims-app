@@ -1,0 +1,25 @@
+name: ADPACapture
+options:
+  bundleIdPrefix: claims.adpa
+  deploymentTarget:
+    iOS: '16.0'
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    CODE_SIGN_STYLE: Automatic
+targets:
+  ADPACapture:
+    type: application
+    platform: iOS
+    sources: [ADPACapture]
+    info:
+      path: Generated/Info.plist
+      properties:
+        CFBundleDisplayName: ADPA Capture
+        NSCameraUsageDescription: Scan a room to prepare inspection measurements for your ADPA claim.
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: claims.adpa.capture
+        TARGETED_DEVICE_FAMILY: '1,2'

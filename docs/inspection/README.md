@@ -41,3 +41,7 @@ Official API references used during implementation:
 - https://developers.openai.com/api/docs/guides/structured-outputs
 
 Validation on this branch: 97 automated tests passed; production build passed. A headless Chromium browser check exercised room creation, measurements, photo persistence across reload, source-linked scope review, comparison transfer, and stale-source warnings. The 390px mobile viewport had no horizontal overflow and no browser JavaScript errors were recorded. Camera/microphone hardware and live provider calls were not tested.
+
+## Cross-platform capture follow-up
+
+Native starter source is now in `native/ios` and `native/android`; see `native/README.md` for build instructions and remaining validation. These are uncompiled source projects, not installed/live connectors. The web module now supports version 2 Apple/Android/manual polygon imports, actual concave floor areas, editable corners, original scan-file fingerprints/local preservation, duplicate protection, and a downloadable draft scope-review JSON packet. The packet is not an SKX/ESX file and includes no original media. Manual capture remains available without depth hardware. Native compile/signing, hardware checks, shared storage and licensed Xactimate/AI connections remain pending. No paid services were activated.
