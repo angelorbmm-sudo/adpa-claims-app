@@ -6,6 +6,7 @@ import { apiEnabled, fetchClaims, saveClaimRemote } from "./lib/api.js";
 const UserAccessCenter = lazy(() => import("./components/UserAccessCenter.jsx"));
 const CheckProcessingCenter = lazy(() => import("./components/CheckProcessingCenter.jsx"));
 import Icon from "./components/Icon.jsx";
+const InspectionScopeCenter = lazy(() => import("./components/InspectionScopeCenter.jsx"));
 import EstimateComparison from "./components/EstimateComparison.jsx";
 import PaymentLedger from "./components/PaymentLedger.jsx";
 import WorkQueue from "./components/WorkQueue.jsx";
@@ -51,6 +52,7 @@ const modules = [
   ["proofplan", "Evidence Standards"],
   ["contents", "Contents"],
   ["ale", "ALE / Loss of Use"],
+  ["inspection", "Inspection & Scope"],
   ["estimates", "Estimate Comparison"],
   ["contractor", "Contractor Commitment"],
   ["payments", "Payment Ledger"],
@@ -254,6 +256,7 @@ function App() {
       supplements: draft.supplements,
       receipts: draft.receipts,
       recovery: draft.recovery,
+      inspection: draft.inspection || { version: 1, rooms: [] },
       estimateComparisons: draft.estimateComparisons || [],
       payments: draft.payments || [],
       checkProcessing: draft.checkProcessing || {checks: []},
@@ -345,7 +348,7 @@ function App() {
           <div className="sidebar-intro"><span className="eyebrow">Your workspace</span><b>From evidence<br/>to settlement.</b></div>
           <nav aria-label="Modules">{[
             ["Workspace", ["portfolio", "overview", "workqueue", "routing"]],
-            ["Build the claim", ["intake", "compliance", "representation", "coverage", "policy", "evidence", "proofplan", "contents", "ale", "estimates", "contractor"]],
+            ["Build the claim", ["intake", "compliance", "representation", "coverage", "policy", "evidence", "proofplan", "contents", "ale", "inspection", "estimates", "contractor"]],
             ["Manage & recover", ["checks", "payments", "financial", "communications", "deadlines", "issues", "critical", "chronology", "supplements", "mortgage", "agreements", "receipts", "package", "approvals", "recovery", "closure"]],
             ["Preparation", ["ai", "transition", "access"]]
           ].map(([group, keys]) => <div className="nav-group" key={group}><span className="nav-label">{group}</span>{keys.map(key => <button className={tab === key ? "active" : ""} aria-current={tab === key ? "page" : undefined} key={key} onClick={() => navigate(key)}><Icon name={key === "portfolio" || key === "overview" ? "dashboard" : key === "workqueue" || key === "deadlines" ? "tasks" : key === "payments" || key === "financial" || key === "recovery" ? "money" : key === "compliance" || key === "approvals" ? "shield" : key === "evidence" || key === "package" ? "folder" : "claim"}/><span>{modules.find(m => m[0] === key)[1]}</span></button>)}</div>)}</nav>
@@ -440,6 +443,7 @@ function App() {
           {tab === "policy" && <PolicyEndorsementCenter claim={draft} onChange={policyAnalysis => saveClaim({ ...draft, policyAnalysis })} />}
           {tab === "evidence" && <EvidenceEngine claim={draft} onChange={documents => saveClaim({ ...draft, documents })} />}
           {tab === "proofplan" && <EvidenceStandardsCenter claim={draft} onChange={evidencePlan => saveClaim({ ...draft, evidencePlan })} />}
+          {tab === "inspection" && <Suspense fallback={<p role="status">Loading inspection…</p>}><InspectionScopeCenter key={draft.id} claim={draft} onChange={saveClaim} /></Suspense>}
           {tab === "estimates" && <EstimateComparison records={draft.estimateComparisons || []} onChange={records => saveClaim({ ...draft, estimateComparisons: records })} />}
           {tab === "contractor" && <ContractorCommitmentCenter claim={draft} onChange={contractorCommitments => saveClaim({ ...draft, contractorCommitments })} />}
           {tab === "payments" && <PaymentLedger payments={draft.payments || []} coverages={draft.coverages} onChange={payments => saveClaim({ ...draft, payments })} />}

@@ -6,3 +6,16 @@ dist/
 *.log
 .DS_Store
 coverage/
+
+# Native development outputs and secrets
+native/**/build/
+native/**/.gradle/
+native/**/local.properties
+native/**/*.xcuserstate
+native/**/xcuserdata/
+native/ios/Generated/
+native/ios/*.xcodeproj/
+*.jks
+*.keystore
+*.p12
+*.mobileprovision

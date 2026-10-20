@@ -1,0 +1,5 @@
+{
+ "version":2,"scanId":"synthetic-android-room","provider":"ARCore guided measurement (synthetic fixture)","captureMethod":"android_arcore","units":"ft","capturedAt":"2026-10-20T06:30:00Z",
+ "warnings":["Synthetic fixture, not a real scan.","User-guided floor corners and manually entered height require verification."],
+ "rooms":[{"name":"Android example L-shaped room","points":[{"x":0,"z":0},{"x":12,"z":0},{"x":12,"z":5},{"x":6,"z":5},{"x":6,"z":10},{"x":0,"z":10}],"height":8,"openingsArea":0,"heightSource":"Inspector entered laser measurement","notes":"Synthetic L-shaped outline. Confirm affected surfaces before scope."}]
+}

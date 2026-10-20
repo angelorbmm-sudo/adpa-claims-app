@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "provider": "Synthetic adapter example — not a field measurement",
+  "capturedAt": "2026-10-20T00:00:00Z",
+  "units": "ft",
+  "rooms": [
+    {"name": "Bedroom", "length": 12, "width": 10, "height": 8, "openingsArea": 20}
+  ]
+}
