@@ -8,6 +8,7 @@ import accessRouter from "./routes/access.js";
 import claimsRouter from "./routes/claims.js";
 import auditRouter from "./routes/audit.js";
 import migrationRouter from "./routes/migration.js";
+import inspectionRouter from "./routes/inspection.js";
 import documentsRouter from "./routes/documents.js";
 
 assertServerConfig();
@@ -15,6 +16,7 @@ assertServerConfig();
 const app=express();
 app.disable("x-powered-by");
 app.use(cors({origin:config.appOrigin,credentials:false}));
+app.use("/api/inspection", express.json({limit:"12mb"}));
 app.use(express.json({limit:"2mb"}));
 
 app.get("/live",(req,res)=>res.json({ok:true,service:"adpa-api"}));
@@ -26,6 +28,7 @@ app.use("/api/claims",claimsRouter);
 app.use("/api/audit",auditRouter);
 app.use("/api/migration",migrationRouter);
 app.use("/api/documents",documentsRouter);
+app.use("/api/inspection",inspectionRouter);
 
 app.use((err,req,res,next)=>{
   console.error(err);

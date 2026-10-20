@@ -43,6 +43,7 @@ export const emptyClaim = () => ({
   signatures: [],
   recovery: [],
   closure: { status: "Open", closedAt: "", closedPackageHash: "", events: [] },
+  inspection: { version: 1, rooms: [] },
   estimateComparisons: [],
   payments: [],
   checkProcessing: { checks: [] },

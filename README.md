@@ -58,3 +58,7 @@ npm run build
 4. Connect email ingestion / approved delivery.
 5. Add persistent production database and object storage.
 6. Validate access control, backup / restore, audit retention, and release gates.
+
+## Inspection to Xactimate scope
+
+The **Inspection & Scope** module connects room media, voice notes, measured sketches, material/repair proposals, review, and unpriced Estimate Comparison lines. See [implementation and integration instructions](docs/inspection/README.md) for working features, provider setup, scan format, and outstanding native LiDAR / licensed Xactimate integrations.

@@ -55,6 +55,8 @@ export default function EstimateComparison({ records, onChange }) {
       <h1>Carrier vs ADPA Estimate Comparison</h1>
       <p>Use this module for dwelling / structure estimate differences. Each variance should explain what differs and what source supports the ADPA position.</p>
 
+      {records.some(r=>r.pricingPending) && <p className="notice">Inspection scope quantities await licensed Xactimate item selection and pricing. Totals below exclude unpriced operations and are incomplete.</p>}
+      {records.some(r=>r.inspectionStale) && <p className="notice">An inspection changed after transfer. Re-review that room and update its working comparison before relying on its quantities.</p>}
       <div className="stats">
         <div className="stat"><small>ADPA supported total</small><b>{money(totals.adpa)}</b></div>
         <div className="stat"><small>Carrier total</small><b>{money(totals.carrier)}</b></div>
@@ -89,12 +91,12 @@ export default function EstimateComparison({ records, onChange }) {
                 <td>{r.coverage}</td>
                 <td>{r.room}<br/><small>{r.trade}</small></td>
                 <td>{r.description}</td>
-                <td>{money(adpa)}</td>
+                <td>{r.pricingPending ? "Pricing pending" : money(adpa)}</td>
                 <td>{money(carrier)}</td>
-                <td>{money(adpa-carrier)}</td>
+                <td>{r.pricingPending ? "Pending" : money(adpa-carrier)}</td>
                 <td>{intelligence.lines.find(x=>x.id===r.id)?.varianceCategory}</td>
                 <td>{r.source || (Math.abs(adpa-carrier)>0.01 ? "SOURCE NEEDED" : "")}</td>
-                <td>{r.status}</td>
+                <td>{r.status}{r.inspectionStale && <small>Inspection changed — retransfer required</small>}</td>
                 <td><button type="button" onClick={() => remove(r.id)}>Remove</button></td>
               </tr>;
             })}
