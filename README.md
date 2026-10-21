@@ -58,3 +58,7 @@ npm run build
 4. Connect email ingestion / approved delivery.
 5. Add persistent production database and object storage.
 6. Validate access control, backup / restore, audit retention, and release gates.
+
+## HomeBack and ADPA service provider resources
+
+See the [service provider resource guide](docs/service-providers/README.md) for the complete 22-page PDF covering 11 provider roles, LifeWorth integration, processes, required records, handoffs, and proposed development requirements. This is a workflow specification; implementation status must be assessed separately.
