@@ -2,6 +2,10 @@
 
 Private working repository for the ADPA digital claims-processing application.
 
+## HomeBack platform direction
+
+[HomeBack platform direction and migration handoff](docs/HOMEBACK_PLATFORM_DIRECTION_2026-10-22.md): HomeBack contains **HB1** (homeowner-first) and **HB2** (professional-first). ADPA remains a separate public adjusting firm and application experience using shared HomeBack technology, including **LifeWorth™** and inspection/capture tools. This is the target architecture; this documentation change does not migrate or rebrand a deployed app.
+
 ## Recovery status
 
 This repository was reconstructed from the saved ADPA Claims Workspace build records after GitHub access was restored on October 5, 2026. It is a clean recovery scaffold and **not represented as a byte-for-byte export of the prior ChatGPT Site source**.
