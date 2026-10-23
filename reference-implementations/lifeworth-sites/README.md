@@ -1,50 +1,61 @@
-# LifeWorth source and developer handover
+# LifeWorth source and developer handoff
 
-The LifeWorth module is implemented in the private Sites ADPA Claims Workspace. This package gives José the exact current module source, schema, tests, integration guidance and illustrative UI design notes. It is a reference implementation for integration into this repository's React/Vite/Express/PostgreSQL application; adding this directory does not wire the feature into that app.
+This package contains the LifeWorth module deployed in the private Sites workspace through October 23, 2026, including documentation tasks, Purchase Organizer and Divide My Belongings. It gives José source, schema, a standalone test suite and integration instructions for the repository's React/Vite/Express/PostgreSQL application.
+
+**Integration status:** this directory is a reference implementation. It does not wire LifeWorth into the root GitHub app or deploy anything to José's environment. The full private Sites app remains separate.
 
 ## Current release
 
-- Hosted source: `5de90eeaa923ca6cd9a2eb4812d2e57a2a252de8`.
-- Published version: 121, successfully deployed October 23, 2026.
+- Hosted source checkpoint: `a7f2afbb931053c767a324673fa3c8a2f742b39b`.
+- Private deployed version: **124**, October 23, 2026.
 - Private app: https://adpa-claims-workspace.angelo-rbmm.chatgpt.site/lifeworth
-- [Current analytics implementation and verification](LIFEWORTH_ANALYTICS_HANDOFF.md).
-- [Inventory, receipts, refunds and material-link handover](LIFEWORTH_ROOM_VALUES_HANDOFF.md).
-- [Original foundation scope](HOMEBACK_LIFEWORTH_HANDOFF.md).
-- Bernards illustrative dashboard mockup: emailed to Angelo separately; image upload to GitHub was declined, so the image is not included in this PR.
+- Source files and SHA-256 hashes: [manifest](docs/SOURCE_MANIFEST.json).
+- Validation and limits: [verification](docs/VERIFICATION.md).
+- Detailed porting guide: [integration checklist](docs/INTEGRATION_CHECKLIST.md).
+- Spanish summary for José: [resumen](docs/RESUMEN_PARA_JOSE.md).
 
-## Working features
+## Included capabilities
 
-Properties, room inventory and materials, reviewed/unreviewed replacement values, manually linked purchases and receipt lines, returns/refunds and CSV export, reviewed ITEL links, supplier quotes with Good/Better/Best eligibility, reconstruction costs, policy comparisons, screening questions, service coordination records and operation planning records.
+| Area | Behavior and handoff |
+| --- | --- |
+| Inventory and purchasing foundation | Properties, room inventory, separate replacement values, manual receipt allocations, returns/refunds, receipt CSV, reviewed ITEL links. [Foundation](HOMEBACK_LIFEWORTH_HANDOFF.md), [room values](LIFEWORTH_ROOM_VALUES_HANDOFF.md). |
+| Analytics and snapshots | Contents/equipment values, room charts, documentation-reference progress, reconstruction versus dwelling limits, dated snapshots. [Analytics](LIFEWORTH_ANALYTICS_HANDOFF.md). |
+| Documentation tasks | Prioritized gaps, assignment labels, statuses and review notes. [Task behavior](docs/DOCUMENTATION_TASKS.md). |
+| Purchase Organizer | Purchase dates, receipt links, confirmed return deadlines and warranty dates/terms, manual links, item/retailer search and upcoming-date filters. [Purchase Organizer](LIFEWORTH_PURCHASE_ORGANIZER_HANDOFF.md). |
+| Divide My Belongings | Two-person plans, selected inventory, split quantities, separate proposed division values, individual owner-recorded responses, stale-proposal review/history and selected-plan CSV. [Division workflow](LIFEWORTH_DIVISION_HANDOFF.md). |
+| Other working foundation | Good/Better/Best pricing circumstances, supplier quote records, reconstruction scope, policy comparisons, assessment questions, provider coordination and manual operation planning. |
 
-The analytics dashboard separates contents from equipment and reconstruction, charts room values, tracks documentation references, compares reconstruction with the dwelling limit and saves dated immutable valuation snapshots. Stored history and audit are exported with the existing JSON export.
+## Run standalone tests
 
-The Bernards image is an illustrative concept using fabricated sample values and history. It is not a screenshot of the published UI or actual claim data. The image uses a circular documentation indicator; the published dashboard currently uses a horizontal progress bar. The concept does not certify any claim coverage or payable amount.
-
-## Run the reference tests
-
-Node >=22.13 is required (`node:sqlite`). From this directory:
+Node **>=22.13** is required for `node:sqlite`. From this directory:
 
 ```sh
 npm install
 npm test
 ```
 
-The runner compiles the module and authenticated API into a temporary test directory and uses mocked users and an in-memory SQLite database. It is not a standalone app. UI runtime dependencies (React, lucide-react), framework auth, database bindings and host routing must be supplied by the target application.
+The runner compiles the domain modules and API into a temporary directory. It uses synthetic fixtures, mocked identities and an in-memory SQLite database. **35 tests pass**, covering the current module and API. The complete hosted application separately passed **772 tests**, TypeScript and its production build at the hosted checkpoint above.
 
-The complete hosted source passed **759 automated tests**, TypeScript and production build checks. The independently runnable subset here covers the LifeWorth module only; its result is recorded in [verification](docs/VERIFICATION.md). Server rendering was checked for loading, no-property, empty and populated states. Browser visual QA, screenshots of the real UI, mobile/device acceptance and live vendor integrations remain unverified because prior browser preview was blocked. The mockup is not browser QA evidence.
+This package is not a standalone running UI. The target must provide routing, React, lucide-react, server authentication and database adapters. Runtime UI/framework dependencies belong to the host; the package dependencies support the standalone test runner.
 
-## José: integration sequence
+## José: implementation order
 
-1. Confirm the authoritative app and staging branch. Keep LifeWorth central to HB1 homeowner-first and HB2 professional-first flows; ADPA remains a separate public adjusting business using shared technology with separate representation and permissions.
-2. Reuse `lib/lifeworth.ts` validation, category calculations, pricing circumstances and snapshot logic. Good means everyday shopping; Better means verified individual-loss partner discounts; Best means verified catastrophe recovery with partner-agreed actual-cost/no-profit basis. These are circumstances, not quality levels.
-3. Port `app/api/lifeworth/route.ts` to verified server identity and tenant authorization. Keep owner isolation, same-origin writes, optimistic concurrency and capacity limits. Do not trust browser-supplied owner IDs.
-4. Convert `drizzle/0010_lifeworth_accounts.sql` from D1/SQLite to an appropriate PostgreSQL migration. Preserve existing records and backward compatibility with accounts that have no snapshots.
-5. Adapt the app-router page, client workspace, dashboard component and CSS to the target router and styling. Connect the API through the target server; copied files do not implement that integration automatically.
-6. Run the supplied tests, then verify two unrelated accounts, stale-write rejection, record/receipt relationships, immutable snapshots, export, mobile layouts and retention in staging.
-7. Complete external services separately: catalogs, checkout, payments, storage metering, phone setup/recordings, lab connectors, permitted ADPA transfer and AI. Manual records do not activate these services.
+1. Confirm the authoritative app and staging branch. HomeBack has shared HB1 homeowner-first and HB2 professional-first technology; ADPA remains a separate public adjusting business with separate representation and authorization.
+2. Port both `lib/lifeworth.ts` and `lib/lifeworth-division.ts` together. The main module imports the division helper. Retain validation and currency arithmetic, backward-compatible defaults, relationships, stale-proposal checks, response history and capacity limits.
+3. Adapt `app/api/lifeworth/route.ts` to trusted server identity and PostgreSQL. Preserve owner isolation, same-origin writes, optimistic version checks and atomic writes. Never accept a browser-supplied owner ID.
+4. Adapt the D1/SQLite account migration to PostgreSQL. The newer records live in the account JSON; no new D1 migration was needed. Do not overwrite populated account JSON or drop unfamiliar fields.
+5. Adapt all LifeWorth client components and CSS together, including `next-actions.tsx`, `purchase-organizer.tsx`, `division.tsx`, `dashboard.tsx` and `workspace.tsx`. Map the page to the target router and protect it before rendering.
+6. Run the standalone suite, target-app TypeScript/build checks and the [staging acceptance checklist](docs/INTEGRATION_CHECKLIST.md). The existing-host integration patch from older packages is not current and is intentionally not included here.
+7. After staging acceptance, deploy through the target app's own workflow. Merging this reference package alone does not complete integration.
 
-## Scope and integration status
+## Product boundaries
 
-This package contains the current LifeWorth module and the handover documents needed to integrate it. The complete private Sites application, unrelated claim modules and deployment runtime are separate from this reference bundle. The root GitHub app has not been changed by this package.
+- Good is everyday pricing; Better is verified individual-loss partner discounts; Best is verified catastrophe/partner-agreed actual-cost/no-profit pricing. They are circumstances, not merchandise quality tiers.
+- Evidence fields hold source references/HTTPS links. Original LifeWorth file uploads, receipt OCR and automatic matching are not included.
+- Purchase deadlines are entered and confirmed against sources. On-page date indicators do not send email/push reminders or verify eligibility.
+- Division responses are entered by the signed-in owner with separate sources and dates. They are not independently authenticated participant approvals, signatures or legal ownership transfers.
+- No live catalog, checkout, payment/refund processing, automatic ADPA transfer or outside invitation is activated.
+- Prior Bernards/dashboard and purchase mockups are illustrative concepts with sample data, not browser captures or parity evidence. Images are not included; preserve the previous decision not to upload the mockup image to GitHub.
+- Browser visual QA and mobile/device acceptance remain unverified after preview access/connection failures. No bypass was attempted.
 
-No customer claim records, original claim evidence, account databases, credentials or runtime secrets are included.
+No customer claim records, original evidence, account databases, runtime bindings, credentials or secrets are included. Historical handoff documents describe earlier checkpoints; this README, the current manifest and verification report describe this release.

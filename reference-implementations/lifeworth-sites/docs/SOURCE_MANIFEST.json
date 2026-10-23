@@ -1,6 +1,8 @@
 {
-  "hosted_commit": "5de90eeaa923ca6cd9a2eb4812d2e57a2a252de8",
-  "hosted_version": 121,
+  "hosted_commit": "a7f2afbb931053c767a324673fa3c8a2f742b39b",
+  "hosted_version": 124,
+  "reference_tests": 35,
+  "hosted_tests": 772,
   "files": [
     {
       "path": "HOMEBACK_LIFEWORTH_HANDOFF.md",
@@ -13,14 +15,24 @@
       "sha256": "06c409db90df117058cb2ce603abc2431768666a5bb2438d005dfb44ec8ca184"
     },
     {
+      "path": "LIFEWORTH_DIVISION_HANDOFF.md",
+      "size_bytes": 3039,
+      "sha256": "9f3c296bb15bef5511ec48db2563f9c8296e92dedd9641715a90db80d057587e"
+    },
+    {
+      "path": "LIFEWORTH_PURCHASE_ORGANIZER_HANDOFF.md",
+      "size_bytes": 1980,
+      "sha256": "b20688a6aac3091a20ed109ac3add17aed29571c49fa0de7f76f8d95814f1abe"
+    },
+    {
       "path": "LIFEWORTH_ROOM_VALUES_HANDOFF.md",
       "size_bytes": 4137,
       "sha256": "fdfadf49b05cd07a21be4aada711f47209b1d1488465f5d328c0ab8eb0b429af"
     },
     {
       "path": "README.md",
-      "size_bytes": 5096,
-      "sha256": "6bd3ba339a28f09b96549efcb18a0628d8663f8597b40b511c344bf21c0ad3b6"
+      "size_bytes": 6248,
+      "sha256": "5e6646b95d1c179f4899c05b7c8007cc28ac52fbf00699f83ba0800925176b78"
     },
     {
       "path": "app/api/lifeworth/route.ts",
@@ -33,9 +45,19 @@
       "sha256": "c6ccb4811df9edb3c8f0375ffa578247cf0befca66a069f9b0fe27f2d32192aa"
     },
     {
+      "path": "app/lifeworth/division.tsx",
+      "size_bytes": 8312,
+      "sha256": "c7f7027dd8bb55ebac9dca62d5cfe959f1192012795f43710d341a1cf49b71f8"
+    },
+    {
       "path": "app/lifeworth/lifeworth.css",
-      "size_bytes": 10479,
-      "sha256": "5139bd47ba9e93c5db707aaaf9c90584f2eb024727f2828b9565f9770d892900"
+      "size_bytes": 12072,
+      "sha256": "2c2f78d038ba76accff170969a1bf1a9717ad252850d87aabbb03d6746bd841c"
+    },
+    {
+      "path": "app/lifeworth/next-actions.tsx",
+      "size_bytes": 4052,
+      "sha256": "766f595fee98a947e16150595291c017a27cec922f8d98edcd12b8e3734d4920"
     },
     {
       "path": "app/lifeworth/page.tsx",
@@ -43,14 +65,34 @@
       "sha256": "a5ee3cf0cfea2a79254040d9610de885fdb261ea9c5449b30ebc010f1782a784"
     },
     {
+      "path": "app/lifeworth/purchase-organizer.tsx",
+      "size_bytes": 4091,
+      "sha256": "4b405e3399e05603ee249cf8722a4afcc20f2a46fe39595ed72991c77b388e7a"
+    },
+    {
       "path": "app/lifeworth/workspace.tsx",
-      "size_bytes": 29079,
-      "sha256": "7a0b428b4d68b25f82b7af54ef16c0e4f0fd3897bb8b9705753a942d4146680b"
+      "size_bytes": 33831,
+      "sha256": "f3697e7f08c76ea534d372ac3d3cd5192751bccec09498c5e7fb2fd921bbdb93"
+    },
+    {
+      "path": "docs/DOCUMENTATION_TASKS.md",
+      "size_bytes": 1115,
+      "sha256": "00a445c787643ad7c7c5666c7d657475f5b49c327446968f0501f3f766c01694"
+    },
+    {
+      "path": "docs/INTEGRATION_CHECKLIST.md",
+      "size_bytes": 4454,
+      "sha256": "176d732a1d7d7712fe6bed9706e34a5ae99b3137621328af9635ec91373876d9"
+    },
+    {
+      "path": "docs/RESUMEN_PARA_JOSE.md",
+      "size_bytes": 2385,
+      "sha256": "2bbb4194da6923960c4852a7aef8257d158dc61a7c52f8c8b1d4a9a908253058"
     },
     {
       "path": "docs/VERIFICATION.md",
-      "size_bytes": 865,
-      "sha256": "e54c80939326dc54060f2ac85377200ef6ceeadc702968bc1cd8ff21667f0196"
+      "size_bytes": 1900,
+      "sha256": "f511065599367e1d9cb2aaa0915383ffa70aa30f115a9e07b70ff90c1d3f11e5"
     },
     {
       "path": "drizzle/0010_lifeworth_accounts.sql",
@@ -63,29 +105,34 @@
       "sha256": "639fe0287859b1da3fcfde6843f0f907053c3ea966a35b8bd6f73ba220bd58dc"
     },
     {
+      "path": "lib/lifeworth-division.ts",
+      "size_bytes": 8874,
+      "sha256": "95dd5975ca5668e5a4042914d7288897da9d0404297169365d4e76e407b06a70"
+    },
+    {
       "path": "lib/lifeworth.ts",
-      "size_bytes": 17411,
-      "sha256": "50b5488c1727e33cfd6caea8bc529f9fe921ee5965acfaaba0ebbd33c64568ad"
+      "size_bytes": 23196,
+      "sha256": "306ccc11e8b83b56c52dc0c061fdcbe37d11246dcb4a104b7bcda610dfd9cfc2"
     },
     {
       "path": "package.json",
-      "size_bytes": 312,
-      "sha256": "ece2f9881012a85b12531df4909c3037cc54c6b54f6c6c3c5a7fe0a74c6ac92b"
+      "size_bytes": 313,
+      "sha256": "4276fe3220b16baa537b5bb82007ef6446f3e39075d5e41e87e94bc79255461a"
     },
     {
       "path": "scripts/mocks.mjs",
-      "size_bytes": 1465,
-      "sha256": "4ee51966da85c829cf5646326888a80e324ae1b1f48c8fac1c6854adc13cf2cd"
+      "size_bytes": 1466,
+      "sha256": "cb1fb24d8188c08bdbac274c72353ef3f5cf46064681761f7205d287b0009a8c"
     },
     {
       "path": "scripts/test.mjs",
-      "size_bytes": 1104,
-      "sha256": "8ed2f457d96cb29fc1254475fe66d8191386fa71252d34939f845754c8a1e0f6"
+      "size_bytes": 1224,
+      "sha256": "ca67b6f60100dcb1a28af13ac4e08b2686bb3b1bc81f44e187f724a329d899ed"
     },
     {
       "path": "tests/lifeworth.test.mjs",
-      "size_bytes": 20239,
-      "sha256": "37ce612a6cd93ce91af7681aa23d800e932fa01613c1b346d6feeafb3f108578"
+      "size_bytes": 35744,
+      "sha256": "e954864009d7ccf5fc8a61c5705c1ee41ec1b15eda87d73e6b2f97ab0ffdcfd4"
     }
   ]
 }
