@@ -1,15 +1,15 @@
 # Verification — October 23, 2026
 
-Current private hosted source: `a7f2afbb931053c767a324673fa3c8a2f742b39b`; deployed version **124**. Deployment succeeded before packaging this handoff.
+Private hosted source: `36d70f6dc247d4694ce245599351c635b09e22e4`; deployed version **125**, successfully published October 23, 2026.
 
-- Full hosted suite: **772 passed**, zero failed, zero skipped.
-- Hosted TypeScript no-emit check: passed.
-- Hosted production build: passed (Vinext / Sites build helper).
-- Refreshed standalone reference suite: **35 passed**, zero failed, zero skipped (`node scripts/test.mjs`).
-- Domain/API source, tests, schema and UI files in this package are copied from that hosted source checkpoint; SHA-256 digests are in SOURCE_MANIFEST.json. The manifest excludes itself and local node_modules.
-- The standalone runner was extended to compile the new division helper before the main module. Synthetic fixtures use mocked users and in-memory SQLite. No tests seeded live customer accounts.
-- The 35-test subset covers initial records, pricing, values, receipts/refunds, materials, analytics/snapshots, documentation tasks, purchase metadata and division workflows. It includes authentication, ownership, origins, optimistic versions, validation, change invalidation, history, exports and relationship guards.
-- Earlier dashboard server-render checks covered loading, no-property, empty and populated-history states. Those were prior checks, not new browser verification of Purchase Organizer or Divide My Belongings.
-- Browser visual QA, screenshots of the live UI, mobile/device acceptance and integration into the root GitHub application remain **unverified**. Managed preview previously encountered access/connection failures. No security bypass was attempted.
+- Full hosted automated suite: **780 passed**, zero failed, zero skipped.
+- Hosted TypeScript and production build: passed.
+- Updated standalone reference suite: **43 passed**, zero failed, zero skipped (`npm test`).
+- Reproducible real-engine checks: **3 passed** (`npm run test:engines`): PNG receipt OCR, text-PDF extraction and rendered image-only PDF OCR. Every fixture is generated locally from synthetic content; no customer receipt is used.
+- Scanner asset preparation: passed (`npm run prepare:scanner`). The private production build includes same-origin language data, worker/core variants, PDF worker, fonts, cmaps and wasm resources.
+- Domain/API/UI/schema/source test files match the hosted checkpoint. `docs/SOURCE_MANIFEST.json` lists all reference files and SHA-256 digests, excluding itself, node_modules and generated scanner resources.
+- The standalone runner includes both domain helpers and both authenticated API routes, with synthetic accounts, mock object storage and in-memory SQLite. No live account was seeded.
+- Earlier dashboard server-render checks were prior checks; they do not establish browser verification for newer screens.
+- Browser visual/end-to-end and mobile acceptance remain **unverified**: preview supervisor reports running, but the cloud browser gets ERR_CONNECTION_REFUSED. No safeguard was bypassed and no alternative browser-control path was used.
 
-The host's 772-test result does not mean this reference directory runs the entire application suite. Its independently runnable subset is 35 tests. The root target application needs its own adapter, UI and staging acceptance checks after integration.
+The root React/Vite/Express/PostgreSQL app is not wired by this reference package. It needs the documented identity/storage/transaction/routing/build adaptations and staging checks. The 780 hosted tests are separate from the 43-test reference subset and three engine checks.

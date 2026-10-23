@@ -1,19 +1,25 @@
 {
   "name": "homeback-lifeworth-sites-reference",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node scripts/test.mjs"
+    "test": "node scripts/test.mjs",
+    "prepare:scanner": "node scripts/prepare-receipt-scanner.mjs",
+    "test:engines": "node scripts/test-scanner-engines.mjs"
   },
   "dependencies": {
-    "zod": "3.25.76"
+    "zod": "3.25.76",
+    "tesseract.js": "7.0.0",
+    "@tesseract.js-data/eng": "1.0.0",
+    "pdfjs-dist": "6.4.299"
   },
   "devDependencies": {
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "@napi-rs/canvas": "1.0.11",
+    "pdf-lib": "1.17.1"
   },
   "engines": {
     "node": ">=22.13.0"
   }
 }
-

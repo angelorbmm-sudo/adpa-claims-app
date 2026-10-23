@@ -27,9 +27,19 @@
 
 ## Before target deployment
 
-- Run the 35 standalone tests plus the target app's build/type checks and any adapter tests needed for real PostgreSQL transactions.
+- Run the 43 standalone tests and three engine checks plus the target app's build/type checks and any adapter tests needed for real PostgreSQL transactions.
 - Perform browser/mobile/keyboard/accessibility and long-label QA in staging. Screenshots or illustrative concepts do not substitute for these checks.
 - Validate private access and retention against a staging dataset before migrating existing records.
-- Keep live commerce, OCR, reminders and participant authentication/signatures explicitly separate until those integrations are implemented and verified.
+- Keep live commerce, external AI/catalog matching, reminders and participant authentication/signatures separate. Receipt on-device OCR is now included; follow RECEIPT_SCANNING_FOR_JOSE.md for its separate storage and build requirements.
 
 Merging the reference-code PR is a review handoff, not evidence that the target application is integrated or deployed.
+
+## Receipt scanning acceptance additions
+
+- Serve every scanner resource from the target origin and verify no CDN/model request or external AI transmission occurs. Test the built output, not only dev mode.
+- Upload a supported receipt, verify hash deduplication and unrelated-owner access denial, and check that raw original bytes survive reload/download with the same digest.
+- Scan a photo, text PDF and image-only PDF. Exercise poor images, unknown retailer/date/total, unsupported types, oversized files, large pixel dimensions, encrypted PDFs and more than three pages. Fail visibly and retain the original without creating purchases.
+- Correct the text, rebuild the draft and reject an old draft confirmation. Confirm that source text is an untrusted draft, not authenticated receipt facts.
+- Match existing inventory or create new unpriced/unconfirmed items. Check quantity/line-total interpretation, partial selections, tax/delivery/discount reconciliation, possible duplicate acknowledgment and exact duplicate-line rejection.
+- Confirm multiple selected lines in one atomic versioned write. Simulate stale versions and original-file corruption; verify no partial items/receipts are saved and double confirmation is blocked.
+- Confirm that originals stay private and available after confirmation, properties retaining originals cannot be deleted, and JSON exports contain metadata/text/references rather than original binaries.
