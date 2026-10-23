@@ -1,0 +1,185 @@
+{
+  "hosted_commit": "36d70f6dc247d4694ce245599351c635b09e22e4",
+  "hosted_version": 125,
+  "reference_tests": 43,
+  "engine_checks": 3,
+  "hosted_tests": 780,
+  "generated_scanner_assets": "Run npm run prepare:scanner; generated resources excluded from Git",
+  "files": [
+    {
+      "path": ".gitignore",
+      "size_bytes": 55,
+      "sha256": "6a5d88a1c9ef33f52e5f70e07ff6e815be9db963ca0bdda2629f8f13fbdd4c06"
+    },
+    {
+      "path": "HOMEBACK_LIFEWORTH_HANDOFF.md",
+      "size_bytes": 4414,
+      "sha256": "423d186afcbda31bf2feb4dc10f5793b7c5b3825f23f145a78fc832c7424b1c2"
+    },
+    {
+      "path": "LIFEWORTH_ANALYTICS_HANDOFF.md",
+      "size_bytes": 2977,
+      "sha256": "06c409db90df117058cb2ce603abc2431768666a5bb2438d005dfb44ec8ca184"
+    },
+    {
+      "path": "LIFEWORTH_DIVISION_HANDOFF.md",
+      "size_bytes": 3039,
+      "sha256": "9f3c296bb15bef5511ec48db2563f9c8296e92dedd9641715a90db80d057587e"
+    },
+    {
+      "path": "LIFEWORTH_PURCHASE_ORGANIZER_HANDOFF.md",
+      "size_bytes": 1980,
+      "sha256": "b20688a6aac3091a20ed109ac3add17aed29571c49fa0de7f76f8d95814f1abe"
+    },
+    {
+      "path": "LIFEWORTH_RECEIPT_SCANNING_HANDOFF.md",
+      "size_bytes": 6436,
+      "sha256": "9487a13bdad236e294cd94213bd4f4ddef82e9de66d4fac98e7c2b1cfc18e099"
+    },
+    {
+      "path": "LIFEWORTH_ROOM_VALUES_HANDOFF.md",
+      "size_bytes": 4137,
+      "sha256": "fdfadf49b05cd07a21be4aada711f47209b1d1488465f5d328c0ab8eb0b429af"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 7499,
+      "sha256": "401d89d3a9a3f4caa5ace457c555b8d265eb892bd1d5fbf5321abed0f6a79ac8"
+    },
+    {
+      "path": "app/api/lifeworth/receipts/route.ts",
+      "size_bytes": 6713,
+      "sha256": "0fbd8af83835f46e3d4700d72730a86a3bd40676971183f4110559a9be37052b"
+    },
+    {
+      "path": "app/api/lifeworth/route.ts",
+      "size_bytes": 2348,
+      "sha256": "5d1125377324bc4a0e08f31a42af44a12f2d37c325a69fd23ec6eaaa61434198"
+    },
+    {
+      "path": "app/lifeworth/dashboard.tsx",
+      "size_bytes": 9846,
+      "sha256": "c6ccb4811df9edb3c8f0375ffa578247cf0befca66a069f9b0fe27f2d32192aa"
+    },
+    {
+      "path": "app/lifeworth/division.tsx",
+      "size_bytes": 8312,
+      "sha256": "c7f7027dd8bb55ebac9dca62d5cfe959f1192012795f43710d341a1cf49b71f8"
+    },
+    {
+      "path": "app/lifeworth/lifeworth.css",
+      "size_bytes": 13022,
+      "sha256": "1c6e604038ef1b33dc4443828220a363ebf1d70bd783830f9516b48e62c0fb7b"
+    },
+    {
+      "path": "app/lifeworth/next-actions.tsx",
+      "size_bytes": 4052,
+      "sha256": "766f595fee98a947e16150595291c017a27cec922f8d98edcd12b8e3734d4920"
+    },
+    {
+      "path": "app/lifeworth/page.tsx",
+      "size_bytes": 228,
+      "sha256": "a5ee3cf0cfea2a79254040d9610de885fdb261ea9c5449b30ebc010f1782a784"
+    },
+    {
+      "path": "app/lifeworth/purchase-organizer.tsx",
+      "size_bytes": 4091,
+      "sha256": "4b405e3399e05603ee249cf8722a4afcc20f2a46fe39595ed72991c77b388e7a"
+    },
+    {
+      "path": "app/lifeworth/receipt-scanner.tsx",
+      "size_bytes": 11965,
+      "sha256": "87a4c251c179116b42084389738570c5672ea94dc2df0d62beb2e19abad6d73f"
+    },
+    {
+      "path": "app/lifeworth/workspace.tsx",
+      "size_bytes": 35009,
+      "sha256": "dde5506b2057b6cfdef4de6bc2876e54b7d2f53f4594fabfd2f2b9b53269945b"
+    },
+    {
+      "path": "docs/DOCUMENTATION_TASKS.md",
+      "size_bytes": 1115,
+      "sha256": "00a445c787643ad7c7c5666c7d657475f5b49c327446968f0501f3f766c01694"
+    },
+    {
+      "path": "docs/INTEGRATION_CHECKLIST.md",
+      "size_bytes": 6000,
+      "sha256": "84f9ba140bf7eec3331ec31cb4cef7150593d24a7968a3f225f03e37c3c84d13"
+    },
+    {
+      "path": "docs/RECEIPT_SCANNING_FOR_JOSE.md",
+      "size_bytes": 8965,
+      "sha256": "7c1a125ae2f21e25d225c9705f33cfb621340448f5272419aaf457c4adba034c"
+    },
+    {
+      "path": "docs/RESUMEN_PARA_JOSE.md",
+      "size_bytes": 4005,
+      "sha256": "f736bd57e70a783cde811541df8990a18a4e9e504ae452688121380a6fa0d43f"
+    },
+    {
+      "path": "docs/VERIFICATION.md",
+      "size_bytes": 1844,
+      "sha256": "676ee705c3e9f4532244d9fff4045f866fd9c9200b3b0c2a6553c4a18f6b38fd"
+    },
+    {
+      "path": "drizzle/0010_lifeworth_accounts.sql",
+      "size_bytes": 163,
+      "sha256": "ab66038a72c106b7dfbf87ceff7e2a3493e7eae30a11ec9dbb5cbaab75055cd3"
+    },
+    {
+      "path": "lib/company-onboarding.ts",
+      "size_bytes": 7737,
+      "sha256": "639fe0287859b1da3fcfde6843f0f907053c3ea966a35b8bd6f73ba220bd58dc"
+    },
+    {
+      "path": "lib/lifeworth-division.ts",
+      "size_bytes": 8874,
+      "sha256": "95dd5975ca5668e5a4042914d7288897da9d0404297169365d4e76e407b06a70"
+    },
+    {
+      "path": "lib/lifeworth-receipt-ocr.ts",
+      "size_bytes": 3417,
+      "sha256": "7020d2a2a36477ac53752e6106c03c9544c85c078b77bc34acf8bed95b661cd1"
+    },
+    {
+      "path": "lib/lifeworth-receipt-scan.ts",
+      "size_bytes": 7786,
+      "sha256": "151b9adbf86acd0b926c8c920ad16ff0ec07715ffdfb9ac5cb62b9e09d1932e6"
+    },
+    {
+      "path": "lib/lifeworth.ts",
+      "size_bytes": 23700,
+      "sha256": "8709f9bc5ad0395e0fe9f63373a8948e808ddce12b1499993314e2e7fb48fa19"
+    },
+    {
+      "path": "package.json",
+      "size_bytes": 595,
+      "sha256": "27d2c79ab3b245d58e0fc047d94b51f940065665d20858a9c5d00149b2b51e81"
+    },
+    {
+      "path": "scripts/mocks.mjs",
+      "size_bytes": 1466,
+      "sha256": "cb1fb24d8188c08bdbac274c72353ef3f5cf46064681761f7205d287b0009a8c"
+    },
+    {
+      "path": "scripts/prepare-receipt-scanner.mjs",
+      "size_bytes": 1541,
+      "sha256": "71bf33885b5340b2053cd94cc6e019487e6318d68afcf39ce9d16158b351f311"
+    },
+    {
+      "path": "scripts/test-scanner-engines.mjs",
+      "size_bytes": 3140,
+      "sha256": "2464dbb5cfe15b45832caa7794c1875860700b7a2817afacb66f63b4192816b6"
+    },
+    {
+      "path": "scripts/test.mjs",
+      "size_bytes": 1594,
+      "sha256": "b6eb72b5db75e573632d8bd96c0a44a287bc6001e9c8f6f3f0e5f40142dd1d8e"
+    },
+    {
+      "path": "tests/lifeworth.test.mjs",
+      "size_bytes": 44662,
+      "sha256": "b260364a8ad61241c308af41e8b0fc962292c185eae11537933ff4dff0ea0e76"
+    }
+  ]
+}
